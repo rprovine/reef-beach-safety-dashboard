@@ -1,18 +1,12 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, Suspense } from 'react'
 import { usePathname, useSearchParams } from 'next/navigation'
 import { initGA, initMixpanel, logPageView } from '@/lib/analytics'
 
-export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
+function AnalyticsTracking() {
   const pathname = usePathname()
   const searchParams = useSearchParams()
-
-  useEffect(() => {
-    // Initialize analytics on mount
-    initGA()
-    initMixpanel()
-  }, [])
 
   useEffect(() => {
     // Track page views on route change
@@ -20,5 +14,22 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
     logPageView(url)
   }, [pathname, searchParams])
 
-  return <>{children}</>
+  return null
+}
+
+export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
+  useEffect(() => {
+    // Initialize analytics on mount
+    initGA()
+    initMixpanel()
+  }, [])
+
+  return (
+    <>
+      <Suspense fallback={null}>
+        <AnalyticsTracking />
+      </Suspense>
+      {children}
+    </>
+  )
 }
