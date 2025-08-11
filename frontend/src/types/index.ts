@@ -17,6 +17,10 @@ export interface Beach {
   island: Island
   lat: number
   lng: number
+  coordinates: {
+    lat: number
+    lng: number
+  }
   spotType: BeachSpotType
   status: BeachStatus
   currentConditions?: CurrentConditions

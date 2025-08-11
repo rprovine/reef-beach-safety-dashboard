@@ -17,7 +17,7 @@ export function Footer() {
               </span>
             </div>
             <p className="text-sm text-gray-600">
-              Real-time beach safety monitoring for Hawaii's beaches. Stay informed, stay safe.
+              Real-time beach safety monitoring for Hawaii&apos;s beaches. Stay informed, stay safe.
             </p>
             <div className="flex space-x-4">
               <a href="#" className="text-gray-400 hover:text-ocean-600">

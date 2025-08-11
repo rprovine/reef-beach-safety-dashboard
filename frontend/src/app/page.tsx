@@ -5,8 +5,8 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { 
   Shield, AlertTriangle, CheckCircle, Activity, 
-  Wind, Waves, Sun, CloudRain, Bell, TrendingUp,
-  Users, Building2, Smartphone, BarChart3, Map,
+  Wind, Waves, Sun, Bell,
+  Building2, Smartphone, BarChart3, Map,
   ArrowRight, Play, Star
 } from 'lucide-react'
 import { SignUpButton } from '@clerk/nextjs'
@@ -71,7 +71,7 @@ const testimonials = [
 
 export default function HomePage() {
   const [currentBeachStatus, setCurrentBeachStatus] = useState('green')
-  const [videoPlaying, setVideoPlaying] = useState(false)
+  const [, setVideoPlaying] = useState(false)
 
   useEffect(() => {
     // Simulate real-time status changes
@@ -181,7 +181,7 @@ export default function HomePage() {
               See It In Action
             </h2>
             <p className="text-xl text-gray-600">
-              Real-time data from Hawaii's most popular beaches
+              Real-time data from Hawaii&apos;s most popular beaches
             </p>
           </div>
 
@@ -272,7 +272,7 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-4xl font-display font-bold text-gray-900 mb-4">
-              Trusted by Hawaii's Top Hospitality Brands
+              Trusted by Hawaii&apos;s Top Hospitality Brands
             </h2>
           </div>
 
@@ -292,7 +292,7 @@ export default function HomePage() {
                   ))}
                 </div>
                 <p className="text-gray-700 mb-4 italic">
-                  "{testimonial.content}"
+                  &ldquo;{testimonial.content}&rdquo;
                 </p>
                 <div className="flex items-center">
                   <div className="w-12 h-12 bg-gradient-to-br from-ocean-400 to-ocean-600 rounded-full mr-3" />
@@ -336,7 +336,16 @@ export default function HomePage() {
 }
 
 // Beach Status Card Component
-function BeachStatusCard({ name, status, waveHeight, windSpeed, waterTemp, advisory }: any) {
+interface BeachStatusCardProps {
+  name: string
+  status: string
+  waveHeight: string
+  windSpeed: string
+  waterTemp: string
+  advisory?: string
+}
+
+function BeachStatusCard({ name, status, waveHeight, windSpeed, waterTemp, advisory }: BeachStatusCardProps) {
   const statusColors = {
     green: 'bg-green-100 text-green-800 border-green-200',
     yellow: 'bg-yellow-100 text-yellow-800 border-yellow-200',
