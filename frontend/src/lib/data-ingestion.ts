@@ -8,11 +8,12 @@ import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 
 // Simulated data sources (replace with real APIs)
-const DATA_SOURCES = {
-  NOAA: 'https://api.noaa.gov/beach-conditions',
-  PACIOOS: 'https://pacioos.hawaii.edu/api/conditions',
-  DOH: 'https://health.hawaii.gov/api/water-quality'
-}
+// Note: These are placeholder URLs for future integration
+// const DATA_SOURCES = {
+//   NOAA: 'https://api.noaa.gov/beach-conditions',
+//   PACIOOS: 'https://pacioos.hawaii.edu/api/conditions',
+//   DOH: 'https://health.hawaii.gov/api/water-quality'
+// }
 
 interface BeachCondition {
   beachId: string
@@ -72,7 +73,7 @@ export class DataIngestionService {
       windDirDeg: Math.floor(Math.random() * 360),
       waterTempF: Math.random() * 10 + 70,
       tideFt: Math.random() * 3 - 1.5,
-      bacteriaLevel: ['safe', 'caution', 'unsafe'][Math.floor(Math.random() * 3)] as any,
+      bacteriaLevel: ['safe', 'caution', 'unsafe'][Math.floor(Math.random() * 3)] as 'safe' | 'caution' | 'unsafe',
       source: 'noaa'
     }
     
@@ -130,7 +131,7 @@ export class DataIngestionService {
   /**
    * Evaluate if a rule should trigger
    */
-  evaluateRule(rule: any, conditions: BeachCondition): boolean {
+  evaluateRule(rule: Record<string, unknown>, conditions: BeachCondition): boolean {
     const metricValue = this.getMetricValue(rule.metric, conditions)
     if (metricValue === null) return false
     
@@ -165,7 +166,7 @@ export class DataIngestionService {
   /**
    * Send alert notification
    */
-  async sendAlert(rule: any, conditions: BeachCondition) {
+  async sendAlert(rule: Record<string, unknown>, conditions: BeachCondition) {
     const beach = await prisma.beach.findUnique({
       where: { id: conditions.beachId }
     })
@@ -194,7 +195,7 @@ export class DataIngestionService {
   /**
    * Format alert message
    */
-  formatAlertMessage(rule: any, beachName: string, conditions: BeachCondition): string {
+  formatAlertMessage(rule: Record<string, unknown>, beachName: string, conditions: BeachCondition): string {
     const templates: Record<string, string> = {
       wave_height_ft: `High surf alert at ${beachName}: Waves are ${conditions.waveHeightFt?.toFixed(1)} ft`,
       wind_mph: `Wind alert at ${beachName}: Winds at ${conditions.windMph?.toFixed(0)} mph`,

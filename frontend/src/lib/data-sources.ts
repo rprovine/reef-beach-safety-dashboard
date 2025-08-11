@@ -203,9 +203,9 @@ export interface ComprehensiveBeachData {
   lastWebcamUpdate: Date
   
   // Forecasts
-  forecast3Hour: any[]
-  forecast24Hour: any[]
-  forecast7Day: any[]
+  forecast3Hour: Record<string, unknown>[]
+  forecast24Hour: Record<string, unknown>[]
+  forecast7Day: Record<string, unknown>[]
   
   // Advisories
   activeAdvisories: string[]
@@ -220,13 +220,13 @@ export interface ComprehensiveBeachData {
   fishing: 'excellent' | 'good' | 'fair' | 'poor'
   
   // Recent Reports
-  userReports: any[]
-  officialReports: any[]
+  userReports: Record<string, unknown>[]
+  officialReports: Record<string, unknown>[]
   
   // Historical Comparison
-  vs24HoursAgo: any
-  vs7DaysAgo: any
-  vsMonthlyAverage: any
+  vs24HoursAgo: Record<string, unknown>
+  vs7DaysAgo: Record<string, unknown>
+  vsMonthlyAverage: Record<string, unknown>
 }
 
 // Hawaii-specific NOAA station IDs

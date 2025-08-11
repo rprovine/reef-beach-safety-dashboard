@@ -6,7 +6,7 @@
 import { DATA_SOURCES, HAWAII_STATIONS, API_KEYS, ComprehensiveBeachData } from '@/lib/data-sources'
 
 export class DataAggregatorService {
-  private cache: Map<string, { data: any; timestamp: number }> = new Map()
+  private cache: Map<string, { data: Record<string, unknown>; timestamp: number }> = new Map()
 
   /**
    * Get comprehensive data for a beach
@@ -174,7 +174,7 @@ export class DataAggregatorService {
   /**
    * Fetch water quality data (mock for now)
    */
-  async fetchWaterQuality(beachId: string) {
+  async fetchWaterQuality() {
     // This would connect to Hawaii DOH API
     // For now, return mock data
     return {
@@ -334,7 +334,7 @@ export class DataAggregatorService {
   /**
    * Fetch PacIOOS data for Hawaii-specific conditions
    */
-  async fetchPacIOOSData(beachId: string) {
+  async fetchPacIOOSData() {
     try {
       // This would connect to PacIOOS ERDDAP server
       // Example: Wave height, period, direction
@@ -368,7 +368,7 @@ export class DataAggregatorService {
       const headers = lines[0].split(/\s+/)
       const data = lines[2].split(/\s+/) // Most recent reading
 
-      const result: any = {}
+      const result: Record<string, unknown> = {}
       headers.forEach((header, index) => {
         if (header === 'WTMP') result.waterTemp = parseFloat(data[index])
         if (header === 'WVHT') result.waveHeight = parseFloat(data[index])
@@ -451,17 +451,17 @@ export class DataAggregatorService {
     return 'Extreme'
   }
 
-  private getCurrentTide(predictions: any[]): number {
+  private getCurrentTide(): number {
     // Implementation would interpolate between tide points
     return 2.5
   }
 
-  private getNextHighTide(predictions: any[]): Date {
+  private getNextHighTide(): Date {
     // Find next high tide from predictions
     return new Date(Date.now() + 6 * 60 * 60 * 1000)
   }
 
-  private getNextLowTide(predictions: any[]): Date {
+  private getNextLowTide(): Date {
     // Find next low tide from predictions
     return new Date(Date.now() + 3 * 60 * 60 * 1000)
   }
@@ -474,7 +474,7 @@ export class DataAggregatorService {
     return null
   }
 
-  private setCache(key: string, data: any) {
+  private setCache(key: string, data: Record<string, unknown>) {
     this.cache.set(key, { data, timestamp: Date.now() })
   }
 }

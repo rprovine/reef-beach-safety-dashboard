@@ -1,13 +1,12 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { 
   Waves, Wind, Thermometer, AlertTriangle, Clock, 
   MapPin, ArrowLeft, Bell, Sun, Droplets, Eye,
-  Activity, Users, Camera, MessageSquare, Heart,
-  Shield, Fish, Compass, TrendingUp, TrendingDown,
-  ChevronRight, Info, Navigation, Calendar
+  Activity, Users, MessageSquare, Heart,
+  Shield, Fish, Info, Navigation
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -20,17 +19,12 @@ interface BeachDetailContentProps {
 }
 
 export default function BeachDetailContent({ slug }: BeachDetailContentProps) {
-  const [beachData, setBeachData] = useState<any>(null)
-  const [communityReports, setCommunityReports] = useState<any[]>([])
+  const [beachData, setBeachData] = useState<Record<string, unknown> | null>(null)
+  const [communityReports, setCommunityReports] = useState<Record<string, unknown>[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    fetchBeachData()
-    fetchCommunityReports()
-  }, [slug])
-
-  const fetchBeachData = async () => {
+  const fetchBeachData = useCallback(async () => {
     try {
       const response = await fetch(`/api/beaches/${slug}/comprehensive`)
       if (!response.ok) throw new Error('Failed to fetch beach data')
@@ -41,14 +35,14 @@ export default function BeachDetailContent({ slug }: BeachDetailContentProps) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [slug])
 
-  const fetchCommunityReports = async () => {
+  const fetchCommunityReports = useCallback(async () => {
     try {
       // Get beach ID first
       const beachRes = await fetch(`/api/beaches?search=${slug}`)
       const beaches = await beachRes.json()
-      const beach = beaches.find((b: any) => b.slug === slug)
+      const beach = beaches.find((b: Record<string, unknown>) => b.slug === slug)
       
       if (beach) {
         const response = await fetch(`/api/community/reports?beachId=${beach.id}`)
@@ -58,7 +52,12 @@ export default function BeachDetailContent({ slug }: BeachDetailContentProps) {
     } catch (err) {
       console.error('Failed to fetch community reports:', err)
     }
-  }
+  }, [slug])
+
+  useEffect(() => {
+    fetchBeachData()
+    fetchCommunityReports()
+  }, [fetchBeachData, fetchCommunityReports])
 
   if (loading) {
     return (
@@ -89,7 +88,14 @@ export default function BeachDetailContent({ slug }: BeachDetailContentProps) {
     )
   }
 
-  const { beach, conditions, warnings, advisories, forecast, recommendations, sources } = beachData
+  const { beach, conditions, warnings, forecast, recommendations, sources } = beachData as {
+    beach: Record<string, unknown>,
+    conditions: Record<string, unknown>,
+    warnings: string[],
+    forecast: Record<string, unknown>,
+    recommendations: string[],
+    sources: Record<string, unknown>
+  }
 
   // Determine overall safety level
   const getSafetyLevel = (score: number) => {
@@ -100,7 +106,7 @@ export default function BeachDetailContent({ slug }: BeachDetailContentProps) {
     return { label: 'Dangerous', color: 'bg-red-500' }
   }
 
-  const safety = getSafetyLevel(conditions.safetyScore || 50)
+  const safety = getSafetyLevel((conditions?.safetyScore as number) || 50)
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
@@ -115,11 +121,11 @@ export default function BeachDetailContent({ slug }: BeachDetailContentProps) {
                 </Button>
               </Link>
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">{beach.name}</h1>
+                <h1 className="text-3xl font-bold text-gray-900">{beach.name as string}</h1>
                 <div className="flex items-center gap-3 mt-2">
                   <div className="flex items-center text-gray-600">
                     <MapPin className="h-4 w-4 mr-1" />
-                    {beach.island.charAt(0).toUpperCase() + beach.island.slice(1)}
+                    {(beach.island as string).charAt(0).toUpperCase() + (beach.island as string).slice(1)}
                   </div>
                   <Badge className={safety.color}>
                     <Shield className="h-3 w-3 mr-1" />
@@ -357,7 +363,7 @@ export default function BeachDetailContent({ slug }: BeachDetailContentProps) {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {forecast?.next3Hours?.map((period: any, idx: number) => (
+                  {forecast?.next3Hours?.map((period: Record<string, unknown>, idx: number) => (
                     <div key={idx} className="flex justify-between items-center py-2 border-b last:border-0">
                       <span className="text-sm font-medium">
                         {new Date(period.time).toLocaleTimeString('en-US', { hour: 'numeric', hour12: true })}
@@ -472,7 +478,7 @@ export default function BeachDetailContent({ slug }: BeachDetailContentProps) {
 interface MetricCardProps {
   icon: React.ElementType
   label: string
-  value: any
+  value: string | number
   unit: string
   subValue?: string
 }

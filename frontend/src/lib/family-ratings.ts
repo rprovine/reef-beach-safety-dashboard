@@ -29,7 +29,7 @@ export interface FamilyRating {
   bestTimeForFamilies: string
 }
 
-export function calculateFamilyRating(beach: any, conditions: any): FamilyRating {
+export function calculateFamilyRating(beach: Record<string, unknown>, conditions: Record<string, unknown>): FamilyRating {
   const { spotType, amenities } = beach
   const { waveHeight, ripCurrentRisk, bacteriaLevel, safetyScore } = conditions
 

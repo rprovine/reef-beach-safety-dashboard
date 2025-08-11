@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
 import jwt from 'jsonwebtoken'
 
 // GET /api/community/reports - Get community reports for a beach
@@ -113,7 +112,7 @@ export async function POST(req: NextRequest) {
     if (authHeader) {
       const token = authHeader.replace('Bearer ', '')
       try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET!) as any
+        const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { userId: string }
         userId = decoded.userId
       } catch {
         // Continue as anonymous

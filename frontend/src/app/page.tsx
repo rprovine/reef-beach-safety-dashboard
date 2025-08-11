@@ -11,7 +11,7 @@ import {
 } from 'lucide-react'
 
 const beachStats = [
-  { label: 'Beaches Monitored', value: '47', icon: Map },
+  { label: 'Beaches Monitored', value: '70', icon: Map },
   { label: 'Active Alerts', value: '12', icon: Bell },
   { label: 'Data Updates/Day', value: '2,880', icon: Activity },
   { label: 'Business Partners', value: '23', icon: Building2 },
@@ -124,7 +124,7 @@ export default function HomePage() {
 
             <p className="text-xl md:text-2xl text-white/90 mb-8 max-w-3xl mx-auto">
               Real-time beach safety monitoring for Hawaii. 
-              Get instant alerts, forecasts, and conditions for 47+ beaches across the islands.
+              Get instant alerts, forecasts, and conditions for 70+ beaches across the islands.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -219,7 +219,7 @@ export default function HomePage() {
               href="/beaches"
               className="inline-flex items-center text-ocean-600 hover:text-ocean-700 font-semibold"
             >
-              View all 47 beaches
+              View all 70 beaches
               <ArrowRight className="ml-2 h-5 w-5" />
             </Link>
           </div>
@@ -364,9 +364,12 @@ function BeachStatusCard({ name, status, waveHeight, windSpeed, waterTemp, advis
   }
 
   const StatusIcon = statusIcons[status as keyof typeof statusIcons]
+  
+  // Convert name to slug for navigation
+  const slug = name.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, '')
 
   return (
-    <div className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
+    <Link href={`/beaches/${slug}`} className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 block">
       {image && (
         <div className="h-48 overflow-hidden">
           <img src={image} alt={name} className="w-full h-full object-cover hover:scale-105 transition-transform duration-300" />
@@ -403,6 +406,6 @@ function BeachStatusCard({ name, status, waveHeight, windSpeed, waterTemp, advis
           <div className="font-semibold text-gray-900">{waterTemp}</div>
         </div>
       </div>
-    </div>
+    </Link>
   )
 }

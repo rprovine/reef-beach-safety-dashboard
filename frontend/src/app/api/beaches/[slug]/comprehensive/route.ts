@@ -108,9 +108,9 @@ export async function GET(
       
       // Historical data for trends
       trends: {
-        waveHeight: calculateTrend(beach.statusHistory, 'waveHeight'),
-        crowdLevel: calculateTrend(beach.statusHistory, 'crowdLevel'),
-        waterQuality: calculateTrend(beach.statusHistory, 'bacteriaLevel'),
+        waveHeight: calculateTrend(beach.statusHistory),
+        crowdLevel: calculateTrend(beach.statusHistory),
+        waterQuality: calculateTrend(beach.statusHistory),
       },
       
       // Forecast
@@ -129,7 +129,7 @@ export async function GET(
         noaa: comprehensiveData.currentTide ? 'active' : 'unavailable',
         openWeather: comprehensiveData.airTemp ? 'active' : 'unavailable',
         waterQuality: comprehensiveData.bacteriaLevel ? 'active' : 'unavailable',
-        stormGlass: comprehensiveData.dataSource === 'StormGlass' ? 'active' : 'unavailable',
+        stormGlass: (comprehensiveData as Record<string, unknown>).dataSource === 'StormGlass' ? 'active' : 'unavailable',
         lastUpdated: new Date().toISOString()
       },
       
@@ -149,70 +149,70 @@ export async function GET(
 }
 
 // Helper functions
-function calculateSafetyScore(data: any): number {
+function calculateSafetyScore(data: Record<string, unknown>): number {
   let score = 100
   
   // Deduct points for hazards
   if (data.ripCurrentRisk === 'high') score -= 30
   if (data.ripCurrentRisk === 'moderate') score -= 15
-  if (data.waveHeight && data.waveHeight > 6) score -= 20
-  if (data.waveHeight && data.waveHeight > 4) score -= 10
+  if (data.waveHeight && typeof data.waveHeight === 'number' && data.waveHeight > 6) score -= 20
+  if (data.waveHeight && typeof data.waveHeight === 'number' && data.waveHeight > 4) score -= 10
   if (data.bacteriaLevel === 'unsafe') score -= 25
   if (data.bacteriaLevel === 'caution') score -= 10
   if (data.jellyfish) score -= 15
-  if (data.uvIndex && data.uvIndex > 10) score -= 10
+  if (data.uvIndex && typeof data.uvIndex === 'number' && data.uvIndex > 10) score -= 10
   if (data.strongCurrent) score -= 20
   
   return Math.max(0, score)
 }
 
-function calculateBestTime(data: any): string {
+function calculateBestTime(data: Record<string, unknown>): string {
   // Simple logic - would be more sophisticated
-  if (data.currentTide && data.currentTide > 3) return 'Low tide in 3 hours'
-  if (data.uvIndex && data.uvIndex > 8) return 'Early morning or late afternoon'
+  if (data.currentTide && typeof data.currentTide === 'number' && data.currentTide > 3) return 'Low tide in 3 hours'
+  if (data.uvIndex && typeof data.uvIndex === 'number' && data.uvIndex > 8) return 'Early morning or late afternoon'
   if (data.crowdLevel === 'packed') return 'Try early morning'
   return 'Conditions good now'
 }
 
-function calculateTrend(history: any[], metric: string): string {
+function calculateTrend(history: Record<string, unknown>[]): string {
   if (history.length < 2) return 'stable'
   // Simplified trend calculation
   return 'improving'
 }
 
-function generateForecast(data: any, hours: number): any[] {
+function generateForecast(data: Record<string, unknown>, hours: number): Record<string, unknown>[] {
   // Generate forecast based on current conditions
   const forecast = []
   for (let i = 1; i <= hours; i += 3) {
     forecast.push({
       time: new Date(Date.now() + i * 60 * 60 * 1000).toISOString(),
-      waveHeight: (data.waveHeight || 2) * (0.9 + Math.random() * 0.2),
-      windSpeed: (data.windSpeed || 10) * (0.9 + Math.random() * 0.2),
-      tide: (data.currentTide || 2) + Math.sin(i / 12 * Math.PI) * 2,
+      waveHeight: (typeof data.waveHeight === 'number' ? data.waveHeight : 2) * (0.9 + Math.random() * 0.2),
+      windSpeed: (typeof data.windSpeed === 'number' ? data.windSpeed : 10) * (0.9 + Math.random() * 0.2),
+      tide: (typeof data.currentTide === 'number' ? data.currentTide : 2) + Math.sin(i / 12 * Math.PI) * 2,
     })
   }
   return forecast
 }
 
-function generateRecommendations(data: any, beach: any): string[] {
+function generateRecommendations(data: Record<string, unknown>, beach: Record<string, unknown>): string[] {
   const recs = []
   
   // Safety recommendations
-  if (data.uvIndex && data.uvIndex > 8) {
+  if (data.uvIndex && typeof data.uvIndex === 'number' && data.uvIndex > 8) {
     recs.push('Apply reef-safe sunscreen SPF 50+ every 2 hours')
   }
   if (data.ripCurrentRisk === 'high') {
     recs.push('Swim near lifeguard towers only')
   }
-  if (data.waveHeight && data.waveHeight > 4) {
+  if (data.waveHeight && typeof data.waveHeight === 'number' && data.waveHeight > 4) {
     recs.push('Experienced swimmers only - strong shore break')
   }
   
   // Activity recommendations
-  if (data.waterClarity && data.waterClarity > 30 && data.waveHeight && data.waveHeight < 2) {
+  if (data.waterClarity && typeof data.waterClarity === 'number' && data.waterClarity > 30 && data.waveHeight && typeof data.waveHeight === 'number' && data.waveHeight < 2) {
     recs.push('Excellent snorkeling conditions - bring underwater camera')
   }
-  if (beach.spotType === 'tidepool' && data.currentTide && data.currentTide < 1) {
+  if (beach.spotType === 'tidepool' && data.currentTide && typeof data.currentTide === 'number' && data.currentTide < 1) {
     recs.push('Perfect tide pooling conditions for next 2 hours')
   }
   
@@ -222,7 +222,7 @@ function generateRecommendations(data: any, beach: any): string[] {
   }
   
   // Equipment recommendations
-  if (beach.amenities.includes('parking')) {
+  if (Array.isArray(beach.amenities) && beach.amenities.includes('parking')) {
     recs.push('Arrive early for parking - fills up by 10 AM on weekends')
   }
   

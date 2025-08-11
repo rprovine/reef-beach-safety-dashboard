@@ -11,22 +11,21 @@ export type SubscriptionPlan = 'free' | 'consumer' | 'business' | 'enterprise'
 export type UserRole = 'free' | 'consumer' | 'business' | 'admin'
 
 export interface Beach {
-  id: number
+  id: string
   name: string
   slug: string
   island: Island
-  lat: number
-  lng: number
+  description?: string
   coordinates: {
     lat: number
     lng: number
   }
-  spotType: BeachSpotType
-  status: BeachStatus
-  currentConditions?: CurrentConditions
-  advisory?: Advisory
-  updatedAt: Date
-  isActive: boolean
+  currentStatus: string
+  lastUpdated: string
+  imageUrl?: string | null
+  webcamUrl?: string | null
+  currentConditions?: Record<string, unknown> | null
+  activeAdvisories: number
 }
 
 export interface CurrentConditions {

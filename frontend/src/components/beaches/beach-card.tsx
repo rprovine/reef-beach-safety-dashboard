@@ -16,11 +16,11 @@ interface BeachCardProps {
 
 export function BeachCard({ beach, selected, onClick, compact }: BeachCardProps) {
   const statusIcon = {
-    green: CheckCircle,
-    yellow: AlertTriangle,
-    red: AlertTriangle,
+    good: CheckCircle,
+    caution: AlertTriangle,
+    dangerous: AlertTriangle,
     gray: Clock,
-  }[beach.status] || Clock
+  }[beach.currentStatus] || CheckCircle
 
   const StatusIcon = statusIcon
 
@@ -37,9 +37,9 @@ export function BeachCard({ beach, selected, onClick, compact }: BeachCardProps)
       >
         <div className="flex items-center justify-between mb-2">
           <h3 className="font-medium text-gray-900">{beach.name}</h3>
-          <div className={cn('px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1', getStatusColor(beach.status))}>
+          <div className={cn('px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1', 'bg-green-100 text-green-800'))}>
             <StatusIcon className="h-3 w-3" />
-            {getStatusLabel(beach.status)}
+            {beach.currentStatus === 'good' ? 'Safe' : beach.currentStatus}
           </div>
         </div>
         {beach.currentConditions && (
@@ -73,9 +73,9 @@ export function BeachCard({ beach, selected, onClick, compact }: BeachCardProps)
       {/* Status Header */}
       <div className={cn(
         'p-4 rounded-t-lg',
-        beach.status === 'green' ? 'bg-green-50' :
-        beach.status === 'yellow' ? 'bg-yellow-50' :
-        beach.status === 'red' ? 'bg-red-50' :
+        beach.currentStatus === 'good' ? 'bg-green-50' :
+        beach.currentStatus === 'caution' ? 'bg-yellow-50' :
+        beach.currentStatus === 'dangerous' ? 'bg-red-50' :
         'bg-gray-50'
       )}>
         <div className="flex items-start justify-between">
@@ -88,18 +88,18 @@ export function BeachCard({ beach, selected, onClick, compact }: BeachCardProps)
           </div>
           <div className={cn(
             'px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1',
-            getStatusColor(beach.status)
+            'bg-green-100 text-green-800'
           )}>
             <StatusIcon className="h-4 w-4" />
-            {getStatusLabel(beach.status)}
+            {beach.currentStatus === 'good' ? 'Safe' : beach.currentStatus}
           </div>
         </div>
 
-        {beach.advisory && (
+        {beach.activeAdvisories > 0 && (
           <div className="mt-3 p-2 bg-red-100 text-red-800 rounded-md text-sm">
             <div className="flex items-center gap-2">
               <AlertTriangle className="h-4 w-4" />
-              <span className="font-medium">{beach.advisory.title}</span>
+              <span className="font-medium">{beach.activeAdvisories} Active Advisory(s)</span>
             </div>
           </div>
         )}
@@ -115,7 +115,7 @@ export function BeachCard({ beach, selected, onClick, compact }: BeachCardProps)
                 <span className="text-sm">Waves</span>
               </div>
               <div className="font-semibold text-gray-900">
-                {beach.currentConditions.waveHeightFt || '--'} ft
+                {beach.currentConditions?.waveHeightFt || '--'} ft
               </div>
             </div>
             <div>
@@ -124,7 +124,7 @@ export function BeachCard({ beach, selected, onClick, compact }: BeachCardProps)
                 <span className="text-sm">Wind</span>
               </div>
               <div className="font-semibold text-gray-900">
-                {beach.currentConditions.windMph || '--'} mph
+                {beach.currentConditions?.windMph || '--'} mph
               </div>
             </div>
             <div>
@@ -133,7 +133,7 @@ export function BeachCard({ beach, selected, onClick, compact }: BeachCardProps)
                 <span className="text-sm">Water Temp</span>
               </div>
               <div className="font-semibold text-gray-900">
-                {beach.currentConditions.waterTempF || '--'}°F
+                {beach.currentConditions?.waterTempF || '--'}°F
               </div>
             </div>
             <div>
@@ -142,7 +142,7 @@ export function BeachCard({ beach, selected, onClick, compact }: BeachCardProps)
                 <span className="text-sm">Updated</span>
               </div>
               <div className="font-semibold text-gray-900">
-                {formatTime(beach.updatedAt)}
+                {new Date(beach.lastUpdated).toLocaleTimeString()}
               </div>
             </div>
           </div>

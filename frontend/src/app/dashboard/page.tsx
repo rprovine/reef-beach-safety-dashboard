@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { 
   Waves, Bell, CreditCard, Settings, LogOut, Plus, 
-  MapPin, Wind, Droplets, AlertTriangle, Check, X,
+  AlertTriangle, Check, X,
   Mail, MessageSquare, Clock, TrendingUp
 } from 'lucide-react'
 

@@ -56,11 +56,11 @@ export async function GET(req: NextRequest) {
       slug: beach.slug,
       island: beach.island,
       description: beach.description,
-      coordinates: beach.coordinates,
-      currentStatus: beach.currentStatus,
-      lastUpdated: beach.lastUpdated,
-      imageUrl: beach.imageUrl,
-      webcamUrl: beach.webcamUrl,
+      coordinates: { lat: beach.lat, lng: beach.lng },
+      currentStatus: 'good', // Default status
+      lastUpdated: beach.updatedAt,
+      imageUrl: null, // Beach images would need to be added to schema
+      webcamUrl: null, // Webcam URLs would need to be added to schema
       currentConditions: beach.readings[0] || null,
       activeAdvisories: beach.advisories.length
     }))
