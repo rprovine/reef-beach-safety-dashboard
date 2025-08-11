@@ -2,7 +2,6 @@
 
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
 import { useBeachDetail, useBeachHistory } from '@/hooks/use-beaches'
 import { cn, formatDateTime, getStatusColor, getStatusLabel } from '@/lib/utils'
 import { 

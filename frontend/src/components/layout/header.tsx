@@ -3,15 +3,14 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { SignInButton, SignUpButton, UserButton, useUser } from '@clerk/nextjs'
-import { Menu, X, Shield, Bell, Map, BarChart3 } from 'lucide-react'
+import { Menu, X, Shield, Bell, Map, BarChart3, User, LogOut } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
+  const [user, setUser] = useState<{ email: string } | null>(null)
   const pathname = usePathname()
-  const { isSignedIn, user } = useUser()
 
   useEffect(() => {
     const handleScroll = () => {
@@ -20,6 +19,21 @@ export function Header() {
     window.addEventListener('scroll', handleScroll)
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
+
+  // Check for user session
+  useEffect(() => {
+    const token = localStorage.getItem('auth-token')
+    if (token) {
+      // In production, validate token with API
+      setUser({ email: 'user@example.com' })
+    }
+  }, [])
+
+  const handleSignOut = () => {
+    localStorage.removeItem('auth-token')
+    setUser(null)
+    window.location.href = '/'
+  }
 
   const navigation = [
     { name: 'Beaches', href: '/beaches', icon: Map },
@@ -35,7 +49,7 @@ export function Header() {
     { name: 'About', href: '/about' },
   ]
 
-  const navItems = isSignedIn ? navigation : publicNavigation
+  const navItems = user ? navigation : publicNavigation
 
   return (
     <header
@@ -88,7 +102,7 @@ export function Header() {
 
           {/* Auth Buttons */}
           <div className="hidden md:flex md:items-center md:space-x-4">
-            {isSignedIn ? (
+            {user ? (
               <>
                 <Link
                   href="/dashboard"
@@ -99,23 +113,47 @@ export function Header() {
                 >
                   Dashboard
                 </Link>
-                <UserButton afterSignOutUrl="/" />
+                <div className="relative group">
+                  <button className={cn(
+                    "flex items-center space-x-2 p-2 rounded-lg transition-colors",
+                    scrolled ? "hover:bg-gray-100" : "hover:bg-white/10"
+                  )}>
+                    <User className="h-5 w-5" />
+                  </button>
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 hidden group-hover:block">
+                    <Link
+                      href="/account"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      Account Settings
+                    </Link>
+                    <button
+                      onClick={handleSignOut}
+                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      <span>Sign Out</span>
+                    </button>
+                  </div>
+                </div>
               </>
             ) : (
               <>
-                <SignInButton mode="modal">
-                  <button className={cn(
+                <Link
+                  href="/auth/signin"
+                  className={cn(
                     "font-medium transition-colors",
                     scrolled ? "text-gray-700 hover:text-ocean-600" : "text-white/80 hover:text-white"
-                  )}>
-                    Sign In
-                  </button>
-                </SignInButton>
-                <SignUpButton mode="modal">
-                  <button className="rounded-full bg-gradient-to-r from-ocean-500 to-ocean-600 px-4 py-2 text-sm font-medium text-white shadow-lg hover:from-ocean-600 hover:to-ocean-700 transition-all">
-                    Get Started Free
-                  </button>
-                </SignUpButton>
+                  )}
+                >
+                  Sign In
+                </Link>
+                <Link
+                  href="/auth/signup"
+                  className="rounded-full bg-gradient-to-r from-ocean-500 to-ocean-600 px-4 py-2 text-sm font-medium text-white shadow-lg hover:from-ocean-600 hover:to-ocean-700 transition-all"
+                >
+                  Get Started Free
+                </Link>
               </>
             )}
           </div>
@@ -163,25 +201,45 @@ export function Header() {
             </Link>
           ))}
           <div className="border-t border-gray-200 pt-3">
-            {isSignedIn ? (
-              <div className="flex items-center justify-between px-3">
-                <span className="text-sm text-gray-600">
-                  {user?.primaryEmailAddress?.emailAddress}
-                </span>
-                <UserButton afterSignOutUrl="/" />
+            {user ? (
+              <div className="space-y-2">
+                <Link
+                  href="/dashboard"
+                  className="block rounded-md px-3 py-2 text-base font-medium text-gray-700 hover:bg-gray-50"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Dashboard
+                </Link>
+                <Link
+                  href="/account"
+                  className="block rounded-md px-3 py-2 text-base font-medium text-gray-700 hover:bg-gray-50"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Account
+                </Link>
+                <button
+                  onClick={handleSignOut}
+                  className="block w-full text-left rounded-md px-3 py-2 text-base font-medium text-red-600 hover:bg-red-50"
+                >
+                  Sign Out
+                </button>
               </div>
             ) : (
               <div className="space-y-2">
-                <SignInButton mode="modal">
-                  <button className="block w-full rounded-md bg-gray-100 px-3 py-2 text-center text-base font-medium text-gray-700 hover:bg-gray-200">
-                    Sign In
-                  </button>
-                </SignInButton>
-                <SignUpButton mode="modal">
-                  <button className="block w-full rounded-md bg-gradient-to-r from-ocean-500 to-ocean-600 px-3 py-2 text-center text-base font-medium text-white hover:from-ocean-600 hover:to-ocean-700">
-                    Get Started Free
-                  </button>
-                </SignUpButton>
+                <Link
+                  href="/auth/signin"
+                  className="block w-full rounded-md bg-gray-100 px-3 py-2 text-center text-base font-medium text-gray-700 hover:bg-gray-200"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Sign In
+                </Link>
+                <Link
+                  href="/auth/signup"
+                  className="block w-full rounded-md bg-gradient-to-r from-ocean-500 to-ocean-600 px-3 py-2 text-center text-base font-medium text-white hover:from-ocean-600 hover:to-ocean-700"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Get Started Free
+                </Link>
               </div>
             )}
           </div>

@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
     // Create checkout session
     const sessionId = `cs_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
     
-    const checkoutSession = await prisma.checkoutSession.create({
+    await prisma.checkoutSession.create({
       data: {
         userId: user.id,
         sessionId,
@@ -187,13 +187,16 @@ export async function GET(request: NextRequest) {
         })
 
         // Create subscription in HubSpot
-        await hubspot.createSubscription({
-          contactId: session.metadata?.contactId as string,
-          dealId: session.hubspotDealId,
-          planId: session.planId,
-          amount: plan.amount,
-          billingCycle: plan.billingCycle
-        })
+        const metadata = session.metadata as { contactId?: string, dealId?: string, plan?: unknown }
+        if (metadata?.contactId) {
+          await hubspot.createSubscription({
+            contactId: metadata.contactId,
+            dealId: session.hubspotDealId,
+            planId: session.planId,
+            amount: plan.amount,
+            billingCycle: plan.billingCycle
+          })
+        }
 
         return NextResponse.json({
           status: 'completed',

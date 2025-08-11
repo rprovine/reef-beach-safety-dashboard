@@ -48,7 +48,8 @@ export class HubSpotService {
         filterGroups: [{
           filters: [{
             propertyName: 'email',
-            operator: 'EQ',
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            operator: 'EQ' as any,
             value: data.email
           }]
         }],
@@ -62,12 +63,12 @@ export class HubSpotService {
         // Update existing contact
         contactId = searchResponse.results[0].id
         await this.client.crm.contacts.basicApi.update(contactId, {
-          properties: data
+          properties: data as unknown as { [key: string]: string }
         })
       } else {
         // Create new contact
         const createResponse = await this.client.crm.contacts.basicApi.create({
-          properties: data
+          properties: data as unknown as { [key: string]: string }
         })
         contactId = createResponse.id
       }
@@ -91,7 +92,8 @@ export class HubSpotService {
         associations: [{
           to: { id: contactId },
           types: [{
-            associationCategory: 'HUBSPOT_DEFINED',
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            associationCategory: 'HUBSPOT_DEFINED' as any,
             associationTypeId: 3
           }]
         }]
@@ -179,13 +181,19 @@ export class HubSpotService {
   }
 
   // Sync user data with HubSpot
-  async syncUserData(userId: string, userData: any) {
+  async syncUserData(userId: string, userData: {
+    email: string
+    name?: string | null
+    phone?: string | null
+    tier: string
+    subscriptionStatus: string
+  }) {
     try {
       const contactId = await this.createOrUpdateContact({
         email: userData.email,
         firstname: userData.name?.split(' ')[0],
         lastname: userData.name?.split(' ').slice(1).join(' '),
-        phone: userData.phone,
+        phone: userData.phone || undefined,
         beach_tier: userData.tier,
         subscription_status: userData.subscriptionStatus
       })
@@ -234,7 +242,8 @@ export class HubSpotService {
         associations: [{
           to: { id: params.contactId },
           types: [{
-            associationCategory: 'HUBSPOT_DEFINED',
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            associationCategory: 'HUBSPOT_DEFINED' as any,
             associationTypeId: 3
           }]
         }]

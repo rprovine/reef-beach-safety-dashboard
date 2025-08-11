@@ -9,7 +9,6 @@ import {
   Building2, Smartphone, BarChart3, Map,
   ArrowRight, Play, Star
 } from 'lucide-react'
-import { SignUpButton } from '@clerk/nextjs'
 
 const beachStats = [
   { label: 'Beaches Monitored', value: '47', icon: Map },
@@ -129,12 +128,13 @@ export default function HomePage() {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <SignUpButton mode="modal">
-                <button className="px-8 py-4 bg-gradient-to-r from-ocean-500 to-ocean-600 text-white font-semibold rounded-full shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-200">
-                  Start Free Trial
-                  <ArrowRight className="inline-block ml-2 h-5 w-5" />
-                </button>
-              </SignUpButton>
+              <Link
+                href="/auth/signup"
+                className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-ocean-500 to-ocean-600 text-white font-semibold rounded-full shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-200"
+              >
+                Start Free Trial
+                <ArrowRight className="inline-block ml-2 h-5 w-5" />
+              </Link>
 
               <button
                 onClick={() => setVideoPlaying(true)}
@@ -317,11 +317,12 @@ export default function HomePage() {
             Join 23+ businesses already using ReefSafe to keep their guests informed and safe
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <SignUpButton mode="modal">
-              <button className="px-8 py-4 bg-white text-ocean-600 font-semibold rounded-full shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-200">
-                Start 14-Day Free Trial
-              </button>
-            </SignUpButton>
+            <Link
+              href="/auth/signup"
+              className="inline-block px-8 py-4 bg-white text-ocean-600 font-semibold rounded-full shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-200"
+            >
+              Start 14-Day Free Trial
+            </Link>
             <Link
               href="/pricing"
               className="px-8 py-4 bg-transparent text-white font-semibold rounded-full border-2 border-white hover:bg-white/10 transition-all duration-200"
