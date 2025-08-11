@@ -1,171 +1,134 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useParams } from 'next/navigation'
 import Link from 'next/link'
+import { useBeachDetail, useBeachHistory } from '@/hooks/use-beaches'
+import { beachDetailsService } from '@/lib/beach-details'
+import { cn, formatDateTime, getStatusColor, getStatusLabel } from '@/lib/utils'
 import { 
   Waves, Wind, Thermometer, AlertTriangle, Clock, 
-  MapPin, ArrowLeft, Bell, Sun, Droplets, Eye,
-  Activity, Users, MessageSquare, Heart,
-  Shield, Fish, Info, Navigation
+  MapPin, ArrowLeft, Bell, Calendar, TrendingUp,
+  TrendingDown, Minus, ChevronRight, Activity,
+  Car, Users, Star, Shield
 } from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Button } from '@/components/ui/button'
+import { BeachMap } from '@/components/map'
+import { Skeleton } from '@/components/ui/skeleton'
 
-interface BeachDetailContentProps {
-  slug: string
-}
+export default function BeachDetailContent() {
+  const params = useParams()
+  const slug = params.slug as string
+  
+  const { data: beach, isLoading, error } = useBeachDetail(slug)
+  const { data: history } = useBeachHistory(slug, 7)
+  const beachDetails = beachDetailsService.getBeachDetails(slug)
+  
+  // Extract all additional data from comprehensive API
+  const safetyScore = beach?.safetyScore
+  const activities = beach?.activities
+  const bacteriaLevel = beach?.bacteriaLevel
+  const warnings = beach?.warnings || []
+  const recommendations = beach?.recommendations || []
+  const trends = beach?.trends
+  const family = beach?.family
 
-export default function BeachDetailContent({ slug }: BeachDetailContentProps) {
-  const [beachData, setBeachData] = useState<Record<string, unknown> | null>(null)
-  const [communityReports, setCommunityReports] = useState<Record<string, unknown>[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  const fetchBeachData = useCallback(async () => {
-    try {
-      const response = await fetch(`/api/beaches/${slug}/comprehensive`)
-      if (!response.ok) throw new Error('Failed to fetch beach data')
-      const data = await response.json()
-      setBeachData(data)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load beach data')
-    } finally {
-      setLoading(false)
-    }
-  }, [slug])
-
-  const fetchCommunityReports = useCallback(async () => {
-    try {
-      // Get beach ID first
-      const beachRes = await fetch(`/api/beaches?search=${slug}`)
-      const beaches = await beachRes.json()
-      const beach = beaches.find((b: Record<string, unknown>) => b.slug === slug)
-      
-      if (beach) {
-        const response = await fetch(`/api/community/reports?beachId=${beach.id}`)
-        const data = await response.json()
-        setCommunityReports(data.reports || [])
-      }
-    } catch (err) {
-      console.error('Failed to fetch community reports:', err)
-    }
-  }, [slug])
-
-  useEffect(() => {
-    fetchBeachData()
-    fetchCommunityReports()
-  }, [fetchBeachData, fetchCommunityReports])
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-ocean-500 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading real-time beach data...</p>
-        </div>
-      </div>
-    )
+  if (isLoading) {
+    return <BeachDetailSkeleton />
   }
 
-  if (error || !beachData) {
+  if (error || !beach) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Error Loading Beach</h1>
-          <p className="text-gray-600 mb-4">{error || 'Beach not found'}</p>
-          <Link href="/beaches">
-            <Button variant="outline">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to beaches
-            </Button>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Beach Not Found</h1>
+          <p className="text-gray-600 mb-4">Sorry, we couldn&apos;t find that beach.</p>
+          <Link
+            href="/beaches"
+            className="inline-flex items-center text-ocean-600 hover:text-ocean-700"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to beaches
           </Link>
         </div>
       </div>
     )
   }
 
-  const { beach, conditions, warnings, forecast, recommendations, sources } = beachData as {
-    beach: Record<string, unknown>,
-    conditions: Record<string, unknown>,
-    warnings: string[],
-    forecast: Record<string, unknown>,
-    recommendations: string[],
-    sources: Record<string, unknown>
-  }
+  const { beach: beachData, currentConditions, forecast7Day, advisories, tides } = beach
 
-  // Determine overall safety level
-  const getSafetyLevel = (score: number) => {
-    if (score >= 80) return { label: 'Excellent', color: 'bg-green-500' }
-    if (score >= 60) return { label: 'Good', color: 'bg-blue-500' }
-    if (score >= 40) return { label: 'Fair', color: 'bg-yellow-500' }
-    if (score >= 20) return { label: 'Poor', color: 'bg-orange-500' }
-    return { label: 'Dangerous', color: 'bg-red-500' }
+  // Calculate trend from history
+  const getTrend = (current: number | null, history: number[] | null) => {
+    if (!current || !history || history.length < 2) return null
+    const avg = history.reduce((a, b) => a + b, 0) / history.length
+    const diff = ((current - avg) / avg) * 100
+    if (Math.abs(diff) < 5) return 'stable'
+    return diff > 0 ? 'up' : 'down'
   }
-
-  const safety = getSafetyLevel((conditions?.safetyScore as number) || 50)
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white border-b shadow-sm">
+      <div className="bg-white border-b mt-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <Link href="/beaches">
-                <Button variant="ghost" size="icon">
-                  <ArrowLeft className="h-5 w-5" />
-                </Button>
+              <Link
+                href="/beaches"
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <ArrowLeft className="h-5 w-5 text-gray-600" />
               </Link>
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">{beach.name as string}</h1>
-                <div className="flex items-center gap-3 mt-2">
-                  <div className="flex items-center text-gray-600">
-                    <MapPin className="h-4 w-4 mr-1" />
-                    {(beach.island as string).charAt(0).toUpperCase() + (beach.island as string).slice(1)}
-                  </div>
-                  <Badge className={safety.color}>
-                    <Shield className="h-3 w-3 mr-1" />
-                    {safety.label} Conditions
-                  </Badge>
-                  <Badge variant="outline">
-                    Score: {conditions.safetyScore}/100
-                  </Badge>
+                <h1 className="text-2xl font-bold text-gray-900">{beachData.name}</h1>
+                <div className="flex items-center gap-2 mt-1">
+                  <MapPin className="h-4 w-4 text-gray-500" />
+                  <span className="text-gray-600">
+                    {beachData.island.charAt(0).toUpperCase() + beachData.island.slice(1)}
+                  </span>
+                  <span className="text-gray-400">•</span>
+                  <span className={cn(
+                    'px-2 py-1 rounded-full text-xs font-medium',
+                    getStatusColor(beachData.currentStatus || beachData.status || 'good')
+                  )}>
+                    {getStatusLabel(beachData.currentStatus || beachData.status || 'good')}
+                  </span>
                 </div>
               </div>
             </div>
-            <div className="flex gap-2">
-              <Button variant="outline">
-                <Heart className="h-4 w-4 mr-2" />
-                Save
-              </Button>
-              <Button>
-                <Bell className="h-4 w-4 mr-2" />
-                Set Alert
-              </Button>
-            </div>
+            <button className="inline-flex items-center px-4 py-2 bg-ocean-500 text-white rounded-lg hover:bg-ocean-600 transition-colors">
+              <Bell className="h-4 w-4 mr-2" />
+              Set Alert
+            </button>
           </div>
         </div>
       </div>
 
-      {/* Active Warnings */}
-      {warnings && warnings.length > 0 && (
+      {/* Active Advisories */}
+      {advisories && advisories.length > 0 && (
         <div className="bg-red-50 border-b border-red-200">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <Alert variant="destructive">
-              <AlertTriangle className="h-4 w-4" />
-              <AlertTitle>Active Warnings</AlertTitle>
-              <AlertDescription>
-                <ul className="mt-2 space-y-1">
-                  {warnings.map((warning: string, idx: number) => (
-                    <li key={idx}>• {warning}</li>
-                  ))}
-                </ul>
-              </AlertDescription>
-            </Alert>
+            {advisories.map((advisory) => (
+              <div key={advisory.id} className="flex items-start space-x-3">
+                <AlertTriangle className="h-5 w-5 text-red-600 mt-0.5" />
+                <div className="flex-1">
+                  <h3 className="font-semibold text-red-900">{advisory.title}</h3>
+                  <p className="text-sm text-red-700 mt-1">
+                    Active since {formatDateTime(advisory.startedAt)}
+                  </p>
+                  {advisory.url && (
+                    <a
+                      href={advisory.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center text-sm text-red-600 hover:text-red-700 mt-2"
+                    >
+                      View official advisory
+                      <ChevronRight className="h-3 w-3 ml-1" />
+                    </a>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}
@@ -174,300 +137,452 @@ export default function BeachDetailContent({ slug }: BeachDetailContentProps) {
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Current Conditions Tabs */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Real-Time Conditions</CardTitle>
-                <CardDescription>
-                  Data from {Object.entries(sources).filter(([k, v]) => v === 'active' && k !== 'lastUpdated').map(([k]) => k).join(', ')}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Tabs defaultValue="ocean" className="w-full">
-                  <TabsList className="grid w-full grid-cols-4">
-                    <TabsTrigger value="ocean">Ocean</TabsTrigger>
-                    <TabsTrigger value="weather">Weather</TabsTrigger>
-                    <TabsTrigger value="safety">Safety</TabsTrigger>
-                    <TabsTrigger value="activities">Activities</TabsTrigger>
-                  </TabsList>
-                  
-                  <TabsContent value="ocean" className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <MetricCard
-                        icon={Waves}
-                        label="Wave Height"
-                        value={conditions.waveHeight?.toFixed(1)}
-                        unit="ft"
-                        subValue={`Period: ${conditions.wavePeriod?.toFixed(1)}s`}
-                      />
-                      <MetricCard
-                        icon={Activity}
-                        label="Swell"
-                        value={conditions.swellHeight?.toFixed(1)}
-                        unit="ft"
-                        subValue={`Direction: ${conditions.swellDirection || 'N/A'}`}
-                      />
-                      <MetricCard
-                        icon={Thermometer}
-                        label="Water Temp"
-                        value={conditions.waterTemp ? (conditions.waterTemp * 9/5 + 32).toFixed(0) : null}
-                        unit="°F"
-                        subValue="Perfect for swimming"
-                      />
-                      <MetricCard
-                        icon={Navigation}
-                        label="Current"
-                        value={conditions.currentSpeed?.toFixed(1)}
-                        unit="kts"
-                        subValue={`Risk: ${conditions.ripCurrentRisk || 'Low'}`}
-                      />
+            {/* Safety Score and Warnings */}
+            {(safetyScore !== undefined || warnings.length > 0) && (
+              <div className="bg-white rounded-xl shadow-sm p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-semibold text-gray-900">Safety Assessment</h2>
+                  {safetyScore !== undefined && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-gray-600">Safety Score:</span>
+                      <span className={`text-2xl font-bold ${
+                        safetyScore >= 80 ? 'text-green-600' :
+                        safetyScore >= 60 ? 'text-yellow-600' :
+                        safetyScore >= 40 ? 'text-orange-600' :
+                        'text-red-600'
+                      }`}>
+                        {safetyScore}/100
+                      </span>
                     </div>
-                  </TabsContent>
-                  
-                  <TabsContent value="weather" className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <MetricCard
-                        icon={Wind}
-                        label="Wind Speed"
-                        value={conditions.windSpeed?.toFixed(1)}
-                        unit="mph"
-                        subValue={`Direction: ${conditions.windDirection || 'N/A'}`}
-                      />
-                      <MetricCard
-                        icon={Sun}
-                        label="UV Index"
-                        value={conditions.uvIndex}
-                        unit=""
-                        subValue={conditions.uvIndex > 8 ? 'Use SPF 50+' : 'Moderate'}
-                      />
-                      <MetricCard
-                        icon={Thermometer}
-                        label="Air Temp"
-                        value={conditions.airTemp?.toFixed(0)}
-                        unit="°F"
-                        subValue={`Humidity: ${conditions.humidity?.toFixed(0)}%`}
-                      />
-                      <MetricCard
-                        icon={Eye}
-                        label="Visibility"
-                        value={conditions.visibility ? (conditions.visibility / 1000).toFixed(1) : null}
-                        unit="mi"
-                        subValue="Clear conditions"
-                      />
-                    </div>
-                  </TabsContent>
-                  
-                  <TabsContent value="safety" className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <MetricCard
-                        icon={Shield}
-                        label="Safety Score"
-                        value={conditions.safetyScore}
-                        unit="/100"
-                        subValue={safety.label}
-                      />
-                      <MetricCard
-                        icon={Droplets}
-                        label="Water Quality"
-                        value={conditions.bacteriaLevel || 'Safe'}
-                        unit=""
-                        subValue={`E. coli: ${conditions.enterococcus?.toFixed(0) || 'Low'} CFU`}
-                      />
-                      <MetricCard
-                        icon={Activity}
-                        label="Rip Current"
-                        value={conditions.ripCurrentRisk || 'Low'}
-                        unit=""
-                        subValue="Stay near lifeguards"
-                      />
-                      <MetricCard
-                        icon={Eye}
-                        label="Water Clarity"
-                        value={conditions.waterClarity}
-                        unit="ft"
-                        subValue="Visibility underwater"
-                      />
-                    </div>
-                  </TabsContent>
-                  
-                  <TabsContent value="activities" className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      {Object.entries(conditions.activities || {}).map(([activity, rating]) => (
-                        <ActivityRating
-                          key={activity}
-                          activity={activity}
-                          rating={rating as string}
-                        />
-                      ))}
-                    </div>
-                  </TabsContent>
-                </Tabs>
-              </CardContent>
-            </Card>
-
-            {/* Community Reports */}
-            <Card>
-              <CardHeader>
-                <div className="flex justify-between items-center">
-                  <div>
-                    <CardTitle>Community Reports</CardTitle>
-                    <CardDescription>Real-time updates from beachgoers</CardDescription>
-                  </div>
-                  <Button size="sm">
-                    <MessageSquare className="h-4 w-4 mr-2" />
-                    Add Report
-                  </Button>
+                  )}
                 </div>
-              </CardHeader>
-              <CardContent>
-                {communityReports.length > 0 ? (
-                  <div className="space-y-4">
-                    {communityReports.map((report) => (
-                      <div key={report.id} className="border-l-4 border-ocean-500 pl-4 py-2">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <h4 className="font-semibold">{report.title}</h4>
-                            <p className="text-sm text-gray-600 mt-1">{report.description}</p>
-                            <div className="flex items-center gap-4 mt-2">
-                              <Badge variant={report.severity === 'high' ? 'destructive' : 'secondary'}>
-                                {report.reportType}
-                              </Badge>
-                              <span className="text-xs text-gray-500">
-                                {new Date(report.createdAt).toLocaleString()}
-                              </span>
-                              <span className="text-xs text-gray-500">
-                                by {report.user?.name || 'Anonymous'}
-                              </span>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Button variant="ghost" size="sm">
-                              👍 {report.upvotes}
-                            </Button>
-                          </div>
-                        </div>
+                
+                {warnings.length > 0 && (
+                  <div className="space-y-2 mb-4">
+                    {warnings.map((warning: string, index: number) => (
+                      <div key={index} className="flex items-start gap-2 p-3 bg-yellow-50 rounded-lg">
+                        <AlertTriangle className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+                        <span className="text-sm text-yellow-800">{warning}</span>
                       </div>
                     ))}
                   </div>
-                ) : (
-                  <p className="text-gray-500 text-center py-8">No recent reports. Be the first to share conditions!</p>
                 )}
-              </CardContent>
-            </Card>
-
-            {/* Forecast */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Forecast</CardTitle>
-                <CardDescription>Conditions for the next 24 hours</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {forecast?.next3Hours?.map((period: Record<string, unknown>, idx: number) => (
-                    <div key={idx} className="flex justify-between items-center py-2 border-b last:border-0">
-                      <span className="text-sm font-medium">
-                        {new Date(period.time).toLocaleTimeString('en-US', { hour: 'numeric', hour12: true })}
+                
+                {bacteriaLevel && (
+                  <div className="p-3 bg-blue-50 rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-blue-900">Water Quality</span>
+                      <span className={`text-sm font-semibold ${
+                        bacteriaLevel === 'safe' ? 'text-green-600' :
+                        bacteriaLevel === 'caution' ? 'text-yellow-600' :
+                        'text-red-600'
+                      }`}>
+                        {bacteriaLevel.toUpperCase()}
                       </span>
-                      <div className="flex items-center gap-4">
-                        <div className="flex items-center text-sm">
-                          <Waves className="h-3 w-3 mr-1 text-gray-400" />
-                          {period.waveHeight?.toFixed(1)} ft
+                    </div>
+                    {beach?.enterococcus !== undefined && (
+                      <div className="text-xs text-blue-700 mt-1">
+                        Enterococcus: {Number(beach.enterococcus).toFixed(1)} MPN/100ml
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Activity Ratings from API */}
+            {activities && (
+              <div className="bg-white rounded-xl shadow-sm p-6">
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">Current Activity Conditions</h2>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {Object.entries(activities).map(([activity, rating]) => (
+                    <div key={activity} className="p-3 bg-gray-50 rounded-lg">
+                      <div className="text-sm font-medium text-gray-900 capitalize mb-1">
+                        {activity}
+                      </div>
+                      <div className={`text-sm font-semibold ${
+                        rating === 'excellent' ? 'text-green-600' :
+                        rating === 'good' ? 'text-green-500' :
+                        rating === 'fair' ? 'text-yellow-500' :
+                        'text-orange-500'
+                      }`}>
+                        {String(rating).toUpperCase()}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Current Conditions */}
+            <div className="bg-white rounded-xl shadow-sm p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold text-gray-900">Current Conditions</h2>
+                <div className="flex items-center text-sm text-gray-500">
+                  <Clock className="h-4 w-4 mr-1" />
+                  Updated {currentConditions?.timestamp ? formatDateTime(currentConditions.timestamp) : 'Recently'}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <ConditionCard
+                  icon={Waves}
+                  label="Wave Height"
+                  value={currentConditions?.waveHeightFt}
+                  unit="ft"
+                  trend={getTrend(currentConditions?.waveHeightFt, history?.waveHeights)}
+                />
+                <ConditionCard
+                  icon={Wind}
+                  label="Wind Speed"
+                  value={currentConditions?.windMph}
+                  unit="mph"
+                  trend={getTrend(currentConditions?.windMph, history?.windSpeeds)}
+                />
+                <ConditionCard
+                  icon={Thermometer}
+                  label="Water Temp"
+                  value={currentConditions?.waterTempF}
+                  unit="°F"
+                  trend={getTrend(currentConditions?.waterTempF, history?.waterTemps)}
+                />
+                <ConditionCard
+                  icon={Activity}
+                  label="Tide"
+                  value={currentConditions?.tideFt}
+                  unit="ft"
+                  trend={currentConditions?.tideFt && currentConditions.tideFt > 0 ? 'up' : 'down'}
+                />
+              </div>
+            </div>
+
+            {/* Recommendations from API */}
+            {recommendations.length > 0 && (
+              <div className="bg-white rounded-xl shadow-sm p-6">
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">Recommendations</h2>
+                <div className="space-y-2">
+                  {recommendations.map((rec: string, index: number) => (
+                    <div key={index} className="flex items-start gap-2">
+                      <ChevronRight className="h-4 w-4 text-ocean-500 mt-0.5 flex-shrink-0" />
+                      <span className="text-sm text-gray-700">{rec}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Trends */}
+            {trends && (
+              <div className="bg-white rounded-xl shadow-sm p-6">
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">Current Trends</h2>
+                <div className="grid grid-cols-3 gap-4">
+                  {Object.entries(trends).map(([key, value]) => (
+                    <div key={key} className="text-center">
+                      <div className="text-xs text-gray-600 capitalize mb-1">
+                        {key.replace(/([A-Z])/g, ' $1').trim()}
+                      </div>
+                      <div className={`text-sm font-semibold ${
+                        value === 'improving' ? 'text-green-600' :
+                        value === 'declining' ? 'text-red-600' :
+                        'text-gray-600'
+                      }`}>
+                        {String(value).toUpperCase()}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Beach Information */}
+            {beachDetails && (
+              <div className="bg-white rounded-xl shadow-sm p-6">
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">About This Beach</h2>
+                
+                {/* Native Name & Pronunciation */}
+                {beachDetails.nativeName && (
+                  <div className="mb-4 p-3 bg-blue-50 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-blue-900">Hawaiian Name:</span>
+                      <span className="text-blue-800">{beachDetails.nativeName}</span>
+                      {beachDetails.pronunciation && (
+                        <span className="text-blue-600">({beachDetails.pronunciation})</span>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Description */}
+                <p className="text-gray-700 leading-relaxed mb-6">{beachDetails.description}</p>
+
+                {/* Highlights */}
+                <div className="mb-6">
+                  <h3 className="font-semibold text-gray-900 mb-3">Highlights</h3>
+                  <div className="grid gap-2">
+                    {beachDetails.highlights.map((highlight, index) => (
+                      <div key={index} className="flex items-start gap-2">
+                        <Star className="h-4 w-4 text-yellow-500 mt-0.5 flex-shrink-0" />
+                        <span className="text-gray-700 text-sm">{highlight}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Activities Grid */}
+                <div className="mb-6">
+                  <h3 className="font-semibold text-gray-900 mb-3">Activities</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {Object.entries(beachDetails.activities).map(([activity, rating]) => {
+                      const display = beachDetailsService.getActivityRatingDisplay(rating)
+                      return (
+                        <div key={activity} className="p-3 bg-gray-50 rounded-lg">
+                          <div className="text-sm font-medium text-gray-900 capitalize mb-1">
+                            {activity.replace(/([A-Z])/g, ' $1').trim()}
+                          </div>
+                          <div className={`text-xs ${display.color}`}>
+                            {display.label}
+                          </div>
                         </div>
-                        <div className="flex items-center text-sm">
-                          <Wind className="h-3 w-3 mr-1 text-gray-400" />
-                          {period.windSpeed?.toFixed(0)} mph
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* Amenities */}
+                <div className="mb-6">
+                  <h3 className="font-semibold text-gray-900 mb-3">Amenities</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {Object.entries(beachDetails.amenities)
+                      .filter(([_, available]) => available)
+                      .map(([amenity, _]) => (
+                        <span
+                          key={amenity}
+                          className="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-800 text-sm rounded-full"
+                        >
+                          <span>{beachDetailsService.getAmenityIcon(amenity as keyof typeof beachDetails.amenities)}</span>
+                          <span className="capitalize">{amenity.replace(/([A-Z])/g, ' $1').trim()}</span>
+                        </span>
+                      ))}
+                  </div>
+                </div>
+
+                {/* Safety Information */}
+                <div className="mb-6">
+                  <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                    <Shield className="h-5 w-5" />
+                    Safety Information
+                  </h3>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <div className="text-sm text-gray-600 mb-1">Difficulty Level</div>
+                      <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
+                        beachDetails.safetyInfo.difficulty === 'beginner' ? 'bg-green-100 text-green-800' :
+                        beachDetails.safetyInfo.difficulty === 'intermediate' ? 'bg-yellow-100 text-yellow-800' :
+                        beachDetails.safetyInfo.difficulty === 'advanced' ? 'bg-orange-100 text-orange-800' :
+                        'bg-red-100 text-red-800'
+                      }`}>
+                        {beachDetails.safetyInfo.difficulty}
+                      </span>
+                    </div>
+                    <div>
+                      <div className="text-sm text-gray-600 mb-1">Kid Friendly</div>
+                      <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
+                        beachDetails.safetyInfo.kidFriendly ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                      }`}>
+                        {beachDetails.safetyInfo.kidFriendly ? 'Yes' : 'Use Caution'}
+                      </span>
+                    </div>
+                  </div>
+                  {beachDetails.safetyInfo.hazards.length > 0 && (
+                    <div className="mt-3">
+                      <div className="text-sm text-gray-600 mb-2">Potential Hazards</div>
+                      {beachDetails.safetyInfo.hazards.map((hazard, index) => (
+                        <div key={index} className="flex items-start gap-2 text-sm text-orange-700 mb-1">
+                          <AlertTriangle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                          <span>{hazard}</span>
                         </div>
-                        <div className="flex items-center text-sm">
-                          <Activity className="h-3 w-3 mr-1 text-gray-400" />
-                          {period.tide?.toFixed(1)} ft
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Access Information */}
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                    <Car className="h-5 w-5" />
+                    Access & Parking
+                  </h3>
+                  <div className="grid md:grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <div className="text-gray-600 mb-1">Walking Time</div>
+                      <div className="text-gray-900">{beachDetails.access.walkingTime}</div>
+                    </div>
+                    <div>
+                      <div className="text-gray-600 mb-1">Parking</div>
+                      <div className="text-gray-900">{beachDetails.access.parkingInfo}</div>
+                    </div>
+                    {beachDetails.access.entranceFee && (
+                      <div>
+                        <div className="text-gray-600 mb-1">Entrance Fee</div>
+                        <div className="text-gray-900">{beachDetails.access.entranceFee}</div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Cultural Significance */}
+                {beachDetails.culturalSignificance && (
+                  <div className="mt-6 p-4 bg-purple-50 rounded-lg">
+                    <h3 className="font-semibold text-purple-900 mb-3">Cultural Significance</h3>
+                    <p className="text-purple-800 text-sm leading-relaxed mb-3">
+                      {beachDetails.culturalSignificance.history}
+                    </p>
+                    {beachDetails.culturalSignificance.respect.length > 0 && (
+                      <div>
+                        <div className="text-purple-800 font-medium text-sm mb-2">Please Respect:</div>
+                        {beachDetails.culturalSignificance.respect.map((item, index) => (
+                          <div key={index} className="text-purple-700 text-sm mb-1">
+                            • {item}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* 7-Day Forecast */}
+            {forecast7Day && forecast7Day.length > 0 && (
+              <div className="bg-white rounded-xl shadow-sm p-6">
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">7-Day Forecast</h2>
+                <div className="space-y-3">
+                  {forecast7Day.map((day, idx) => (
+                    <div key={idx} className="flex items-center justify-between py-3 border-b last:border-0">
+                      <div className="flex items-center space-x-3">
+                        <div className="text-sm">
+                          <div className="font-medium text-gray-900">
+                            {new Date(day.date).toLocaleDateString('en-US', { weekday: 'short' })}
+                          </div>
+                          <div className="text-gray-500">
+                            {new Date(day.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-6">
+                        <div className="text-right">
+                          <div className="flex items-center text-sm">
+                            <Waves className="h-3 w-3 mr-1 text-gray-400" />
+                            <span className="text-gray-900">{day.waveHeightFt.avg} ft</span>
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {day.waveHeightFt.min}-{day.waveHeightFt.max} ft
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="flex items-center text-sm">
+                            <Wind className="h-3 w-3 mr-1 text-gray-400" />
+                            <span className="text-gray-900">{day.windMph.avg} mph</span>
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {day.windMph.min}-{day.windMph.max} mph
+                          </div>
                         </div>
                       </div>
                     </div>
                   ))}
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            )}
+
+            {/* Tide Chart */}
+            {tides && tides.length > 0 && (
+              <div className="bg-white rounded-xl shadow-sm p-6">
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">Today&apos;s Tides</h2>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {tides.slice(0, 4).map((tide, idx) => (
+                    <div key={idx} className="text-center">
+                      <div className={cn(
+                        'text-xs font-medium px-2 py-1 rounded-full inline-block mb-2',
+                        tide.type === 'high' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700'
+                      )}>
+                        {tide.type === 'high' ? 'High Tide' : 'Low Tide'}
+                      </div>
+                      <div className="text-lg font-semibold text-gray-900">
+                        {Number(tide.height).toFixed(1)} ft
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        {new Date(tide.time).toLocaleTimeString('en-US', { 
+                          hour: 'numeric', 
+                          minute: '2-digit',
+                          hour12: true 
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Sidebar */}
           <div className="space-y-6">
-            {/* Best Time to Visit */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Best Time Today</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-4">
-                  <Clock className="h-8 w-8 text-ocean-500 mx-auto mb-2" />
-                  <p className="text-lg font-semibold">{conditions.bestTimeToday}</p>
-                  <p className="text-sm text-gray-600 mt-2">Based on tide, crowd, and conditions</p>
-                </div>
-              </CardContent>
-            </Card>
+            {/* Map */}
+            <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+              <div className="h-64">
+                <BeachMap
+                  beaches={[beachData]}
+                  selectedBeachId={beachData.slug}
+                  onBeachSelect={() => {}}
+                  center={[beachData.coordinates?.lat || beachData.lat, beachData.coordinates?.lng || beachData.lng]}
+                  zoom={13}
+                />
+              </div>
+            </div>
 
-            {/* Recommendations */}
-            {recommendations && recommendations.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Recommendations</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-3">
-                    {recommendations.map((rec: string, idx: number) => (
-                      <li key={idx} className="flex items-start">
-                        <Info className="h-4 w-4 text-ocean-500 mr-2 mt-0.5 flex-shrink-0" />
-                        <span className="text-sm">{rec}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
-            )}
+            {/* Quick Actions */}
+            <div className="bg-white rounded-xl shadow-sm p-6">
+              <h3 className="font-semibold text-gray-900 mb-4">Quick Actions</h3>
+              <div className="space-y-3">
+                <button className="w-full text-left px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors flex items-center justify-between">
+                  <div className="flex items-center">
+                    <Bell className="h-5 w-5 text-gray-600 mr-3" />
+                    <span className="text-gray-900">Set Alert</span>
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-gray-400" />
+                </button>
+                <button className="w-full text-left px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors flex items-center justify-between">
+                  <div className="flex items-center">
+                    <Calendar className="h-5 w-5 text-gray-600 mr-3" />
+                    <span className="text-gray-900">View History</span>
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-gray-400" />
+                </button>
+              </div>
+            </div>
 
-            {/* Quick Stats */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Beach Info</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-600">Type</span>
-                    <Badge variant="outline">{beach.type}</Badge>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-600">Amenities</span>
-                    <span className="text-sm font-medium">{beach.amenities?.length || 0}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-600">Coordinates</span>
-                    <span className="text-sm font-mono">
-                      {beach.coordinates.lat.toFixed(4)}, {beach.coordinates.lng.toFixed(4)}
-                    </span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Data Sources */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Data Sources</CardTitle>
-                <CardDescription>Last updated: {new Date(sources.lastUpdated).toLocaleTimeString()}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  {Object.entries(sources).filter(([k]) => k !== 'lastUpdated').map(([source, status]) => (
-                    <div key={source} className="flex justify-between items-center">
-                      <span className="text-sm capitalize">{source}</span>
-                      <Badge variant={status === 'active' ? 'default' : 'secondary'}>
-                        {status}
-                      </Badge>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+            {/* Safety Tips */}
+            <div className="bg-yellow-50 rounded-xl p-6 border border-yellow-200">
+              <h3 className="font-semibold text-yellow-900 mb-3">Safety Tips</h3>
+              <ul className="space-y-2 text-sm text-yellow-800">
+                <li className="flex items-start">
+                  <span className="mr-2">•</span>
+                  Always follow lifeguard instructions
+                </li>
+                <li className="flex items-start">
+                  <span className="mr-2">•</span>
+                  Check for posted warning signs
+                </li>
+                <li className="flex items-start">
+                  <span className="mr-2">•</span>
+                  Never turn your back on the ocean
+                </li>
+                <li className="flex items-start">
+                  <span className="mr-2">•</span>
+                  Know your limits and swim near lifeguards
+                </li>
+              </ul>
+            </div>
           </div>
         </div>
       </div>
@@ -475,67 +590,67 @@ export default function BeachDetailContent({ slug }: BeachDetailContentProps) {
   )
 }
 
-interface MetricCardProps {
+interface ConditionCardProps {
   icon: React.ElementType
   label: string
-  value: string | number
+  value: number | null
   unit: string
-  subValue?: string
+  trend?: 'up' | 'down' | 'stable' | null
 }
 
-function MetricCard({ icon: Icon, label, value, unit, subValue }: MetricCardProps) {
+function ConditionCard({ icon: Icon, label, value, unit, trend }: ConditionCardProps) {
+  const TrendIcon = trend === 'up' ? TrendingUp : trend === 'down' ? TrendingDown : Minus
+  
+  const formatValue = (val: number | null, unitType: string) => {
+    if (val === null) return '--'
+    
+    // Format based on unit type
+    if (unitType === 'ft') return Number(val).toFixed(1)
+    if (unitType === 'mph') return Number(val).toFixed(0)
+    if (unitType === '°F') return Number(val).toFixed(0)
+    return Number(val).toFixed(1)
+  }
+
   return (
-    <div className="bg-white border rounded-lg p-4">
+    <div className="bg-gray-50 rounded-lg p-4">
       <div className="flex items-center justify-between mb-2">
         <Icon className="h-5 w-5 text-ocean-500" />
-        <span className="text-xs text-gray-500">{label}</span>
+        {trend && (
+          <TrendIcon className={cn(
+            'h-4 w-4',
+            trend === 'up' ? 'text-red-500' : 
+            trend === 'down' ? 'text-green-500' : 
+            'text-gray-400'
+          )} />
+        )}
       </div>
-      <div className="text-2xl font-bold">
-        {value !== null && value !== undefined ? `${value}${unit}` : '--'}
+      <div className="text-sm text-gray-600">{label}</div>
+      <div className="text-2xl font-semibold text-gray-900">
+        {value !== null ? `${formatValue(value, unit)}${unit}` : '--'}
       </div>
-      {subValue && (
-        <div className="text-xs text-gray-600 mt-1">{subValue}</div>
-      )}
     </div>
   )
 }
 
-function ActivityRating({ activity, rating }: { activity: string; rating: string }) {
-  const getColor = (rating: string) => {
-    switch(rating) {
-      case 'excellent': return 'text-green-600 bg-green-50'
-      case 'good': return 'text-blue-600 bg-blue-50'
-      case 'fair': return 'text-yellow-600 bg-yellow-50'
-      case 'poor': return 'text-orange-600 bg-orange-50'
-      case 'dangerous': return 'text-red-600 bg-red-50'
-      case 'flat': return 'text-gray-600 bg-gray-50'
-      default: return 'text-gray-600 bg-gray-50'
-    }
-  }
-
-  const getIcon = (activity: string) => {
-    switch(activity) {
-      case 'swimming': return Users
-      case 'surfing': return Waves
-      case 'snorkeling': return Fish
-      case 'diving': return Fish
-      case 'fishing': return Fish
-      default: return Activity
-    }
-  }
-
-  const IconComponent = getIcon(activity)
-
+function BeachDetailSkeleton() {
   return (
-    <div className={`rounded-lg p-4 ${getColor(rating)}`}>
-      <div className="flex items-center justify-between">
-        <div className="flex items-center">
-          <IconComponent className="h-5 w-5 mr-2" />
-          <span className="font-medium capitalize">{activity}</span>
+    <div className="min-h-screen bg-gray-50">
+      <div className="bg-white border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <Skeleton className="h-8 w-64" />
+          <Skeleton className="h-4 w-32 mt-2" />
         </div>
-        <Badge className={getColor(rating).replace('bg-', 'bg-opacity-20 ')}>
-          {rating.toUpperCase()}
-        </Badge>
+      </div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="grid lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2 space-y-6">
+            <Skeleton className="h-64 rounded-xl" />
+            <Skeleton className="h-48 rounded-xl" />
+          </div>
+          <div>
+            <Skeleton className="h-64 rounded-xl" />
+          </div>
+        </div>
       </div>
     </div>
   )
