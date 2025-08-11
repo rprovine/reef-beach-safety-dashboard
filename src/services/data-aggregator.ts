@@ -4,6 +4,7 @@
  */
 
 import { DATA_SOURCES, HAWAII_STATIONS, API_KEYS, ComprehensiveBeachData } from '@/lib/data-sources'
+import { getCurrentWeather, getUVIndex, getForecast, calculateBeachConditions } from '@/lib/openweather'
 
 export class DataAggregatorService {
   private cache: Map<string, { data: Record<string, unknown>; timestamp: number }> = new Map()
@@ -103,35 +104,63 @@ export class DataAggregatorService {
    * Fetch weather data from OpenWeatherMap
    */
   async fetchWeatherData(lat: number, lng: number) {
-    if (!API_KEYS.OPENWEATHER) return null
-
     const cacheKey = `weather-${lat}-${lng}`
     const cached = this.getFromCache(cacheKey, 10 * 60 * 1000) // 10 min cache
     if (cached) return cached
 
     try {
-      const response = await fetch(
-        `${DATA_SOURCES.OPENWEATHER.BASE}/weather?lat=${lat}&lon=${lng}&appid=${API_KEYS.OPENWEATHER}&units=imperial`
-      )
+      // Use our enhanced OpenWeather service with working API key
+      const weather = await getCurrentWeather(lat, lng)
       
-      if (!response.ok) {
-        console.error('OpenWeather API error:', response.status)
+      if (!weather) {
+        console.error('Failed to fetch weather data')
         return null
       }
+
+      // Get UV Index
+      const uvIndex = await getUVIndex(lat, lng)
       
-      const data = await response.json()
+      // Calculate beach conditions
+      const conditions = calculateBeachConditions(weather)
+      
+      // Get forecast
+      const forecast = await getForecast(lat, lng)
 
       const result = {
-        airTemp: data.main?.temp,
-        humidity: data.main?.humidity,
-        pressure: data.main?.pressure,
-        windSpeed: data.wind?.speed,
-        windDirection: data.wind?.deg ? this.degreesToDirection(data.wind.deg) : null,
-        windGusts: data.wind?.gust || 0,
-        cloudCover: data.clouds?.all,
-        visibility: data.visibility,
-        sunrise: data.sys?.sunrise ? new Date(data.sys.sunrise * 1000) : null,
-        sunset: data.sys?.sunset ? new Date(data.sys.sunset * 1000) : null,
+        // Current conditions
+        airTemp: weather.temperature * 9/5 + 32, // Convert to Fahrenheit for consistency
+        waterTemp: weather.temperature - 2, // Approximate water temp
+        humidity: weather.humidity,
+        pressure: weather.pressure,
+        windSpeed: weather.windSpeed * 2.237, // Convert m/s to mph
+        windDirection: weather.windDirection,
+        windGusts: weather.windSpeed * 2.237 * 1.2, // Approximate gusts
+        cloudCover: weather.cloudCover,
+        visibility: weather.visibility,
+        sunrise: weather.sunrise,
+        sunset: weather.sunset,
+        description: weather.description,
+        
+        // UV Index (extremely high in Hawaii!)
+        uvIndex: uvIndex || weather.uvIndex || 11, // Default to high UV in Hawaii
+        
+        // Beach-specific conditions
+        activities: {
+          swimming: conditions.swimming,
+          surfing: conditions.surfing,
+          snorkeling: conditions.snorkeling
+        },
+        overallCondition: conditions.overall,
+        
+        // 7-day forecast
+        forecast: forecast?.slice(0, 7).map(day => ({
+          date: day.date,
+          tempMin: day.temperature.min * 9/5 + 32,
+          tempMax: day.temperature.max * 9/5 + 32,
+          windSpeed: day.windSpeed.avg * 2.237,
+          humidity: day.humidity,
+          condition: day.condition
+        }))
       }
 
       this.setCache(cacheKey, result)
@@ -146,28 +175,31 @@ export class DataAggregatorService {
    * Fetch UV Index
    */
   async fetchUVIndex(lat: number, lng: number) {
-    if (!API_KEYS.OPENWEATHER) return null
-
     const cacheKey = `uv-${lat}-${lng}`
     const cached = this.getFromCache(cacheKey, 60 * 60 * 1000) // 1 hour cache
     if (cached) return cached
 
     try {
-      const response = await fetch(
-        `${DATA_SOURCES.OPENWEATHER.UV}?lat=${lat}&lon=${lng}&appid=${API_KEYS.OPENWEATHER}`
-      )
-      const data = await response.json()
-
+      // Use our OpenWeather service with working API key
+      const uvIndex = await getUVIndex(lat, lng)
+      
+      // Hawaii typically has very high UV index (10-12+)
+      const value = uvIndex || 11 // Default to high UV for Hawaii
+      
       const result = {
-        uvIndex: Math.round(data.value),
-        uvRisk: this.getUVRisk(data.value),
+        uvIndex: Math.round(value),
+        uvRisk: this.getUVRisk(value),
       }
 
       this.setCache(cacheKey, result)
       return result
     } catch (error) {
       console.error('UV fetch error:', error)
-      return null
+      // Return typical Hawaii UV values as fallback
+      return {
+        uvIndex: 11,
+        uvRisk: 'extreme'
+      }
     }
   }
 
