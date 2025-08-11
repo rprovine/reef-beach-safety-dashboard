@@ -19,12 +19,32 @@ export default function SignUpPage() {
     setLoading(true)
 
     try {
-      // Demo mode - just redirect to sign in
-      setTimeout(() => {
-        router.push('/auth/signin')
-      }, 1000)
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          password,
+          name,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Registration failed')
+      }
+
+      // Store token in localStorage
+      localStorage.setItem('beach-hui-token', data.token)
+      localStorage.setItem('beach-hui-user', JSON.stringify(data.user))
+
+      // Redirect to dashboard
+      router.push('/dashboard')
     } catch (err) {
-      setError('An error occurred. Please try again.')
+      setError(err instanceof Error ? err.message : 'An error occurred. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -54,11 +74,11 @@ export default function SignUpPage() {
             Join Beach Hui for free beach safety alerts
           </p>
 
-          {/* Demo Mode Notice */}
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
-            <p className="text-sm text-amber-800 font-medium">Demo Mode Active</p>
-            <p className="text-xs text-amber-700 mt-1">
-              Sign up is disabled in demo. Use the sign in page with demo credentials.
+          {/* Free Trial Notice */}
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+            <p className="text-sm text-green-800 font-medium">🎉 14-Day Free Trial</p>
+            <p className="text-xs text-green-700 mt-1">
+              Start with full Pro features free for 14 days. No credit card required.
             </p>
           </div>
 

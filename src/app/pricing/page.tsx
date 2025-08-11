@@ -90,12 +90,32 @@ export default function PricingPage() {
   const { user } = useAuth()
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('monthly')
 
-  const handleSelectPlan = (planName: string) => {
+  const handleSelectPlan = (planName: string, planPrice: string) => {
     trackConversion('upgrade', 0)
-    if (planName === 'Business') {
-      window.location.href = '/contact'
+    
+    if (!user) {
+      // Not logged in - redirect to signup
+      if (planName === 'Free') {
+        window.location.href = '/auth/signup'
+      } else if (planName === 'Pro') {
+        window.location.href = '/auth/signup?plan=pro&trial=true'
+      } else if (planName === 'Business') {
+        window.location.href = '/contact'
+      }
     } else {
-      toast.success(`Redirecting to ${planName} signup...`)
+      // Logged in - handle upgrade
+      if (planName === 'Business') {
+        window.location.href = '/contact'
+      } else if (planName === 'Pro' && user.tier === 'free') {
+        // Show upgrade modal or redirect to payment
+        toast.success('Upgrading to Pro plan...')
+        // In production, this would redirect to Stripe checkout
+        window.location.href = `/checkout?plan=pro&price=${planPrice}`
+      } else if (planName === user.tier) {
+        toast.info('You are already on this plan')
+      } else {
+        toast.success(`Switching to ${planName} plan...`)
+      }
     }
   }
 
@@ -197,18 +217,22 @@ export default function PricingPage() {
 
                 {/* CTA Button */}
                 <div className="mt-8">
-                  <Link
-                    href={plan.ctaLink}
-                    onClick={() => handleSelectPlan(plan.name)}
+                  <button
+                    onClick={() => handleSelectPlan(plan.name, plan.price)}
                     className={`block w-full text-center px-6 py-3 rounded-lg font-medium transition-colors ${
-                      plan.popular
+                      user?.tier === plan.name.toLowerCase()
+                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                        : plan.popular
                         ? 'bg-gradient-to-r from-ocean-500 to-purple-600 text-white hover:from-ocean-600 hover:to-purple-700'
                         : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
                     }`}
+                    disabled={user?.tier === plan.name.toLowerCase()}
                   >
-                    {plan.cta}
-                    <ChevronRight className="inline-block ml-2 h-4 w-4" />
-                  </Link>
+                    {user?.tier === plan.name.toLowerCase() ? 'Current Plan' : plan.cta}
+                    {user?.tier !== plan.name.toLowerCase() && (
+                      <ChevronRight className="inline-block ml-2 h-4 w-4" />
+                    )}
+                  </button>
                 </div>
               </div>
             </div>

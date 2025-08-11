@@ -91,29 +91,48 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Check if user is logged in
-    const token = localStorage.getItem('auth-token')
-    const email = localStorage.getItem('user-email')
-    const tier = localStorage.getItem('user-tier')
+    // Check for new auth format first
+    const beachHuiToken = localStorage.getItem('beach-hui-token')
+    const beachHuiUser = localStorage.getItem('beach-hui-user')
     
-    if (!token || !email || !tier) {
-      router.push('/auth/signin')
-      return
+    if (beachHuiToken && beachHuiUser) {
+      // New auth format (real users)
+      const userData = JSON.parse(beachHuiUser)
+      setUser({
+        email: userData.email,
+        tier: userData.tier || 'free',
+        name: userData.name || userData.email.split('@')[0],
+        features: tierFeatures[userData.tier as keyof typeof tierFeatures]?.features.filter(f => f.available).map(f => f.name) || []
+      })
+      setLoading(false)
+    } else {
+      // Check old demo auth format
+      const token = localStorage.getItem('auth-token')
+      const email = localStorage.getItem('user-email')
+      const tier = localStorage.getItem('user-tier')
+      
+      if (!token || !email || !tier) {
+        router.push('/auth/signin')
+        return
+      }
+      
+      setUser({
+        email,
+        tier,
+        name: email.split('@')[0],
+        features: tierFeatures[tier as keyof typeof tierFeatures]?.features.filter(f => f.available).map(f => f.name) || []
+      })
+      setLoading(false)
     }
-    
-    setUser({
-      email,
-      tier,
-      name: email.split('@')[0], // Use email prefix as name
-      features: tierFeatures[tier as keyof typeof tierFeatures]?.features.filter(f => f.available).map(f => f.name) || []
-    })
-    setLoading(false)
   }, [router])
 
   const handleLogout = () => {
+    // Clear all auth tokens
     localStorage.removeItem('auth-token')
     localStorage.removeItem('user-email')
     localStorage.removeItem('user-tier')
+    localStorage.removeItem('beach-hui-token')
+    localStorage.removeItem('beach-hui-user')
     router.push('/auth/signin')
   }
 

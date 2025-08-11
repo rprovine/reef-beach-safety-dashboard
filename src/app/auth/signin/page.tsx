@@ -18,7 +18,7 @@ export default function SignInPage() {
     setLoading(true)
 
     try {
-      // Demo mode - accept specific demo accounts
+      // Check if it's a demo account first
       const demoAccounts = {
         'demo@beachhui.com': { password: 'demo123', tier: 'free' },
         'pro@beachhui.com': { password: 'pro123', tier: 'pro' },
@@ -34,12 +34,39 @@ export default function SignInPage() {
         localStorage.setItem('user-tier', account.tier)
         
         // Redirect to dashboard
-        router.push('/beaches')
+        router.push('/dashboard')
       } else {
-        setError('Invalid email or password. Try demo@beachhui.com / demo123')
+        // Try real login API
+        const response = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email,
+            password,
+          }),
+        })
+
+        const data = await response.json()
+
+        if (!response.ok) {
+          // If database error, suggest demo accounts
+          if (response.status === 503) {
+            throw new Error('Database unavailable. Try demo accounts: demo@beachhui.com / demo123')
+          }
+          throw new Error(data.error || 'Invalid email or password')
+        }
+
+        // Store token in localStorage
+        localStorage.setItem('beach-hui-token', data.token)
+        localStorage.setItem('beach-hui-user', JSON.stringify(data.user))
+
+        // Redirect to dashboard
+        router.push('/dashboard')
       }
     } catch (err) {
-      setError('An error occurred. Please try again.')
+      setError(err instanceof Error ? err.message : 'An error occurred. Please try again.')
     } finally {
       setLoading(false)
     }
