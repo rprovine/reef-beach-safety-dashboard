@@ -1,0 +1,288 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User account with HubSpot integration
+model User {
+  id                String            @id @default(cuid())
+  email             String            @unique
+  password          String
+  name              String?
+  phone             String?
+  tier              String            @default("free") // free, consumer, business, enterprise
+  subscriptionStatus String           @default("active") // active, trial, past_due, canceled
+  trialEndDate      DateTime?
+  hubspotContactId  String?
+  hubspotDealId     String?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  
+  subscription      Subscription?
+  payments          Payment[]
+  alerts            Alert[]
+  widgets           Widget[]
+  beachFavorites    BeachFavorite[]
+  alertHistory      AlertHistory[]
+  sessions          Session[]
+  checkoutSessions  CheckoutSession[]
+}
+
+// Subscription management with HubSpot
+model Subscription {
+  id                String    @id @default(cuid())
+  userId            String    @unique
+  tier              String    // free, consumer, business, enterprise
+  status            String    // active, past_due, canceled, paused
+  billingCycle      String    @default("monthly") // monthly, yearly
+  paymentMethod     String    @default("hubspot")
+  startDate         DateTime
+  endDate           DateTime
+  cancelAtPeriodEnd Boolean   @default(false)
+  cancelledAt       DateTime?
+  hubspotSubscriptionId String?
+  metadata          Json?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Payment history with HubSpot
+model Payment {
+  id                String    @id @default(cuid())
+  userId            String
+  amount            Decimal   @db.Decimal(10, 2)
+  currency          String    @default("USD")
+  status            String    // paid, pending, failed, refunded
+  description       String
+  invoiceNumber     String    @unique
+  hubspotInvoiceId  String?
+  hubspotPaymentId  String?
+  billingPeriodStart DateTime
+  billingPeriodEnd   DateTime
+  paidAt            DateTime?
+  failedAt          DateTime?
+  refundedAt        DateTime?
+  metadata          Json?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([status])
+}
+
+// Checkout session for HubSpot payment links
+model CheckoutSession {
+  id                String    @id @default(cuid())
+  userId            String
+  sessionId         String    @unique
+  planId            String    // consumer_monthly, business_monthly, enterprise_monthly
+  status            String    @default("pending") // pending, completed, failed, expired
+  email             String
+  paymentUrl        String    // HubSpot payment link
+  hubspotDealId     String?
+  metadata          Json?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  completedAt       DateTime?
+  
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([sessionId])
+  @@index([status])
+}
+
+// Beach data
+model Beach {
+  id                String            @id @default(cuid())
+  name              String
+  slug              String            @unique
+  island            String            // oahu, maui, kauai, hawaii
+  lat               Decimal           @db.Decimal(10, 8)
+  lng               Decimal           @db.Decimal(11, 8)
+  spotType          String            // general, surf, family, tidepool
+  description       String?
+  amenities         String[]          @default([])
+  isActive          Boolean           @default(true)
+  dataSourceUrl     String?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  
+  readings          Reading[]
+  advisories        Advisory[]
+  favorites         BeachFavorite[]
+  alertRules        AlertRule[]
+  statusHistory     StatusHistory[]
+  
+  @@index([island])
+  @@index([slug])
+}
+
+// Real-time readings from NOAA/PacIOOS
+model Reading {
+  id                String    @id @default(cuid())
+  beachId           String
+  timestamp         DateTime
+  waveHeightFt      Decimal?  @db.Decimal(5, 2)
+  windMph           Decimal?  @db.Decimal(5, 2)
+  windDirDeg        Int?
+  waterTempF        Decimal?  @db.Decimal(5, 2)
+  tideFt            Decimal?  @db.Decimal(5, 2)
+  bacteriaLevel     String?   // safe, caution, unsafe
+  source            String    // noaa, pacioos, doh, manual
+  rawData           Json?
+  createdAt         DateTime  @default(now())
+  
+  beach             Beach     @relation(fields: [beachId], references: [id], onDelete: Cascade)
+  
+  @@index([beachId])
+  @@index([timestamp])
+}
+
+// DOH advisories
+model Advisory {
+  id                String    @id @default(cuid())
+  beachId           String
+  status            String    // active, resolved
+  title             String
+  description       String?
+  severity          String    // low, medium, high
+  url               String?
+  source            String    // doh, nws, manual
+  startedAt         DateTime
+  resolvedAt        DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  beach             Beach     @relation(fields: [beachId], references: [id], onDelete: Cascade)
+  
+  @@index([beachId])
+  @@index([status])
+}
+
+// Alert configuration
+model Alert {
+  id                String            @id @default(cuid())
+  userId            String
+  name              String
+  isActive          Boolean           @default(true)
+  channels          String[]          @default(["email"]) // email, sms
+  quietHoursStart   String?           // HH:MM format
+  quietHoursEnd     String?           // HH:MM format
+  timezone          String            @default("Pacific/Honolulu")
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  
+  user              User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rules             AlertRule[]
+  history           AlertHistory[]
+  
+  @@index([userId])
+}
+
+// Alert rules
+model AlertRule {
+  id                String    @id @default(cuid())
+  alertId           String
+  beachId           String
+  metric            String    // wave_height_ft, wind_mph, advisory, bacteria
+  operator          String    // gt, gte, lt, lte, eq, changed, is_active
+  threshold         Decimal?  @db.Decimal(10, 2)
+  createdAt         DateTime  @default(now())
+  
+  alert             Alert     @relation(fields: [alertId], references: [id], onDelete: Cascade)
+  beach             Beach     @relation(fields: [beachId], references: [id], onDelete: Cascade)
+  
+  @@index([alertId])
+  @@index([beachId])
+}
+
+// Alert history
+model AlertHistory {
+  id                String    @id @default(cuid())
+  alertId           String
+  userId            String
+  beachName         String
+  condition         String
+  message           String
+  channel           String    // email, sms
+  sentAt            DateTime  @default(now())
+  
+  alert             Alert     @relation(fields: [alertId], references: [id], onDelete: Cascade)
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([alertId])
+  @@index([userId])
+}
+
+// Embeddable widgets for business customers
+model Widget {
+  id                String    @id @default(cuid())
+  userId            String
+  name              String
+  beaches           String[]  // Array of beach IDs
+  theme             Json      @default("{}")
+  layout            String    @default("card") // card, map, ticker
+  embedToken        String    @unique @default(cuid())
+  domains           String[]  @default([]) // Allowed domains
+  usageCount        Int       @default(0)
+  lastUsed          DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([embedToken])
+}
+
+// User's favorite beaches
+model BeachFavorite {
+  id                String    @id @default(cuid())
+  userId            String
+  beachId           String
+  createdAt         DateTime  @default(now())
+  
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  beach             Beach     @relation(fields: [beachId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, beachId])
+  @@index([userId])
+  @@index([beachId])
+}
+
+// Beach status history for analytics
+model StatusHistory {
+  id                String    @id @default(cuid())
+  beachId           String
+  status            String    // green, yellow, red, gray
+  reason            Json      // What caused the status
+  timestamp         DateTime  @default(now())
+  
+  beach             Beach     @relation(fields: [beachId], references: [id], onDelete: Cascade)
+  
+  @@index([beachId])
+  @@index([timestamp])
+}
+
+// User sessions for auth
+model Session {
+  id                String    @id @default(cuid())
+  userId            String
+  token             String    @unique
+  expiresAt         DateTime
+  createdAt         DateTime  @default(now())
+  
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([token])
+}
