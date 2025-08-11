@@ -91,6 +91,42 @@ export default function BeachesContent() {
                 </select>
               </div>
 
+              {/* Activity Filter */}
+              <div className="flex items-center gap-2">
+                <select
+                  onChange={(e) => {
+                    // Add activity filtering logic here
+                    console.log('Activity filter:', e.target.value)
+                  }}
+                  className="rounded-lg border-gray-300 text-sm focus:ring-ocean-500 focus:border-ocean-500"
+                >
+                  <option value="all">All Activities</option>
+                  <option value="swimming">Swimming</option>
+                  <option value="surfing">Surfing</option>
+                  <option value="snorkeling">Snorkeling</option>
+                  <option value="diving">Diving</option>
+                  <option value="fishing">Fishing</option>
+                  <option value="family">Family Friendly</option>
+                </select>
+              </div>
+
+              {/* Safety Filter */}
+              <div className="flex items-center gap-2">
+                <select
+                  onChange={(e) => {
+                    // Add safety filtering logic here
+                    console.log('Safety filter:', e.target.value)
+                  }}
+                  className="rounded-lg border-gray-300 text-sm focus:ring-ocean-500 focus:border-ocean-500"
+                >
+                  <option value="all">All Safety Levels</option>
+                  <option value="excellent">Excellent</option>
+                  <option value="good">Good</option>
+                  <option value="fair">Fair</option>
+                  <option value="caution">Use Caution</option>
+                </select>
+              </div>
+
               {/* Search */}
               <div className="relative flex-1 max-w-md">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />

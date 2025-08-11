@@ -13,7 +13,7 @@ export function useBeaches(island?: Island, searchQuery?: string) {
       if (searchQuery) params.append('search', searchQuery)
       
       const response = await axios.get<Beach[]>(
-        `${API_URL}/api/v1/beaches?${params.toString()}`
+        `/api/beaches?${params.toString()}`
       )
       return response.data
     },

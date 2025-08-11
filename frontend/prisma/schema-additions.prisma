@@ -1,0 +1,99 @@
+// Add these models to your schema.prisma
+
+// Community Reports
+model CommunityReport {
+  id                String    @id @default(cuid())
+  beachId           String
+  userId            String?   // Optional - allow anonymous reports
+  reportType        String    // hazard, conditions, wildlife, crowding, parking
+  severity          String    // low, medium, high, critical
+  title             String
+  description       String
+  photoUrls         String[]
+  upvotes           Int       @default(0)
+  downvotes         Int       @default(0)
+  isVerified        Boolean   @default(false)
+  verifiedBy        String?   // Admin or trusted user who verified
+  expiresAt         DateTime? // Auto-expire certain reports
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  beach             Beach     @relation(fields: [beachId], references: [id], onDelete: Cascade)
+  user              User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  votes             ReportVote[]
+  
+  @@index([beachId])
+  @@index([reportType])
+  @@index([createdAt])
+}
+
+model ReportVote {
+  id                String    @id @default(cuid())
+  reportId          String
+  userId            String
+  voteType          String    // upvote, downvote
+  createdAt         DateTime  @default(now())
+  
+  report            CommunityReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([reportId, userId])
+  @@index([userId])
+}
+
+// Beach Check-ins (for crowd monitoring)
+model BeachCheckIn {
+  id                String    @id @default(cuid())
+  beachId           String
+  userId            String?
+  checkInTime       DateTime  @default(now())
+  checkOutTime      DateTime?
+  crowdLevel        String?   // empty, light, moderate, crowded, packed
+  parkingStatus     String?   // plenty, limited, full
+  
+  beach             Beach     @relation(fields: [beachId], references: [id], onDelete: Cascade)
+  user              User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  
+  @@index([beachId])
+  @@index([checkInTime])
+}
+
+// Local Expert Insights
+model LocalInsight {
+  id                String    @id @default(cuid())
+  beachId           String
+  userId            String
+  insightType       String    // best_time, secret_spot, safety_tip, local_knowledge
+  title             String
+  content           String
+  upvotes           Int       @default(0)
+  isPinned          Boolean   @default(false)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  beach             Beach     @relation(fields: [beachId], references: [id], onDelete: Cascade)
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([beachId])
+  @@index([userId])
+}
+
+// Beach Photos from Community
+model BeachPhoto {
+  id                String    @id @default(cuid())
+  beachId           String
+  userId            String
+  photoUrl          String
+  caption           String?
+  tags              String[]  // sunset, wildlife, conditions, crowding
+  likes             Int       @default(0)
+  isVerified        Boolean   @default(false)
+  takenAt           DateTime
+  createdAt         DateTime  @default(now())
+  
+  beach             Beach     @relation(fields: [beachId], references: [id], onDelete: Cascade)
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([beachId])
+  @@index([takenAt])
+}
