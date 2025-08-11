@@ -43,7 +43,7 @@ export function useBeachDetail(slug: string) {
         const currentConditions = conditions.lastReading || {}
         
         // Build complete response using all available data
-        const response = {
+        const transformedResponse = {
           beach: {
             ...data.beach,
             currentStatus: data.beach.status || 'good',
@@ -82,7 +82,7 @@ export function useBeachDetail(slug: string) {
           trends: data.trends
         }
         
-        return response as any
+        return transformedResponse as any
       } catch (error) {
         console.error('Beach detail error:', error)
         throw error
