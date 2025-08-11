@@ -1,13 +1,13 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { CheckCircle, ArrowRight, Sparkles, Mail } from 'lucide-react'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/auth-context'
 import confetti from 'canvas-confetti'
 
-export default function PaymentSuccessPage() {
+function PaymentSuccessContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const { user } = useAuth()
@@ -154,5 +154,17 @@ export default function PaymentSuccessPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function PaymentSuccessPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-b from-green-50 to-white pt-20 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+      </div>
+    }>
+      <PaymentSuccessContent />
+    </Suspense>
   )
 }

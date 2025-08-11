@@ -1,12 +1,12 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { Shield, Check, Waves, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/auth-context'
 
-export default function CheckoutPage() {
+function CheckoutContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const { user } = useAuth()
@@ -203,5 +203,17 @@ export default function CheckoutPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function CheckoutPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-b from-ocean-50 to-white pt-20 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-ocean-600"></div>
+      </div>
+    }>
+      <CheckoutContent />
+    </Suspense>
   )
 }
