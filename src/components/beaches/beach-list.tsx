@@ -28,6 +28,10 @@ export function BeachList({
   const handleBeachClick = (beach: Beach) => {
     router.push(`/beaches/${beach.slug}`)
   }
+
+  // Debug logging
+  console.log('BeachList render:', { beaches, loading, error, beachCount: beaches?.length })
+  
   if (loading) {
     return (
       <div className={compact ? 'p-4 space-y-3' : 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'}>

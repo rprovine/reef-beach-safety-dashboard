@@ -5,6 +5,7 @@ import { Beach, BeachDetailResponse, Island } from '@/types'
 const API_URL = process.env.NEXT_PUBLIC_API_URL || ''
 
 export function useBeaches(island?: Island, searchQuery?: string) {
+  console.log('useBeaches: Hook called with', { island, searchQuery })
   return useQuery({
     queryKey: ['beaches', island, searchQuery],
     queryFn: async () => {
@@ -12,10 +13,17 @@ export function useBeaches(island?: Island, searchQuery?: string) {
       if (island) params.append('island', island)
       if (searchQuery) params.append('search', searchQuery)
       
-      const response = await axios.get<Beach[]>(
-        `/api/beaches?${params.toString()}`
-      )
-      return response.data
+      const url = `/api/beaches?${params.toString()}`
+      console.log('useBeaches: Fetching from', url)
+      
+      try {
+        const response = await axios.get<Beach[]>(url)
+        console.log('useBeaches: Success', response.data.length, 'beaches')
+        return response.data
+      } catch (error) {
+        console.error('useBeaches: Error', error)
+        throw error
+      }
     },
     staleTime: 60 * 1000, // 1 minute
     refetchInterval: 5 * 60 * 1000, // 5 minutes

@@ -25,10 +25,15 @@ export default function BeachesContent() {
     searchParams.get('beach')
   )
 
+  console.log('BeachesContent: About to call useBeaches with', { selectedIsland, searchQuery })
+  
   const { data: beaches, isLoading, error } = useBeaches(
     selectedIsland === 'all' ? undefined : selectedIsland,
     searchQuery
   )
+
+  // Debug logging
+  console.log('Beaches data:', { beaches, isLoading, error, count: beaches?.length })
 
   const handleBeachSelect = (beachId: string) => {
     setSelectedBeachId(beachId)
@@ -154,16 +159,47 @@ export default function BeachesContent() {
 
       {/* Main Content */}
       <div className="flex-1 relative">
-        {viewMode === 'map' ? (
+        {isLoading ? (
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-ocean-500 mx-auto mb-4"></div>
+              <p>Loading beaches...</p>
+            </div>
+          </div>
+        ) : error ? (
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <p className="text-red-600 mb-4">Error loading beaches: {error.message}</p>
+              <button 
+                onClick={() => window.location.reload()}
+                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+              >
+                Retry
+              </button>
+            </div>
+          </div>
+        ) : !beaches || beaches.length === 0 ? (
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <p className="text-gray-600 mb-4">No beaches found</p>
+              <div className="mt-4 p-4 bg-gray-100 rounded-lg text-left text-sm">
+                <strong>Debug:</strong><br/>
+                Loading: {String(isLoading)}<br/>
+                Error: {error ? error.message : 'none'}<br/>
+                Beaches: {beaches ? `${beaches.length} items` : 'null/undefined'}<br/>
+                Island: {selectedIsland}<br/>
+                Search: "{searchQuery}"
+              </div>
+            </div>
+          </div>
+        ) : viewMode === 'map' ? (
           <div className="h-[calc(100vh-12rem)]">
-            {beaches && (
-              <BeachMap
-                beaches={beaches}
-                selectedBeachId={selectedBeachId}
-                onBeachSelect={handleBeachSelect}
-                className="h-full"
-              />
-            )}
+            <BeachMap
+              beaches={beaches}
+              selectedBeachId={selectedBeachId}
+              onBeachSelect={handleBeachSelect}
+              className="h-full"
+            />
           </div>
         ) : (
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
