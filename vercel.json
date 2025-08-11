@@ -6,11 +6,5 @@
   "installCommand": "cd frontend && npm install",
   "outputDirectory": "frontend/.next",
   "framework": "nextjs",
-  "regions": ["sfo1"],
-  "functions": {
-    "frontend/src/app/api/**/*.ts": {
-      "maxDuration": 30,
-      "regions": ["sfo1"]
-    }
-  }
+  "regions": ["sfo1"]
 }
