@@ -4,6 +4,7 @@ import { Beach } from '@/types'
 import { BeachCard } from './beach-card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { AlertCircle } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 
 interface BeachListProps {
   beaches?: Beach[]
@@ -22,6 +23,11 @@ export function BeachList({
   onBeachSelect,
   compact = false,
 }: BeachListProps) {
+  const router = useRouter()
+
+  const handleBeachClick = (beach: Beach) => {
+    router.push(`/beaches/${beach.slug}`)
+  }
   if (loading) {
     return (
       <div className={compact ? 'p-4 space-y-3' : 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'}>
@@ -58,7 +64,7 @@ export function BeachList({
             key={beach.id}
             beach={beach}
             selected={selectedBeachId === beach.slug}
-            onClick={() => onBeachSelect(beach.slug)}
+            onClick={() => handleBeachClick(beach)}
             compact
           />
         ))}
@@ -73,7 +79,7 @@ export function BeachList({
           key={beach.id}
           beach={beach}
           selected={selectedBeachId === beach.slug}
-          onClick={() => onBeachSelect(beach.slug)}
+          onClick={() => handleBeachClick(beach)}
         />
       ))}
     </div>

@@ -1,14 +1,10 @@
-# 🌊 Reef & Beach Safety Dashboard
+# Hawaii Beach Safety Dashboard 🏖️
 
-**The most comprehensive beach safety platform for Hawaii**
-
-<!-- Updated to trigger redeploy -->
-
-Making every beach day a safe beach day through real-time data, community intelligence, and family-focused features.
+A comprehensive beach safety and conditions monitoring platform specifically designed for Hawaii's unique beach environment. This application provides real-time beach conditions, safety alerts, and community-driven reporting to help locals and visitors make informed decisions about ocean activities.
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-Available-green)](http://localhost:3001)
-[![Beaches](https://img.shields.io/badge/Beaches-70%20Hawaiian-blue)](http://localhost:3001/beaches)
-[![Data Sources](https://img.shields.io/badge/Data%20Sources-5%20Active-orange)](#data-sources)
+[![Beaches](https://img.shields.io/badge/Beaches-71%20Hawaiian-blue)](http://localhost:3001/beaches)
+[![Database](https://img.shields.io/badge/Database-Supabase-green)](#database-setup)
 
 ## 🏆 Why We're Better Than Surfline
 
@@ -49,13 +45,13 @@ Making every beach day a safe beach day through real-time data, community intell
 
 ## 🗺️ Beach Coverage
 
-### 🏖️ **70 Beaches Across 6 Islands**
-- **Oahu**: 15 beaches (Waikiki, Pipeline, Lanikai, Hanauma Bay...)
-- **Maui**: 15 beaches (Big Beach, Napili Bay, Hookipa...)
-- **Kauai**: 15 beaches (Poipu, Hanalei Bay, Tunnels...)
-- **Big Island**: 15 beaches (Hapuna, Green Sand, Punaluu...)
-- **Molokai**: 5 beaches (Papohaku, Murphy Beach...)
-- **Lanai**: 5 beaches (Hulopoe, Shipwreck Beach...)
+### 🏖️ **71 Beaches Across 6 Islands**
+- **Oʻahu**: 15 beaches (Waikiki, Pipeline, Lanikai, Hanauma Bay, White Sands...)
+- **Maui**: 15 beaches (Big Beach, Napili Bay, Hookipa, Wailea...)
+- **Kauaʻi**: 14 beaches (Poipu, Hanalei Bay, Tunnels, Secret Beach...)
+- **Big Island**: 19 beaches (Hapuna, Green Sand, Punaluu, White Sands...)
+- **Molokai**: 5 beaches (Papohaku, Murphy Beach, Halawa...)
+- **Lanai**: 5 beaches (Hulopoe, Shipwreck Beach, Manele Bay...)
 
 ## 🔌 Data Sources
 

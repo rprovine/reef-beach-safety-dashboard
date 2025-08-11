@@ -1,0 +1,71 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+// Simplified Beach model for development
+model Beach {
+  id                String            @id @default(cuid())
+  name              String
+  slug              String            @unique
+  island            String            // oahu, maui, kauai, hawaii
+  lat               Float
+  lng               Float
+  spotType          String            // general, surf, family, tidepool
+  description       String?
+  amenities         String?           // JSON string for development
+  isActive          Boolean           @default(true)
+  dataSourceUrl     String?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  
+  readings          Reading[]
+  
+  @@index([island])
+  @@index([slug])
+}
+
+// Simplified Reading model
+model Reading {
+  id                String    @id @default(cuid())
+  beachId           String
+  timestamp         DateTime
+  waveHeightFt      Float?
+  windMph           Float?
+  windDirDeg        Int?
+  waterTempF        Float?
+  tideFt            Float?
+  bacteriaLevel     String?   // safe, caution, unsafe
+  source            String    // noaa, pacioos, doh, manual
+  rawData           String?   // JSON string
+  createdAt         DateTime  @default(now())
+  
+  beach             Beach     @relation(fields: [beachId], references: [id], onDelete: Cascade)
+  
+  @@index([beachId])
+  @@index([timestamp])
+}
+
+// Community reports
+model CommunityReport {
+  id                String    @id @default(cuid())
+  beachId           String?
+  beachName         String
+  title             String
+  description       String
+  reportType        String    // condition, safety, wildlife, other
+  severity          String    // low, medium, high
+  upvotes           Int       @default(0)
+  userName          String?
+  userEmail         String?
+  verified          Boolean   @default(false)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  @@index([beachId])
+  @@index([createdAt])
+}

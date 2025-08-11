@@ -609,6 +609,16 @@ const beaches = [
     spotType: 'tidepool',
     amenities: ['parking', 'restrooms']
   },
+  {
+    name: 'White Sands Beach',
+    slug: 'white-sands-beach',
+    island: 'hawaii',
+    description: 'Small white sand beach that comes and goes with the seasons',
+    lat: 19.6175,
+    lng: -155.9675,
+    spotType: 'family',
+    amenities: ['parking', 'restrooms', 'showers', 'lifeguard']
+  },
 
   // Molokai Beaches
   {
