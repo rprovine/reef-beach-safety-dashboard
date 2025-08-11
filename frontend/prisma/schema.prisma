@@ -30,6 +30,7 @@ model User {
   alertHistory      AlertHistory[]
   sessions          Session[]
   checkoutSessions  CheckoutSession[]
+  apiLogs           ApiLog[]
 }
 
 // Subscription management with HubSpot
@@ -285,4 +286,21 @@ model Session {
   
   @@index([userId])
   @@index([token])
+}
+
+// API usage tracking for rate limiting
+model ApiLog {
+  id                String    @id @default(cuid())
+  userId            String
+  endpoint          String
+  method            String
+  statusCode        Int
+  responseTime      Int?
+  responseSize      Int?
+  createdAt         DateTime  @default(now())
+  
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([createdAt])
 }
