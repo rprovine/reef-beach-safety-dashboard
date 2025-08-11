@@ -3,483 +3,375 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Alert, AlertDescription } from '@/components/ui/alert'
 import { 
-  Waves, Bell, CreditCard, Settings, LogOut, Plus, 
-  AlertTriangle, Check, X,
-  Mail, MessageSquare, Clock, TrendingUp
+  Waves, Shield, Building2, Users, LogOut, Bell, Heart, 
+  TrendingUp, Map, Code, AlertCircle, Check, X, 
+  Calendar, Fish, Siren, Share2, Download, Globe,
+  BarChart3, Zap, Crown, Star
 } from 'lucide-react'
 
 interface User {
-  id: string
   email: string
-  name: string
   tier: string
-  subscriptionStatus: string
-  trialEndDate?: string
+  name: string
+  features: string[]
 }
 
-interface AlertData {
-  id: string
-  name: string
-  isActive: boolean
-  channels: string[]
-  createdAt: string
-  rules: Array<{
-    beach: {
-      name: string
-      island: string
-    }
-    metric: string
-    operator: string
-    threshold?: number
-  }>
-  history: Array<{
-    beachName: string
-    condition: string
-    message: string
-    sentAt: string
-  }>
+const tierFeatures = {
+  free: {
+    icon: Waves,
+    color: 'bg-gray-100 text-gray-800',
+    borderColor: 'border-gray-300',
+    features: [
+      { name: 'View Beach Conditions', available: true, icon: Map },
+      { name: '3 Favorite Beaches', available: true, icon: Heart },
+      { name: 'Basic Alerts', available: true, icon: Bell },
+      { name: 'Advanced Alerts', available: false, icon: Bell },
+      { name: '7-Day Forecast', available: false, icon: Calendar },
+      { name: 'Marine Life Calendar', available: false, icon: Fish },
+      { name: 'API Access', available: false, icon: Code },
+      { name: 'Embeddable Widgets', available: false, icon: Globe },
+      { name: 'Emergency Features', available: false, icon: Siren },
+      { name: 'Offline Mode', available: false, icon: Download }
+    ]
+  },
+  consumer: {
+    icon: Shield,
+    color: 'bg-blue-100 text-blue-800',
+    borderColor: 'border-blue-300',
+    features: [
+      { name: 'View Beach Conditions', available: true, icon: Map },
+      { name: 'Unlimited Favorites', available: true, icon: Heart },
+      { name: 'Advanced Alerts', available: true, icon: Bell },
+      { name: '7-Day Forecast', available: true, icon: Calendar },
+      { name: 'Marine Life Calendar', available: true, icon: Fish },
+      { name: 'Community Reports', available: true, icon: Users },
+      { name: 'API Access', available: false, icon: Code },
+      { name: 'Embeddable Widgets', available: false, icon: Globe },
+      { name: 'Emergency Features', available: true, icon: Siren },
+      { name: 'Offline Mode', available: true, icon: Download }
+    ]
+  },
+  business: {
+    icon: Building2,
+    color: 'bg-purple-100 text-purple-800',
+    borderColor: 'border-purple-300',
+    features: [
+      { name: 'View Beach Conditions', available: true, icon: Map },
+      { name: 'Unlimited Favorites', available: true, icon: Heart },
+      { name: 'Advanced Alerts', available: true, icon: Bell },
+      { name: '7-Day Forecast', available: true, icon: Calendar },
+      { name: 'Marine Life Calendar', available: true, icon: Fish },
+      { name: 'Community Reports', available: true, icon: Users },
+      { name: 'API Access (1000 req/day)', available: true, icon: Code },
+      { name: 'Embeddable Widgets', available: true, icon: Globe },
+      { name: 'Analytics Dashboard', available: true, icon: BarChart3 },
+      { name: 'Priority Support', available: true, icon: Zap }
+    ]
+  },
+  enterprise: {
+    icon: Users,
+    color: 'bg-orange-100 text-orange-800',
+    borderColor: 'border-orange-300',
+    features: [
+      { name: 'Everything in Business', available: true, icon: Crown },
+      { name: 'Unlimited API Access', available: true, icon: Code },
+      { name: 'Custom Integrations', available: true, icon: Zap },
+      { name: 'White Label Options', available: true, icon: Globe },
+      { name: 'SLA Guarantee', available: true, icon: Shield },
+      { name: 'Dedicated Support', available: true, icon: Star },
+      { name: 'Custom Data Sources', available: true, icon: BarChart3 },
+      { name: 'Advanced Analytics', available: true, icon: TrendingUp },
+      { name: 'Team Management', available: true, icon: Users },
+      { name: 'Custom Features', available: true, icon: Crown }
+    ]
+  }
 }
+
+const sampleAlerts = [
+  { id: 1, beach: 'Waikiki Beach', condition: 'Wave Height > 4ft', status: 'active' },
+  { id: 2, beach: 'Sunset Beach', condition: 'High Surf Advisory', status: 'triggered' },
+  { id: 3, beach: 'Hanauma Bay', condition: 'Bacteria Level Alert', status: 'active' }
+]
+
+const favoriteBeaches = [
+  { id: 1, name: 'Waikiki Beach', island: 'Oahu', status: 'good' },
+  { id: 2, name: 'Sunset Beach', island: 'Oahu', status: 'caution' },
+  { id: 3, name: 'Hanauma Bay', island: 'Oahu', status: 'good' }
+]
 
 export default function DashboardPage() {
-  const [user, setUser] = useState<User | null>(null)
-  const [alerts, setAlerts] = useState<AlertData[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
   const router = useRouter()
+  const [user, setUser] = useState<User | null>(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const token = localStorage.getItem('token')
+    // Check if user is logged in
     const userData = localStorage.getItem('user')
-    
-    if (!token || !userData) {
+    if (!userData) {
       router.push('/login')
       return
     }
     
     setUser(JSON.parse(userData))
-    fetchAlerts(token)
+    setLoading(false)
   }, [router])
 
-  const fetchAlerts = async (token: string) => {
-    try {
-      const response = await fetch('/api/alerts', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch alerts')
-      }
-      
-      const data = await response.json()
-      setAlerts(data.alerts)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load alerts')
-    } finally {
-      setLoading(false)
-    }
-  }
-
   const handleLogout = () => {
-    localStorage.removeItem('token')
     localStorage.removeItem('user')
-    router.push('/')
-  }
-
-  const deleteAlert = async (alertId: string) => {
-    const token = localStorage.getItem('token')
-    if (!token) return
-
-    try {
-      const response = await fetch(`/api/alerts/${alertId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
-      
-      if (!response.ok) {
-        throw new Error('Failed to delete alert')
-      }
-      
-      setAlerts(prev => prev.filter(a => a.id !== alertId))
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete alert')
-    }
-  }
-
-  const toggleAlert = async (alertId: string, isActive: boolean) => {
-    const token = localStorage.getItem('token')
-    if (!token) return
-
-    try {
-      const response = await fetch(`/api/alerts/${alertId}`, {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ isActive: !isActive })
-      })
-      
-      if (!response.ok) {
-        throw new Error('Failed to update alert')
-      }
-      
-      setAlerts(prev => prev.map(a => 
-        a.id === alertId ? { ...a, isActive: !isActive } : a
-      ))
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update alert')
-    }
-  }
-
-  const getTierColor = (tier: string) => {
-    switch(tier) {
-      case 'free': return 'bg-gray-100 text-gray-800'
-      case 'consumer': return 'bg-blue-100 text-blue-800'
-      case 'business': return 'bg-purple-100 text-purple-800'
-      case 'enterprise': return 'bg-amber-100 text-amber-800'
-      default: return 'bg-gray-100 text-gray-800'
-    }
-  }
-
-  const getTierPrice = (tier: string) => {
-    switch(tier) {
-      case 'free': return 'Free'
-      case 'consumer': return '$4.99/mo'
-      case 'business': return '$49/mo'
-      case 'enterprise': return '$199/mo'
-      default: return 'Free'
-    }
-  }
-
-  const getTierLimits = (tier: string) => {
-    switch(tier) {
-      case 'free': return { alerts: 3, sms: false, api: false, history: 7 }
-      case 'consumer': return { alerts: 10, sms: true, api: false, history: 30 }
-      case 'business': return { alerts: -1, sms: true, api: true, history: 90 }
-      case 'enterprise': return { alerts: -1, sms: true, api: true, history: 365 }
-      default: return { alerts: 3, sms: false, api: false, history: 7 }
-    }
+    localStorage.removeItem('token')
+    router.push('/login')
   }
 
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <Waves className="h-12 w-12 text-blue-500 animate-pulse mx-auto mb-4" />
-          <p className="text-gray-600">Loading dashboard...</p>
-        </div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-ocean-500"></div>
       </div>
     )
   }
 
   if (!user) return null
 
-  const limits = getTierLimits(user.tier)
-  const daysUntilTrialEnd = user.trialEndDate 
-    ? Math.ceil((new Date(user.trialEndDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
-    : null
+  const tierConfig = tierFeatures[user.tier as keyof typeof tierFeatures] || tierFeatures.free
+  const TierIcon = tierConfig.icon
 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
+      <div className="bg-white border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <Link href="/" className="flex items-center gap-2">
-                <Waves className="h-8 w-8 text-blue-600" />
-                <span className="font-bold text-xl">Reef Safety</span>
+              <Link href="/beaches" className="flex items-center gap-2 group">
+                <Waves className="h-8 w-8 text-ocean-600 group-hover:scale-105 transition-transform" />
+                <h1 className="text-2xl font-bold text-gray-900">Reef Beach Safety</h1>
               </Link>
             </div>
             
             <div className="flex items-center gap-4">
-              <Badge className={getTierColor(user.tier)}>
-                {user.tier.toUpperCase()} - {getTierPrice(user.tier)}
-              </Badge>
-              <Button variant="ghost" size="icon" onClick={handleLogout}>
-                <LogOut className="h-5 w-5" />
-              </Button>
+              <div className={`px-3 py-1 rounded-full ${tierConfig.color} font-medium text-sm`}>
+                <TierIcon className="h-4 w-4 inline mr-1" />
+                {user.tier.charAt(0).toUpperCase() + user.tier.slice(1)} Tier
+              </div>
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <LogOut className="h-4 w-4" />
+                Logout
+              </button>
             </div>
           </div>
         </div>
-      </header>
+      </div>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Welcome Section */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Welcome back, {user.name || user.email}
-          </h1>
-          <p className="text-gray-600">Manage your beach safety alerts and subscription</p>
+        <div className="bg-white rounded-xl shadow-sm p-6 mb-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            Welcome back, {user.name}!
+          </h2>
+          <p className="text-gray-600">
+            You're currently on the <span className="font-semibold">{user.tier}</span> plan.
+            {user.tier === 'free' && ' Upgrade to unlock more features!'}
+          </p>
         </div>
 
-        {/* Trial/Subscription Alert */}
-        {user.subscriptionStatus === 'trial' && daysUntilTrialEnd !== null && (
-          <Alert className="mb-6 border-amber-200 bg-amber-50">
-            <AlertTriangle className="h-4 w-4 text-amber-600" />
-            <AlertDescription className="text-amber-800">
-              Your free trial ends in {daysUntilTrialEnd} days. 
-              <Link href="/pricing" className="font-medium underline ml-1">
-                Upgrade now
-              </Link>
-              {' '}to keep all your alerts active.
-            </AlertDescription>
-          </Alert>
-        )}
-
-        {error && (
-          <Alert variant="destructive" className="mb-6">
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardDescription>Active Alerts</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{alerts.filter(a => a.isActive).length}</div>
-              <p className="text-xs text-muted-foreground">
-                {limits.alerts === -1 ? 'Unlimited' : `of ${limits.alerts} allowed`}
-              </p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="pb-2">
-              <CardDescription>Notifications Sent</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {alerts.reduce((sum, a) => sum + a.history.length, 0)}
+        <div className="grid lg:grid-cols-3 gap-8">
+          {/* Main Content */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Quick Actions */}
+            <div className="bg-white rounded-xl shadow-sm p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <Link
+                  href="/beaches"
+                  className="p-4 bg-ocean-50 rounded-lg hover:bg-ocean-100 transition-colors text-center group"
+                >
+                  <Map className="h-6 w-6 text-ocean-600 mx-auto mb-2 group-hover:scale-110 transition-transform" />
+                  <span className="text-sm font-medium text-gray-900">View Beaches</span>
+                </Link>
+                
+                <button
+                  className={`p-4 rounded-lg transition-colors text-center group ${
+                    user.tier !== 'free' 
+                      ? 'bg-blue-50 hover:bg-blue-100' 
+                      : 'bg-gray-50 cursor-not-allowed opacity-50'
+                  }`}
+                  disabled={user.tier === 'free'}
+                >
+                  <Bell className="h-6 w-6 text-blue-600 mx-auto mb-2" />
+                  <span className="text-sm font-medium text-gray-900">Manage Alerts</span>
+                </button>
+                
+                <button
+                  className={`p-4 rounded-lg transition-colors text-center group ${
+                    user.tier === 'business' || user.tier === 'enterprise'
+                      ? 'bg-purple-50 hover:bg-purple-100' 
+                      : 'bg-gray-50 cursor-not-allowed opacity-50'
+                  }`}
+                  disabled={user.tier !== 'business' && user.tier !== 'enterprise'}
+                >
+                  <Globe className="h-6 w-6 text-purple-600 mx-auto mb-2" />
+                  <span className="text-sm font-medium text-gray-900">Widgets</span>
+                </button>
+                
+                <button
+                  className={`p-4 rounded-lg transition-colors text-center group ${
+                    user.tier === 'business' || user.tier === 'enterprise'
+                      ? 'bg-green-50 hover:bg-green-100' 
+                      : 'bg-gray-50 cursor-not-allowed opacity-50'
+                  }`}
+                  disabled={user.tier !== 'business' && user.tier !== 'enterprise'}
+                >
+                  <BarChart3 className="h-6 w-6 text-green-600 mx-auto mb-2" />
+                  <span className="text-sm font-medium text-gray-900">Analytics</span>
+                </button>
               </div>
-              <p className="text-xs text-muted-foreground">This month</p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="pb-2">
-              <CardDescription>SMS Alerts</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {limits.sms ? (
-                  <Check className="h-6 w-6 text-green-500" />
-                ) : (
-                  <X className="h-6 w-6 text-gray-400" />
-                )}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {limits.sms ? 'Enabled' : 'Upgrade required'}
-              </p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="pb-2">
-              <CardDescription>API Access</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {limits.api ? (
-                  <Check className="h-6 w-6 text-green-500" />
-                ) : (
-                  <X className="h-6 w-6 text-gray-400" />
-                )}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {limits.api ? 'Enabled' : 'Business+ required'}
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Main Content Tabs */}
-        <Tabs defaultValue="alerts" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="alerts">
-              <Bell className="h-4 w-4 mr-2" />
-              Alerts
-            </TabsTrigger>
-            <TabsTrigger value="subscription">
-              <CreditCard className="h-4 w-4 mr-2" />
-              Subscription
-            </TabsTrigger>
-            <TabsTrigger value="settings">
-              <Settings className="h-4 w-4 mr-2" />
-              Settings
-            </TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="alerts" className="space-y-4">
-            <div className="flex justify-between items-center">
-              <h2 className="text-xl font-semibold">Your Beach Alerts</h2>
-              <Button disabled={limits.alerts !== -1 && alerts.length >= limits.alerts}>
-                <Plus className="h-4 w-4 mr-2" />
-                Create Alert
-              </Button>
             </div>
-            
-            {alerts.length === 0 ? (
-              <Card>
-                <CardContent className="text-center py-12">
-                  <Bell className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium mb-2">No alerts configured</h3>
-                  <p className="text-gray-600 mb-4">
-                    Create your first beach safety alert to get started
-                  </p>
-                  <Button>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Create Your First Alert
-                  </Button>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="grid gap-4">
-                {alerts.map(alert => (
-                  <Card key={alert.id}>
-                    <CardHeader>
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <CardTitle className="text-lg">{alert.name}</CardTitle>
-                          <CardDescription>
-                            {alert.rules[0]?.beach.name} ({alert.rules[0]?.beach.island})
-                          </CardDescription>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Badge variant={alert.isActive ? 'default' : 'secondary'}>
-                            {alert.isActive ? 'Active' : 'Paused'}
-                          </Badge>
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={() => toggleAlert(alert.id, alert.isActive)}
-                          >
-                            {alert.isActive ? 'Pause' : 'Resume'}
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={() => deleteAlert(alert.id)}
-                          >
-                            Delete
-                          </Button>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="flex gap-4 text-sm text-gray-600">
-                        <div className="flex items-center gap-1">
-                          {alert.channels.includes('email') && <Mail className="h-4 w-4" />}
-                          {alert.channels.includes('sms') && <MessageSquare className="h-4 w-4" />}
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Clock className="h-4 w-4" />
-                          {alert.history.length} notifications sent
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+
+            {/* Favorite Beaches */}
+            <div className="bg-white rounded-xl shadow-sm p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">Favorite Beaches</h3>
+                <Link href="/beaches" className="text-ocean-600 hover:text-ocean-700 text-sm">
+                  View All →
+                </Link>
               </div>
-            )}
-          </TabsContent>
-          
-          <TabsContent value="subscription" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Current Plan</CardTitle>
-                <CardDescription>Manage your subscription and billing</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
-                  <div>
-                    <h3 className="font-semibold">{user.tier.toUpperCase()} Plan</h3>
-                    <p className="text-sm text-gray-600">{getTierPrice(user.tier)}</p>
-                  </div>
-                  {user.tier !== 'enterprise' && (
-                    <Button>
-                      <TrendingUp className="h-4 w-4 mr-2" />
-                      Upgrade Plan
-                    </Button>
-                  )}
+              
+              <div className="space-y-3">
+                {favoriteBeaches.map((beach) => (
+                  <Link
+                    key={beach.id}
+                    href={`/beaches/${beach.name.toLowerCase().replace(' ', '-')}`}
+                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                  >
+                    <div>
+                      <p className="font-medium text-gray-900">{beach.name}</p>
+                      <p className="text-sm text-gray-600">{beach.island}</p>
+                    </div>
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      beach.status === 'good' ? 'bg-green-100 text-green-800' :
+                      beach.status === 'caution' ? 'bg-yellow-100 text-yellow-800' :
+                      'bg-red-100 text-red-800'
+                    }`}>
+                      {beach.status}
+                    </span>
+                  </Link>
+                ))}
+                {user.tier === 'free' && (
+                  <p className="text-sm text-gray-500 text-center py-2">
+                    Upgrade to add unlimited favorites
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Active Alerts */}
+            {user.tier !== 'free' && (
+              <div className="bg-white rounded-xl shadow-sm p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900">Active Alerts</h3>
+                  <button className="text-ocean-600 hover:text-ocean-700 text-sm">
+                    Manage →
+                  </button>
                 </div>
                 
-                <div className="space-y-2">
-                  <h4 className="font-medium">Plan Features</h4>
-                  <ul className="space-y-1 text-sm">
-                    <li className="flex items-center gap-2">
-                      <Check className="h-4 w-4 text-green-500" />
-                      {limits.alerts === -1 ? 'Unlimited' : limits.alerts} beach alerts
-                    </li>
-                    <li className="flex items-center gap-2">
-                      {limits.sms ? (
-                        <Check className="h-4 w-4 text-green-500" />
+                <div className="space-y-3">
+                  {sampleAlerts.map((alert) => (
+                    <div
+                      key={alert.id}
+                      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={`p-2 rounded-lg ${
+                          alert.status === 'triggered' ? 'bg-red-100' : 'bg-blue-100'
+                        }`}>
+                          <AlertCircle className={`h-4 w-4 ${
+                            alert.status === 'triggered' ? 'text-red-600' : 'text-blue-600'
+                          }`} />
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900">{alert.beach}</p>
+                          <p className="text-sm text-gray-600">{alert.condition}</p>
+                        </div>
+                      </div>
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        alert.status === 'triggered' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
+                      }`}>
+                        {alert.status}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Sidebar - Plan Features */}
+          <div className="space-y-6">
+            <div className="bg-white rounded-xl shadow-sm p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Your Plan Features</h3>
+              <div className="space-y-2">
+                {tierConfig.features.map((feature, idx) => (
+                  <div
+                    key={idx}
+                    className={`flex items-center gap-3 p-2 rounded-lg ${
+                      feature.available ? 'bg-green-50' : 'bg-gray-50'
+                    }`}
+                  >
+                    <div className={`p-1 rounded ${
+                      feature.available ? 'bg-green-100' : 'bg-gray-200'
+                    }`}>
+                      {feature.available ? (
+                        <Check className="h-4 w-4 text-green-600" />
                       ) : (
                         <X className="h-4 w-4 text-gray-400" />
                       )}
-                      SMS notifications
-                    </li>
-                    <li className="flex items-center gap-2">
-                      {limits.api ? (
-                        <Check className="h-4 w-4 text-green-500" />
-                      ) : (
-                        <X className="h-4 w-4 text-gray-400" />
-                      )}
-                      API access
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Check className="h-4 w-4 text-green-500" />
-                      {limits.history} days historical data
-                    </li>
-                  </ul>
+                    </div>
+                    <feature.icon className={`h-4 w-4 ${
+                      feature.available ? 'text-gray-700' : 'text-gray-400'
+                    }`} />
+                    <span className={`text-sm ${
+                      feature.available ? 'text-gray-900' : 'text-gray-500'
+                    }`}>
+                      {feature.name}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              
+              {user.tier !== 'enterprise' && (
+                <button className="w-full mt-4 px-4 py-2 bg-gradient-to-r from-ocean-500 to-ocean-600 text-white rounded-lg hover:from-ocean-600 hover:to-ocean-700 transition-all font-medium">
+                  Upgrade Plan
+                </button>
+              )}
+            </div>
+
+            {/* API Usage (Business/Enterprise) */}
+            {(user.tier === 'business' || user.tier === 'enterprise') && (
+              <div className="bg-white rounded-xl shadow-sm p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">API Usage</h3>
+                <div className="space-y-3">
+                  <div>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span className="text-gray-600">Requests Today</span>
+                      <span className="font-medium">247 / {user.tier === 'enterprise' ? '∞' : '1000'}</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div className="bg-ocean-600 h-2 rounded-full" style={{ width: '24.7%' }}></div>
+                    </div>
+                  </div>
+                  <button className="text-ocean-600 hover:text-ocean-700 text-sm font-medium">
+                    View API Docs →
+                  </button>
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="settings" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Account Settings</CardTitle>
-                <CardDescription>Manage your account preferences</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label className="text-sm font-medium">Email</Label>
-                  <p className="text-sm text-gray-600">{user.email}</p>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium">Name</Label>
-                  <p className="text-sm text-gray-600">{user.name || 'Not set'}</p>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium">Account ID</Label>
-                  <p className="text-sm text-gray-600 font-mono">{user.id}</p>
-                </div>
-                <Button variant="outline">Update Profile</Button>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-      </main>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   )
-}
-
-// Add missing Label component
-function Label({ children, className }: { children: React.ReactNode, className?: string }) {
-  return <label className={className}>{children}</label>
 }

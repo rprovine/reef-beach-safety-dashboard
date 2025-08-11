@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import { useSearchParams } from 'next/navigation'
+import Link from 'next/link'
 import { BeachMap } from '@/components/map'
 import { BeachList } from '@/components/beaches/beach-list'
 import { useBeaches } from '@/hooks/use-beaches'
@@ -115,8 +116,15 @@ export default function BeachesContent() {
             {/* Title and View Toggle */}
             <div className="flex items-center justify-between">
               <h1 className="text-2xl font-bold text-gray-900">Beach Safety Dashboard</h1>
-              <div className="flex items-center gap-2 bg-gray-100 p-1 rounded-lg">
-                <button
+              <div className="flex items-center gap-4">
+                <Link 
+                  href="/login" 
+                  className="px-4 py-2 bg-ocean-500 text-white rounded-lg hover:bg-ocean-600 transition-colors text-sm font-medium"
+                >
+                  Login / Demo
+                </Link>
+                <div className="flex items-center gap-2 bg-gray-100 p-1 rounded-lg">
+                  <button
                   onClick={() => setViewMode('map')}
                   className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
                     viewMode === 'map'
