@@ -3,6 +3,10 @@ import { prisma } from '@/lib/prisma'
 import { dataAggregator } from '@/services/data-aggregator'
 import { calculateFamilyRating, getFamilyFeatures } from '@/lib/family-ratings'
 
+// Force dynamic runtime
+export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
+
 // GET /api/beaches/[slug]/comprehensive - Get all available data for a beach
 export async function GET(
   req: NextRequest,

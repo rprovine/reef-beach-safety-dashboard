@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
+// Force dynamic runtime
+export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
+
 // GET /api/beaches - Public endpoint for fetching beach data
 export async function GET(req: NextRequest) {
   try {

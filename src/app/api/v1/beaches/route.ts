@@ -3,6 +3,10 @@ import { prisma } from '@/lib/prisma'
 import { withApiProtection, AuthenticatedRequest } from '@/lib/api-middleware'
 import { canAccessHistoricalData } from '@/lib/tier-limits'
 
+// Force dynamic runtime
+export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
+
 // GET /api/v1/beaches - Public API endpoint for beach data
 export async function GET(req: NextRequest) {
   return withApiProtection({ 
