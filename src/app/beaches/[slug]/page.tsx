@@ -3,11 +3,13 @@
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { useBeachDetail, useBeachHistory } from '@/hooks/use-beaches'
+import { beachDetailsService } from '@/lib/beach-details'
 import { cn, formatDateTime, getStatusColor, getStatusLabel } from '@/lib/utils'
 import { 
   Waves, Wind, Thermometer, AlertTriangle, Clock, 
   MapPin, ArrowLeft, Bell, Calendar, TrendingUp,
-  TrendingDown, Minus, ChevronRight, Activity
+  TrendingDown, Minus, ChevronRight, Activity,
+  Car, Users, Star, Shield
 } from 'lucide-react'
 import { BeachMap } from '@/components/map'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -18,6 +20,7 @@ export default function BeachDetailPage() {
   
   const { data: beach, isLoading, error } = useBeachDetail(slug)
   const { data: history } = useBeachHistory(slug, 7)
+  const beachDetails = beachDetailsService.getBeachDetails(slug)
 
   if (isLoading) {
     return <BeachDetailSkeleton />
@@ -56,7 +59,7 @@ export default function BeachDetailPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white border-b">
+      <div className="bg-white border-b mt-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
@@ -167,6 +170,164 @@ export default function BeachDetailPage() {
               </div>
             </div>
 
+            {/* Beach Information */}
+            {beachDetails && (
+              <div className="bg-white rounded-xl shadow-sm p-6">
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">About This Beach</h2>
+                
+                {/* Native Name & Pronunciation */}
+                {beachDetails.nativeName && (
+                  <div className="mb-4 p-3 bg-blue-50 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-blue-900">Hawaiian Name:</span>
+                      <span className="text-blue-800">{beachDetails.nativeName}</span>
+                      {beachDetails.pronunciation && (
+                        <span className="text-blue-600">({beachDetails.pronunciation})</span>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Description */}
+                <p className="text-gray-700 leading-relaxed mb-6">{beachDetails.description}</p>
+
+                {/* Highlights */}
+                <div className="mb-6">
+                  <h3 className="font-semibold text-gray-900 mb-3">Highlights</h3>
+                  <div className="grid gap-2">
+                    {beachDetails.highlights.map((highlight, index) => (
+                      <div key={index} className="flex items-start gap-2">
+                        <Star className="h-4 w-4 text-yellow-500 mt-0.5 flex-shrink-0" />
+                        <span className="text-gray-700 text-sm">{highlight}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Activities Grid */}
+                <div className="mb-6">
+                  <h3 className="font-semibold text-gray-900 mb-3">Activities</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {Object.entries(beachDetails.activities).map(([activity, rating]) => {
+                      const display = beachDetailsService.getActivityRatingDisplay(rating)
+                      return (
+                        <div key={activity} className="p-3 bg-gray-50 rounded-lg">
+                          <div className="text-sm font-medium text-gray-900 capitalize mb-1">
+                            {activity.replace(/([A-Z])/g, ' $1').trim()}
+                          </div>
+                          <div className={`text-xs ${display.color}`}>
+                            {display.label}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+
+                {/* Amenities */}
+                <div className="mb-6">
+                  <h3 className="font-semibold text-gray-900 mb-3">Amenities</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {Object.entries(beachDetails.amenities)
+                      .filter(([_, available]) => available)
+                      .map(([amenity, _]) => (
+                        <span
+                          key={amenity}
+                          className="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-800 text-sm rounded-full"
+                        >
+                          <span>{beachDetailsService.getAmenityIcon(amenity as keyof typeof beachDetails.amenities)}</span>
+                          <span className="capitalize">{amenity.replace(/([A-Z])/g, ' $1').trim()}</span>
+                        </span>
+                      ))}
+                  </div>
+                </div>
+
+                {/* Safety Information */}
+                <div className="mb-6">
+                  <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                    <Shield className="h-5 w-5" />
+                    Safety Information
+                  </h3>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <div className="text-sm text-gray-600 mb-1">Difficulty Level</div>
+                      <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
+                        beachDetails.safetyInfo.difficulty === 'beginner' ? 'bg-green-100 text-green-800' :
+                        beachDetails.safetyInfo.difficulty === 'intermediate' ? 'bg-yellow-100 text-yellow-800' :
+                        beachDetails.safetyInfo.difficulty === 'advanced' ? 'bg-orange-100 text-orange-800' :
+                        'bg-red-100 text-red-800'
+                      }`}>
+                        {beachDetails.safetyInfo.difficulty}
+                      </span>
+                    </div>
+                    <div>
+                      <div className="text-sm text-gray-600 mb-1">Kid Friendly</div>
+                      <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
+                        beachDetails.safetyInfo.kidFriendly ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                      }`}>
+                        {beachDetails.safetyInfo.kidFriendly ? 'Yes' : 'Use Caution'}
+                      </span>
+                    </div>
+                  </div>
+                  {beachDetails.safetyInfo.hazards.length > 0 && (
+                    <div className="mt-3">
+                      <div className="text-sm text-gray-600 mb-2">Potential Hazards</div>
+                      {beachDetails.safetyInfo.hazards.map((hazard, index) => (
+                        <div key={index} className="flex items-start gap-2 text-sm text-orange-700 mb-1">
+                          <AlertTriangle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                          <span>{hazard}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Access Information */}
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                    <Car className="h-5 w-5" />
+                    Access & Parking
+                  </h3>
+                  <div className="grid md:grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <div className="text-gray-600 mb-1">Walking Time</div>
+                      <div className="text-gray-900">{beachDetails.access.walkingTime}</div>
+                    </div>
+                    <div>
+                      <div className="text-gray-600 mb-1">Parking</div>
+                      <div className="text-gray-900">{beachDetails.access.parkingInfo}</div>
+                    </div>
+                    {beachDetails.access.entranceFee && (
+                      <div>
+                        <div className="text-gray-600 mb-1">Entrance Fee</div>
+                        <div className="text-gray-900">{beachDetails.access.entranceFee}</div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Cultural Significance */}
+                {beachDetails.culturalSignificance && (
+                  <div className="mt-6 p-4 bg-purple-50 rounded-lg">
+                    <h3 className="font-semibold text-purple-900 mb-3">Cultural Significance</h3>
+                    <p className="text-purple-800 text-sm leading-relaxed mb-3">
+                      {beachDetails.culturalSignificance.history}
+                    </p>
+                    {beachDetails.culturalSignificance.respect.length > 0 && (
+                      <div>
+                        <div className="text-purple-800 font-medium text-sm mb-2">Please Respect:</div>
+                        {beachDetails.culturalSignificance.respect.map((item, index) => (
+                          <div key={index} className="text-purple-700 text-sm mb-1">
+                            • {item}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* 7-Day Forecast */}
             {forecast7Day && forecast7Day.length > 0 && (
               <div className="bg-white rounded-xl shadow-sm p-6">
@@ -224,7 +385,7 @@ export default function BeachDetailPage() {
                         {tide.type === 'high' ? 'High Tide' : 'Low Tide'}
                       </div>
                       <div className="text-lg font-semibold text-gray-900">
-                        {tide.height.toFixed(1)} ft
+                        {Number(tide.height).toFixed(1)} ft
                       </div>
                       <div className="text-sm text-gray-500">
                         {new Date(tide.time).toLocaleTimeString('en-US', { 
@@ -315,6 +476,16 @@ interface ConditionCardProps {
 
 function ConditionCard({ icon: Icon, label, value, unit, trend }: ConditionCardProps) {
   const TrendIcon = trend === 'up' ? TrendingUp : trend === 'down' ? TrendingDown : Minus
+  
+  const formatValue = (val: number | null, unitType: string) => {
+    if (val === null) return '--'
+    
+    // Format based on unit type
+    if (unitType === 'ft') return Number(val).toFixed(1)
+    if (unitType === 'mph') return Number(val).toFixed(0)
+    if (unitType === '°F') return Number(val).toFixed(0)
+    return Number(val).toFixed(1)
+  }
 
   return (
     <div className="bg-gray-50 rounded-lg p-4">
@@ -331,7 +502,7 @@ function ConditionCard({ icon: Icon, label, value, unit, trend }: ConditionCardP
       </div>
       <div className="text-sm text-gray-600">{label}</div>
       <div className="text-2xl font-semibold text-gray-900">
-        {value !== null ? `${value}${unit}` : '--'}
+        {value !== null ? `${formatValue(value, unit)}${unit}` : '--'}
       </div>
     </div>
   )
