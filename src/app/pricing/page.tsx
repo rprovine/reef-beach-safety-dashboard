@@ -34,7 +34,7 @@ const plans = [
   },
   {
     name: 'Pro',
-    price: '$9',
+    price: '$4.99',
     period: '/month',
     description: 'For beach enthusiasts & families',
     icon: '🏄',
@@ -164,7 +164,7 @@ export default function PricingPage() {
                   <div className="mt-6">
                     <span className="text-4xl font-bold text-gray-900">
                       {billingPeriod === 'yearly' && plan.price !== '$0' 
-                        ? `$${Math.floor(parseInt(plan.price.slice(1)) * 0.8)}`
+                        ? plan.price === '$4.99' ? '$3.99' : `$${Math.floor(parseFloat(plan.price.slice(1)) * 0.8)}`
                         : plan.price}
                     </span>
                     <span className="text-gray-600">
@@ -173,7 +173,7 @@ export default function PricingPage() {
                     </span>
                     {billingPeriod === 'yearly' && plan.price !== '$0' && (
                       <div className="text-sm text-green-600 mt-1">
-                        Save ${Math.floor(parseInt(plan.price.slice(1)) * 12 * 0.2)}/year
+                        Save ${plan.price === '$4.99' ? '12' : Math.floor(parseFloat(plan.price.slice(1)) * 12 * 0.2)}/year
                       </div>
                     )}
                   </div>
