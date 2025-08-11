@@ -1,6 +1,6 @@
 import { Resend } from 'resend'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
 
 export interface EmailTemplate {
   to: string | string[]
@@ -150,6 +150,11 @@ export const templates = {
 
 // Send email function
 export async function sendEmail(template: EmailTemplate) {
+  if (!resend) {
+    console.warn('Email service not configured - RESEND_API_KEY is missing')
+    return { success: false, error: 'Email service not configured' }
+  }
+  
   try {
     const { data, error } = await resend.emails.send({
       from: template.from || 'Beach Hui <alerts@beachhui.com>',
