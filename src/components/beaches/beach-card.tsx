@@ -37,7 +37,7 @@ export function BeachCard({ beach, selected, onClick, compact }: BeachCardProps)
       >
         <div className="flex items-center justify-between mb-2">
           <h3 className="font-medium text-gray-900">{beach.name}</h3>
-          <div className={cn('px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1', 'bg-green-100 text-green-800'))}>
+          <div className={cn('px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1', 'bg-green-100 text-green-800')}>
             <StatusIcon className="h-3 w-3" />
             {beach.currentStatus === 'good' ? 'Safe' : beach.currentStatus}
           </div>
