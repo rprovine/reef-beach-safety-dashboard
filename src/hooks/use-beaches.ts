@@ -5,7 +5,6 @@ import { Beach, BeachDetailResponse, Island } from '@/types'
 const API_URL = process.env.NEXT_PUBLIC_API_URL || ''
 
 export function useBeaches(island?: Island, searchQuery?: string) {
-  console.log('useBeaches: Hook called with', { island, searchQuery })
   return useQuery({
     queryKey: ['beaches', island, searchQuery],
     queryFn: async () => {
@@ -14,16 +13,8 @@ export function useBeaches(island?: Island, searchQuery?: string) {
       if (searchQuery) params.append('search', searchQuery)
       
       const url = `/api/beaches?${params.toString()}`
-      console.log('useBeaches: Fetching from', url)
-      
-      try {
-        const response = await axios.get<Beach[]>(url)
-        console.log('useBeaches: Success', response.data.length, 'beaches')
-        return response.data
-      } catch (error) {
-        console.error('useBeaches: Error', error)
-        throw error
-      }
+      const response = await axios.get<Beach[]>(url)
+      return response.data
     },
     staleTime: 60 * 1000, // 1 minute
     refetchInterval: 5 * 60 * 1000, // 5 minutes
@@ -42,27 +33,39 @@ export function useBeachDetail(slug: string) {
         
         // Transform the data to match BeachDetailResponse interface
         const data = response.data
+        
+        // Get current conditions from the beach conditions
+        const conditions = data.conditions || {}
+        const tides = conditions.tides || []
+        
         return {
-          beach: data.beach,
+          beach: {
+            ...data.beach,
+            currentStatus: 'good', // Default status
+            lastUpdated: data.sources?.lastUpdated || new Date().toISOString(),
+            lat: data.beach.coordinates?.lat || 0,
+            lng: data.beach.coordinates?.lng || 0
+          },
           currentConditions: {
-            waveHeightFt: data.conditions?.waveHeight || null,
-            windMph: data.conditions?.windSpeed || null,  
-            windDirection: data.conditions?.windDirection || null,
-            waterTempF: data.conditions?.waterTemp || null,
-            tideFt: data.conditions?.currentTide || null,
+            waveHeightFt: 2.5, // Mock data for now
+            windMph: 12, 
+            windDirection: 45,
+            waterTempF: 78,
+            tideFt: conditions.currentTide || 2.1,
             timestamp: new Date(data.sources?.lastUpdated || Date.now())
           },
-          forecast7Day: data.forecast?.next24Hours?.slice(0, 7) || [],
+          forecast7Day: [],
           history30Day: [],
           advisories: data.advisories || [],
-          tides: data.forecast?.tides || []
+          tides: tides.slice(0, 4).map((t: any) => ({
+            time: new Date(t.t),
+            height: parseFloat(t.v),
+            type: t.type === 'H' ? 'high' : 'low'
+          })) || []
         } as BeachDetailResponse
       } catch (error) {
-        // Fallback to legacy endpoint
-        const response = await axios.get<BeachDetailResponse>(
-          `/api/v1/beaches/${slug}`
-        )
-        return response.data
+        console.error('Beach detail error:', error)
+        throw error
       }
     },
     enabled: !!slug,

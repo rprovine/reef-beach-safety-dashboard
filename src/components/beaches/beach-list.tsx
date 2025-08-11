@@ -29,8 +29,7 @@ export function BeachList({
     router.push(`/beaches/${beach.slug}`)
   }
 
-  // Debug logging
-  console.log('BeachList render:', { beaches, loading, error, beachCount: beaches?.length })
+  // Render beach list
   
   if (loading) {
     return (

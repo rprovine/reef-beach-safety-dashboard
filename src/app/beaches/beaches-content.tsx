@@ -25,15 +25,10 @@ export default function BeachesContent() {
     searchParams.get('beach')
   )
 
-  console.log('BeachesContent: About to call useBeaches with', { selectedIsland, searchQuery })
-  
   const { data: beaches, isLoading, error } = useBeaches(
     selectedIsland === 'all' ? undefined : selectedIsland,
     searchQuery
   )
-
-  // Debug logging
-  console.log('Beaches data:', { beaches, isLoading, error, count: beaches?.length })
 
   const handleBeachSelect = (beachId: string) => {
     setSelectedBeachId(beachId)
