@@ -76,9 +76,9 @@ export default function BeachDetailPage() {
                   <span className="text-gray-400">•</span>
                   <span className={cn(
                     'px-2 py-1 rounded-full text-xs font-medium',
-                    getStatusColor(beachData.status)
+                    getStatusColor(beachData.currentStatus || beachData.status || 'good')
                   )}>
-                    {getStatusLabel(beachData.status)}
+                    {getStatusLabel(beachData.currentStatus || beachData.status || 'good')}
                   </span>
                 </div>
               </div>
@@ -131,7 +131,7 @@ export default function BeachDetailPage() {
                 <h2 className="text-lg font-semibold text-gray-900">Current Conditions</h2>
                 <div className="flex items-center text-sm text-gray-500">
                   <Clock className="h-4 w-4 mr-1" />
-                  Updated {formatDateTime(currentConditions.timestamp)}
+                  Updated {currentConditions?.timestamp ? formatDateTime(currentConditions.timestamp) : 'Recently'}
                 </div>
               </div>
 
@@ -139,30 +139,30 @@ export default function BeachDetailPage() {
                 <ConditionCard
                   icon={Waves}
                   label="Wave Height"
-                  value={currentConditions.waveHeightFt}
+                  value={currentConditions?.waveHeightFt}
                   unit="ft"
-                  trend={getTrend(currentConditions.waveHeightFt, history?.waveHeights)}
+                  trend={getTrend(currentConditions?.waveHeightFt, history?.waveHeights)}
                 />
                 <ConditionCard
                   icon={Wind}
                   label="Wind Speed"
-                  value={currentConditions.windMph}
+                  value={currentConditions?.windMph}
                   unit="mph"
-                  trend={getTrend(currentConditions.windMph, history?.windSpeeds)}
+                  trend={getTrend(currentConditions?.windMph, history?.windSpeeds)}
                 />
                 <ConditionCard
                   icon={Thermometer}
                   label="Water Temp"
-                  value={currentConditions.waterTempF}
+                  value={currentConditions?.waterTempF}
                   unit="°F"
-                  trend={getTrend(currentConditions.waterTempF, history?.waterTemps)}
+                  trend={getTrend(currentConditions?.waterTempF, history?.waterTemps)}
                 />
                 <ConditionCard
                   icon={Activity}
                   label="Tide"
-                  value={currentConditions.tideFt}
+                  value={currentConditions?.tideFt}
                   unit="ft"
-                  trend={currentConditions.tideFt && currentConditions.tideFt > 0 ? 'up' : 'down'}
+                  trend={currentConditions?.tideFt && currentConditions.tideFt > 0 ? 'up' : 'down'}
                 />
               </div>
             </div>
@@ -249,7 +249,7 @@ export default function BeachDetailPage() {
                   beaches={[beachData]}
                   selectedBeachId={beachData.slug}
                   onBeachSelect={() => {}}
-                  center={[beachData.lat, beachData.lng]}
+                  center={[beachData.coordinates?.lat || beachData.lat, beachData.coordinates?.lng || beachData.lng]}
                   zoom={13}
                 />
               </div>

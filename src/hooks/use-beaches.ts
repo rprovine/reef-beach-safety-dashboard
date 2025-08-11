@@ -34,10 +34,36 @@ export function useBeachDetail(slug: string) {
   return useQuery({
     queryKey: ['beach', slug],
     queryFn: async () => {
-      const response = await axios.get<BeachDetailResponse>(
-        `/api/beaches/${slug}/comprehensive`
-      )
-      return response.data
+      try {
+        // Try the comprehensive endpoint first
+        const response = await axios.get<any>(
+          `/api/beaches/${slug}/comprehensive`
+        )
+        
+        // Transform the data to match BeachDetailResponse interface
+        const data = response.data
+        return {
+          beach: data.beach,
+          currentConditions: {
+            waveHeightFt: data.conditions?.waveHeight || null,
+            windMph: data.conditions?.windSpeed || null,  
+            windDirection: data.conditions?.windDirection || null,
+            waterTempF: data.conditions?.waterTemp || null,
+            tideFt: data.conditions?.currentTide || null,
+            timestamp: new Date(data.sources?.lastUpdated || Date.now())
+          },
+          forecast7Day: data.forecast?.next24Hours?.slice(0, 7) || [],
+          history30Day: [],
+          advisories: data.advisories || [],
+          tides: data.forecast?.tides || []
+        } as BeachDetailResponse
+      } catch (error) {
+        // Fallback to legacy endpoint
+        const response = await axios.get<BeachDetailResponse>(
+          `/api/v1/beaches/${slug}`
+        )
+        return response.data
+      }
     },
     enabled: !!slug,
     staleTime: 30 * 1000, // 30 seconds
