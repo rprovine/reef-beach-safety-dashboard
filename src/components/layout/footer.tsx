@@ -66,8 +66,8 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/api" className="text-gray-600 hover:text-ocean-600">
-                  API Access
+                <Link href="/api-docs" className="text-gray-600 hover:text-ocean-600">
+                  API Docs
                 </Link>
               </li>
             </ul>
@@ -90,7 +90,7 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/business" className="text-gray-600 hover:text-ocean-600">
+                <Link href="/for-business" className="text-gray-600 hover:text-ocean-600">
                   For Business
                 </Link>
               </li>
