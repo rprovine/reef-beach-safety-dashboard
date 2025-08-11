@@ -1,6 +1,39 @@
 # Changelog
 
-All notable changes to the Hawaii Beach Safety Dashboard will be documented in this file.
+All notable changes to Beach Hui - Hawaii Beach & Reef Safety Platform will be documented in this file.
+
+## [2.0.0] - 2025-01-11
+
+### Added
+- 🪸 **Reef Monitoring Dashboard**: Comprehensive 5-tab interface for reef health, marine life, hazards, education, and conservation
+- 🌊 **OpenWeather API Integration**: Real-time weather data with UV index, humidity, and 7-day forecasts
+- ☀️ **Extreme UV Monitoring**: Hawaii-specific UV warnings (index 11-12)
+- 🐢 **Marine Life Tracking**: Protected species monitoring (monk seals, sea turtles, whales, dolphins)
+- 🛡️ **Enhanced Security**: Rate limiting, CORS protection, security headers (HSTS, CSP, XSS)
+- 📊 **Comprehensive Data API**: Single endpoint for all beach data (`/api/beaches/[slug]/comprehensive`)
+- 👨‍👩‍👧‍👦 **Family Features**: Age-appropriate ratings, amenity info, accessibility details
+- 🎯 **Activity Ratings**: Conditions for swimming, surfing, snorkeling, diving, fishing
+- 📱 **PWA Capabilities**: Mobile-optimized with offline support
+- 📝 **Complete Documentation**: API docs, security policy, deployment guide
+
+### Changed
+- 🏷️ **Rebranding**: Now "Beach Hui - Powered by LeniLani Consulting"
+- 🎨 **UI Improvements**: Fixed header readability, always visible background
+- 📐 **Formatting**: Standardized all decimals to 1 decimal place
+- 🔧 **API Structure**: Unified data response format
+- 📧 **Contact Info**: All references updated to info@lenilani.com
+
+### Security
+- 🔐 **API Key Protection**: Removed hardcoded OpenWeather key (GitGuardian alert resolved)
+- 🔑 **Environment Variables**: All sensitive data now in env vars only
+- ✅ **Validation**: API key presence checking with graceful fallbacks
+- 🛡️ **Headers**: Implemented all security headers
+
+### Fixed
+- 🐛 **Beach Detail Page**: Resolved client-side rendering errors
+- 🔄 **React Query**: Fixed hydration issues with direct fetch
+- 🗄️ **Database**: Resolved connection timeout issues
+- 📱 **Mobile UI**: Header menu now always readable
 
 ## [Unreleased]
 

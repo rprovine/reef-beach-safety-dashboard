@@ -1,6 +1,9 @@
 {
   "name": "beach-hui",
-  "version": "1.0.0",
+  "version": "2.0.0",
+  "description": "Hawaii Beach & Reef Safety Platform - Real-time conditions, reef health monitoring, and marine conservation",
+  "author": "LeniLani Consulting <info@lenilani.com>",
+  "license": "MIT",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -10,7 +13,11 @@
     "lint": "next lint",
     "type-check": "tsc --noEmit",
     "test": "jest --watch",
-    "test:ci": "jest --ci"
+    "test:ci": "jest --ci",
+    "db:push": "prisma db push",
+    "db:seed": "node prisma/seed-beaches.js",
+    "db:migrate": "prisma migrate deploy",
+    "db:studio": "prisma studio"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.59.0",

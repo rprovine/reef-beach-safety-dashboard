@@ -12,7 +12,7 @@
 
 ## Base URL
 ```
-Production: Contact LeniLani Consulting for production access
+Production: https://beach-hui.vercel.app/api
 Development: http://localhost:3001/api
 ```
 
