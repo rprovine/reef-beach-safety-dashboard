@@ -57,7 +57,7 @@ export default function BeachDetailContent() {
   const { beach: beachData, currentConditions, forecast7Day, advisories, tides } = beach
 
   // Calculate trend from history
-  const getTrend = (current: number | null, history: number[] | null) => {
+  const getTrend = (current: number | null, history: number[] | null | undefined) => {
     if (!current || !history || history.length < 2) return null
     const avg = history.reduce((a, b) => a + b, 0) / history.length
     const diff = ((current - avg) / avg) * 100
@@ -107,7 +107,7 @@ export default function BeachDetailContent() {
       {advisories && advisories.length > 0 && (
         <div className="bg-red-50 border-b border-red-200">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            {advisories.map((advisory) => (
+            {advisories.map((advisory: any) => (
               <div key={advisory.id} className="flex items-start space-x-3">
                 <AlertTriangle className="h-5 w-5 text-red-600 mt-0.5" />
                 <div className="flex-1">
@@ -457,7 +457,7 @@ export default function BeachDetailContent() {
               <div className="bg-white rounded-xl shadow-sm p-6">
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">7-Day Forecast</h2>
                 <div className="space-y-3">
-                  {forecast7Day.map((day, idx) => (
+                  {forecast7Day.map((day: any, idx: number) => (
                     <div key={idx} className="flex items-center justify-between py-3 border-b last:border-0">
                       <div className="flex items-center space-x-3">
                         <div className="text-sm">
@@ -500,7 +500,7 @@ export default function BeachDetailContent() {
               <div className="bg-white rounded-xl shadow-sm p-6">
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">Today&apos;s Tides</h2>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {tides.slice(0, 4).map((tide, idx) => (
+                  {tides.slice(0, 4).map((tide: any, idx: number) => (
                     <div key={idx} className="text-center">
                       <div className={cn(
                         'text-xs font-medium px-2 py-1 rounded-full inline-block mb-2',

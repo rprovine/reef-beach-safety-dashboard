@@ -57,11 +57,14 @@ export default function BeachesContent() {
         
         // Fallback: check based on conditions for specific activities
         if (selectedActivity === 'swimming') {
-          return beach.currentConditions?.waveHeightFt && beach.currentConditions.waveHeightFt < 3
+          const waveHeight = beach.currentConditions?.waveHeightFt as number | undefined
+          return waveHeight !== undefined && waveHeight < 3
         } else if (selectedActivity === 'surfing') {
-          return beach.currentConditions?.waveHeightFt && beach.currentConditions.waveHeightFt >= 3
+          const waveHeight = beach.currentConditions?.waveHeightFt as number | undefined
+          return waveHeight !== undefined && waveHeight >= 3
         } else if (selectedActivity === 'snorkeling') {
-          return beach.currentConditions?.waveHeightFt && beach.currentConditions.waveHeightFt < 2
+          const waveHeight = beach.currentConditions?.waveHeightFt as number | undefined
+          return waveHeight !== undefined && waveHeight < 2
         }
         
         return true

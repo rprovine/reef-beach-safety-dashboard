@@ -46,15 +46,15 @@ export function BeachCard({ beach, selected, onClick, compact }: BeachCardProps)
           <div className="grid grid-cols-3 gap-2 text-xs text-gray-600">
             <div className="flex items-center gap-1">
               <Waves className="h-3 w-3" />
-              {beach.currentConditions.waveHeightFt || '--'} ft
+              {beach.currentConditions.waveHeightFt ? `${Number(beach.currentConditions.waveHeightFt).toFixed(1)}` : '--'} ft
             </div>
             <div className="flex items-center gap-1">
               <Wind className="h-3 w-3" />
-              {beach.currentConditions.windMph || '--'} mph
+              {beach.currentConditions.windMph ? `${Number(beach.currentConditions.windMph).toFixed(0)}` : '--'} mph
             </div>
             <div className="flex items-center gap-1">
               <Thermometer className="h-3 w-3" />
-              {beach.currentConditions.waterTempF || '--'}°F
+              {beach.currentConditions.waterTempF ? `${Number(beach.currentConditions.waterTempF).toFixed(0)}` : '--'}°F
             </div>
           </div>
         )}
@@ -142,7 +142,7 @@ export function BeachCard({ beach, selected, onClick, compact }: BeachCardProps)
                 <span className="text-sm">Updated</span>
               </div>
               <div className="font-semibold text-gray-900 text-xs">
-                {new Date(beach.currentConditions.timestamp || beach.lastUpdated).toLocaleTimeString('en-US', { 
+                {new Date((beach.currentConditions.timestamp as any) || beach.lastUpdated).toLocaleTimeString('en-US', { 
                   hour: '2-digit', 
                   minute: '2-digit' 
                 })}
