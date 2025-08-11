@@ -112,8 +112,9 @@ export default function LoginPage() {
               <Waves className="h-10 w-10 text-white" />
             </div>
           </Link>
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Reef Beach Safety Dashboard</h1>
-          <p className="text-gray-600">Hawaii's Premier Beach Safety & Conditions Platform</p>
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">Beach Hui</h1>
+          <p className="text-gray-600">Hawaii's Premier Beach Safety & Reef Conservation Platform</p>
+          <p className="text-sm text-gray-500 mt-1">Powered by LeniLani Consulting</p>
         </div>
 
         <div className="grid lg:grid-cols-5 gap-8">

@@ -1,5 +1,6 @@
 # Beach Hui API Documentation
-*Powered by LeniLani Consulting*
+*Developed by LeniLani Consulting*
+*Contact: info@lenilani.com*
 
 ## Table of Contents
 - [Authentication](#authentication)
@@ -11,7 +12,7 @@
 
 ## Base URL
 ```
-Production: https://beachhui.com/api
+Production: Contact LeniLani Consulting for production access
 Development: http://localhost:3001/api
 ```
 
@@ -425,6 +426,7 @@ curl https://beachhui.com/api/beaches/waikiki-beach \
 ## Support
 
 For API support and questions:
-- Email: api@beachhui.com
-- GitHub Issues: https://github.com/beachhui/api-issues
-- Documentation: https://docs.beachhui.com
+- Email: info@lenilani.com
+- Company: LeniLani Consulting
+- Website: https://lenilani.com
+- GitHub: https://github.com/rprovine/reef-beach-safety-dashboard

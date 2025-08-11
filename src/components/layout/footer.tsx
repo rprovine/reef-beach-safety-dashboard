@@ -110,11 +110,11 @@ export function Footer() {
             <ul className="mt-4 space-y-3">
               <li className="flex items-center space-x-2 text-gray-600">
                 <Mail className="h-4 w-4" />
-                <span>aloha@beachhui.com</span>
+                <span>info@lenilani.com</span>
               </li>
               <li className="flex items-center space-x-2 text-gray-600">
                 <Phone className="h-4 w-4" />
-                <span>(808) 555-REEF</span>
+                <span>info@lenilani.com</span>
               </li>
               <li className="flex items-start space-x-2 text-gray-600">
                 <MapPin className="h-4 w-4 mt-0.5" />
@@ -128,7 +128,7 @@ export function Footer() {
         <div className="mt-8 pt-8 border-t border-gray-200">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <p className="text-sm text-gray-500">
-              © {new Date().getFullYear()} Beach Hui - LeniLani Consulting. All rights reserved.
+              © {new Date().getFullYear()} LeniLani Consulting. All rights reserved.
             </p>
             <div className="flex space-x-6">
               <Link href="/privacy" className="text-sm text-gray-500 hover:text-ocean-600">

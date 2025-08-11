@@ -58,8 +58,8 @@ export default function BeachDetailContent() {
 
   const { beach: beachData, currentConditions, forecast7Day, advisories, tides } = beach
   
-  // Generate reef data for this beach
-  const reefData = generateReefData(slug, beachData.name)
+  // Generate reef data for this beach (only if beachData exists)
+  const reefData = beachData ? generateReefData(slug, beachData.name) : null
 
   // Calculate trend from history
   const getTrend = (current: number | null, history: number[] | null | undefined) => {
@@ -530,10 +530,12 @@ export default function BeachDetailContent() {
             )}
 
             {/* Reef Dashboard */}
-            <ReefDashboard 
-              beachName={beachData.name}
-              reefData={reefData}
-            />
+            {reefData && beachData && (
+              <ReefDashboard 
+                beachName={beachData.name}
+                reefData={reefData}
+              />
+            )}
           </div>
 
           {/* Sidebar */}

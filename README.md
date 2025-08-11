@@ -429,10 +429,10 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 
 ## 📞 Support
 
-- **Documentation**: [https://docs.beachhui.com](https://docs.beachhui.com)
-- **Email**: aloha@beachhui.com
+- **Documentation**: [Beach Hui Docs](https://github.com/rprovine/reef-beach-safety-dashboard/wiki)
+- **Email**: info@lenilani.com
+- **Website**: [https://lenilani.com](https://lenilani.com)
 - **GitHub Issues**: [Report bugs here](https://github.com/rprovine/reef-beach-safety-dashboard/issues)
-- **API Status**: [https://status.beachhui.com](https://status.beachhui.com)
 
 ## 🌺 Mahalo
 
@@ -445,4 +445,6 @@ Special thanks to:
 
 ---
 
-**Built with 🌊 in Hawaii for safer beach experiences worldwide.**
+**Built with 🌊 by LeniLani Consulting for safer beach experiences in Hawaii.**
+
+**Contact**: info@lenilani.com | [lenilani.com](https://lenilani.com)

@@ -1,8 +1,9 @@
 # Security Policy - Beach Hui
+*Managed by LeniLani Consulting*
 
 ## Reporting Security Vulnerabilities
 
-If you discover a security vulnerability, please email security@beachhui.com with:
+If you discover a security vulnerability, please email info@lenilani.com with:
 - Description of the vulnerability
 - Steps to reproduce
 - Potential impact
@@ -227,9 +228,9 @@ npm update
 6. **Review** - Post-incident analysis
 
 #### Contact Information
-- Security Team: security@beachhui.com
-- Emergency: +1-808-XXX-XXXX
-- Status Page: https://status.beachhui.com
+- Security Team: info@lenilani.com
+- Company: LeniLani Consulting
+- Website: https://lenilani.com
 
 ### Compliance
 
@@ -282,4 +283,5 @@ npm update
 
 **Last Updated**: January 2024
 **Next Review**: April 2024
-**Contact**: security@beachhui.com
+**Contact**: info@lenilani.com
+**Company**: LeniLani Consulting
