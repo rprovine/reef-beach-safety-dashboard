@@ -4,37 +4,27 @@ import Image from 'next/image'
 
 const teamMembers = [
   {
-    name: 'Kai Leilani',
+    name: 'Reno Provine',
     role: 'Founder & CEO',
-    bio: 'Marine biologist with 15 years of experience in reef conservation',
-    image: '🌺'
+    bio: 'Visionary leader passionate about ocean safety and marine conservation',
+    image: '🌊'
   },
   {
-    name: 'Makoa Wong',
-    role: 'Head of Safety',
-    bio: 'Former lifeguard captain with expertise in ocean safety',
-    image: '🏄'
+    name: 'Shayna Provine',
+    role: 'Chief Technology Officer',
+    bio: 'Tech innovator driving our platform\'s cutting-edge features',
+    image: '💻'
   },
   {
-    name: 'Leilani Pua',
-    role: 'Marine Data Scientist',
-    bio: 'PhD in Marine Biology, specializing in coral reef ecosystems',
-    image: '🐠'
-  },
-  {
-    name: 'Keoni Silva',
-    role: 'Community Manager',
-    bio: 'Connecting beach lovers and building our ohana',
-    image: '🤙'
+    name: 'Gordon Powers',
+    role: 'Chief Revenue Officer',
+    bio: 'Strategic growth expert expanding Beach Hui across Hawaii',
+    image: '📈'
   }
 ]
 
 const milestones = [
-  { year: '2020', event: 'Beach Hui founded in Honolulu' },
-  { year: '2021', event: 'Launched real-time beach monitoring' },
-  { year: '2022', event: 'Added reef health tracking' },
-  { year: '2023', event: 'Reached 50,000 active users' },
-  { year: '2024', event: 'AI Beach Buddy launched' }
+  { year: '2024', event: 'Beach Hui launches - Revolutionizing beach safety in Hawaii' }
 ]
 
 export default function AboutPage() {
@@ -144,7 +134,7 @@ export default function AboutPage() {
       {/* Team Section */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <h2 className="text-3xl font-bold text-center text-gray-900 mb-12">Meet Our Team</h2>
-        <div className="grid md:grid-cols-4 gap-8">
+        <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
           {teamMembers.map((member) => (
             <div key={member.name} className="text-center">
               <div className="text-6xl mb-4">{member.image}</div>
@@ -176,6 +166,9 @@ export default function AboutPage() {
                 </div>
               </div>
             ))}
+            <div className="text-center mt-8">
+              <p className="text-gray-600 italic">More milestones coming soon as we grow...</p>
+            </div>
           </div>
         </div>
       </div>
