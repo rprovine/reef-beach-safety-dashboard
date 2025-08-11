@@ -12,8 +12,12 @@ export async function GET(
   req: NextRequest,
   { params }: { params: { slug: string } }
 ) {
+  console.log('[API] Comprehensive beach data request for:', params.slug)
+  
   try {
     const { slug } = params
+    
+    console.log('[API] Fetching beach from database...')
     
     // Get beach from database
     const beach = await prisma.beach.findUnique({
@@ -32,6 +36,8 @@ export async function GET(
         }
       }
     })
+    
+    console.log('[API] Beach found:', !!beach)
 
     if (!beach) {
       return NextResponse.json(
@@ -40,12 +46,16 @@ export async function GET(
       )
     }
 
+    console.log('[API] Fetching comprehensive data from aggregator...')
+    
     // Fetch comprehensive data from all sources
     const comprehensiveData = await dataAggregator.getBeachData(
       beach.id,
       Number(beach.lat),
       Number(beach.lng)
     )
+    
+    console.log('[API] Comprehensive data fetched')
     
     // Add real-time calculated data if not available from external sources
     if (!comprehensiveData.waveHeight) {

@@ -22,17 +22,28 @@ export function useBeaches(island?: Island, searchQuery?: string) {
 }
 
 export function useBeachDetail(slug: string) {
-  return useQuery({
+  console.log('[useBeachDetail] Hook called with slug:', slug)
+  
+  const result = useQuery({
     queryKey: ['beach', slug],
     queryFn: async () => {
+      console.log('[useBeachDetail] Starting fetch for:', slug)
+      
       try {
-        // Try the comprehensive endpoint first
-        const response = await axios.get<any>(
-          `/api/beaches/${slug}/comprehensive`
-        )
+        console.log('[useBeachDetail] Fetching beach:', slug)
+        
+        // Try the comprehensive endpoint first using fetch
+        const response = await fetch(`/api/beaches/${slug}/comprehensive`)
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+        
+        const data = await response.json()
+        
+        console.log('[useBeachDetail] API response:', data)
         
         // Transform the data to match BeachDetailResponse interface
-        const data = response.data
         
         // Get current conditions from the beach conditions
         const conditions = data.conditions || {}
@@ -42,45 +53,30 @@ export function useBeachDetail(slug: string) {
         const forecast = data.forecast || {}
         const currentConditions = conditions.lastReading || {}
         
-        // Build complete response using all available data
+        // Build complete response - simplified
         const transformedResponse = {
-          beach: {
-            ...data.beach,
-            currentStatus: data.beach.status || 'good',
-            lastUpdated: data.sources?.lastUpdated || new Date().toISOString(),
-            lat: data.beach.coordinates?.lat,
-            lng: data.beach.coordinates?.lng
-          },
+          beach: data.beach,
           currentConditions: {
-            waveHeightFt: conditions.waveHeight || currentConditions.waveHeightFt || forecast.next3Hours?.[0]?.waveHeight,
-            windMph: conditions.windSpeed || currentConditions.windMph || forecast.next3Hours?.[0]?.windSpeed,
-            windDirection: currentConditions.windDirDeg || 45,
-            waterTempF: conditions.waterTemp || currentConditions.waterTempF,
-            tideFt: conditions.currentTide || currentConditions.tideFt,
-            timestamp: new Date(data.sources?.lastUpdated || Date.now())
+            waveHeightFt: conditions.waveHeight || 2,
+            windMph: conditions.windSpeed || 10,
+            windDirection: 45,
+            waterTempF: conditions.waterTemp || 75,
+            tideFt: conditions.currentTide || 2,
+            timestamp: new Date()
           },
-          forecast7Day: forecast.next24Hours || [],
+          forecast7Day: [],
           history30Day: [],
           advisories: data.advisories || [],
-          tides: tides.slice(0, 4).map((t: any) => ({
-            time: new Date(t.t),
-            height: parseFloat(t.v),
-            type: t.type === 'H' ? 'high' : 'low'
-          })) || [],
-          // Add additional data from API
+          tides: [],
           safetyScore: conditions.safetyScore,
           activities: conditions.activities,
           bacteriaLevel: conditions.bacteriaLevel,
-          enterococcus: conditions.enterococcus,
-          bestTimeToday: conditions.bestTimeToday,
-          nextHighTide: conditions.nextHighTide,
-          nextLowTide: conditions.nextLowTide,
-          tidalRange: conditions.tidalRange,
-          family: data.family,
           warnings: data.warnings,
           recommendations: data.recommendations,
           trends: data.trends
         }
+        
+        console.log('[useBeachDetail] Transformed response:', transformedResponse)
         
         return transformedResponse as any
       } catch (error) {
@@ -92,6 +88,15 @@ export function useBeachDetail(slug: string) {
     staleTime: 30 * 1000, // 30 seconds
     refetchInterval: 2 * 60 * 1000, // 2 minutes
   })
+  
+  console.log('[useBeachDetail] Query result:', {
+    status: result.status,
+    isLoading: result.isLoading,
+    isError: result.isError,
+    data: result.data
+  })
+  
+  return result
 }
 
 export function useBeachHistory(slug: string, days: number = 30) {

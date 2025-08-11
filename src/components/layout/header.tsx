@@ -57,7 +57,7 @@ export function Header() {
         'fixed top-0 z-50 w-full transition-all duration-300',
         scrolled
           ? 'bg-white/95 backdrop-blur-md shadow-md'
-          : 'bg-transparent'
+          : 'bg-white/90 backdrop-blur-sm shadow-sm'
       )}
     >
       <nav className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -72,16 +72,10 @@ export function Header() {
                 <div className="absolute -bottom-1 -right-1 h-3 w-3 rounded-full bg-safe border-2 border-white"></div>
               </div>
               <div className="flex flex-col">
-                <span className={cn(
-                  "font-display font-bold text-xl",
-                  scrolled ? "text-gray-900" : "text-white"
-                )}>
+                <span className="font-display font-bold text-xl text-gray-900">
                   Beach Hui
                 </span>
-                <span className={cn(
-                  "text-xs -mt-1",
-                  scrolled ? "text-gray-500" : "text-white/70"
-                )}>
+                <span className="text-xs -mt-1 text-gray-500">
                   by LeniLani Consulting
                 </span>
               </div>
@@ -97,10 +91,8 @@ export function Header() {
                 className={cn(
                   'font-medium transition-colors',
                   pathname === item.href
-                    ? scrolled ? 'text-ocean-600' : 'text-white'
-                    : scrolled
-                    ? 'text-gray-700 hover:text-ocean-600'
-                    : 'text-white/80 hover:text-white'
+                    ? 'text-ocean-600'
+                    : 'text-gray-700 hover:text-ocean-600'
                 )}
               >
                 {item.name}
@@ -114,18 +106,12 @@ export function Header() {
               <>
                 <Link
                   href="/dashboard"
-                  className={cn(
-                    "font-medium",
-                    scrolled ? "text-gray-700 hover:text-ocean-600" : "text-white/80 hover:text-white"
-                  )}
+                  className="font-medium text-gray-700 hover:text-ocean-600"
                 >
                   Dashboard
                 </Link>
                 <div className="relative group">
-                  <button className={cn(
-                    "flex items-center space-x-2 p-2 rounded-lg transition-colors",
-                    scrolled ? "hover:bg-gray-100" : "hover:bg-white/10"
-                  )}>
+                  <button className="flex items-center space-x-2 p-2 rounded-lg transition-colors hover:bg-gray-100">
                     <User className="h-5 w-5" />
                   </button>
                   <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 hidden group-hover:block">
@@ -149,10 +135,7 @@ export function Header() {
               <>
                 <Link
                   href="/auth/signin"
-                  className={cn(
-                    "font-medium transition-colors",
-                    scrolled ? "text-gray-700 hover:text-ocean-600" : "text-white/80 hover:text-white"
-                  )}
+                  className="font-medium transition-colors text-gray-700 hover:text-ocean-600"
                 >
                   Sign In
                 </Link>
@@ -170,10 +153,7 @@ export function Header() {
           <div className="flex md:hidden">
             <button
               type="button"
-              className={cn(
-                "-m-2.5 inline-flex items-center justify-center rounded-md p-2.5",
-                scrolled ? "text-gray-700" : "text-white"
-              )}
+              className="-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 text-gray-700"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
               <span className="sr-only">Open main menu</span>

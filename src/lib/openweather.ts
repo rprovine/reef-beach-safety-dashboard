@@ -3,8 +3,13 @@
 
 import axios from 'axios'
 
-const API_KEY = process.env.OPENWEATHER_API_KEY || '6e2b2672dc3061a2c1d764c086024c9c'
+const API_KEY = process.env.OPENWEATHER_API_KEY
 const BASE_URL = 'https://api.openweathermap.org/data/2.5'
+
+// Warning if API key is not set
+if (!API_KEY) {
+  console.warn('[OpenWeather] API key not configured. Weather data will not be available.')
+}
 
 export interface WeatherData {
   temperature: number // Celsius
@@ -51,6 +56,11 @@ export function getWindDirection(degrees: number): string {
 
 // Fetch current weather for coordinates
 export async function getCurrentWeather(lat: number, lon: number): Promise<WeatherData | null> {
+  if (!API_KEY) {
+    console.warn('[OpenWeather] Cannot fetch weather: API key not configured')
+    return null
+  }
+  
   try {
     const response = await axios.get(`${BASE_URL}/weather`, {
       params: {
@@ -85,6 +95,11 @@ export async function getCurrentWeather(lat: number, lon: number): Promise<Weath
 
 // Fetch UV index for coordinates
 export async function getUVIndex(lat: number, lon: number): Promise<number | null> {
+  if (!API_KEY) {
+    console.warn('[OpenWeather] Cannot fetch UV index: API key not configured')
+    return null
+  }
+  
   try {
     const response = await axios.get(`${BASE_URL}/uvi`, {
       params: {
@@ -104,6 +119,11 @@ export async function getUVIndex(lat: number, lon: number): Promise<number | nul
 
 // Fetch marine weather (requires One Call API - may need subscription)
 export async function getMarineWeather(lat: number, lon: number): Promise<MarineWeatherData | null> {
+  if (!API_KEY) {
+    console.warn('[OpenWeather] Cannot fetch marine weather: API key not configured')
+    return null
+  }
+  
   try {
     // Try One Call API 3.0 (requires subscription)
     const response = await axios.get(`https://api.openweathermap.org/data/3.0/onecall`, {

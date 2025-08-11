@@ -1,5 +1,6 @@
 'use client'
 
+import React from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { useBeachDetail, useBeachHistory } from '@/hooks/use-beaches'
@@ -20,9 +21,72 @@ export default function BeachDetailContent() {
   const params = useParams()
   const slug = params.slug as string
   
-  const { data: beach, isLoading, error } = useBeachDetail(slug)
+  const [beach, setBeach] = React.useState<any>(null)
+  const [isLoading, setIsLoading] = React.useState(true)
+  const [error, setError] = React.useState<any>(null)
+  
+  console.log('Beach slug:', slug)
+  
+  // Use direct fetch instead of the hook for now
+  React.useEffect(() => {
+    console.log('[BeachDetailContent] Fetching beach data...')
+    setIsLoading(true)
+    
+    fetch(`/api/beaches/${slug}/comprehensive`)
+      .then(res => res.json())
+      .then(data => {
+        console.log('[BeachDetailContent] Got data:', data)
+        
+        // Transform data
+        const transformedData = {
+          beach: data.beach,
+          currentConditions: {
+            waveHeightFt: data.conditions?.waveHeight || 2,
+            windMph: data.conditions?.windSpeed || 10,
+            windDirection: 45,
+            waterTempF: data.conditions?.waterTemp || 75,
+            tideFt: data.conditions?.currentTide || 2,
+            timestamp: new Date()
+          },
+          forecast7Day: [],
+          advisories: data.advisories || [],
+          tides: [],
+          safetyScore: data.conditions?.safetyScore,
+          activities: data.conditions?.activities,
+          bacteriaLevel: data.conditions?.bacteriaLevel,
+          warnings: data.warnings,
+          recommendations: data.recommendations,
+          trends: data.trends
+        }
+        
+        setBeach(transformedData)
+        setIsLoading(false)
+      })
+      .catch(err => {
+        console.error('[BeachDetailContent] Fetch error:', err)
+        setError(err)
+        setIsLoading(false)
+      })
+  }, [slug])
+  
   const { data: history } = useBeachHistory(slug, 7)
   const beachDetails = beachDetailsService.getBeachDetails(slug)
+  
+  console.log('Beach data:', beach)
+  console.log('Loading:', isLoading)
+  console.log('Error:', error)
+  
+  // More detailed logging
+  if (beach) {
+    console.log('Beach structure:', {
+      hasBeach: !!beach.beach,
+      hasCurrentConditions: !!beach.currentConditions,
+      hasForecast: !!beach.forecast7Day,
+      hasAdvisories: !!beach.advisories,
+      hasTides: !!beach.tides,
+      beachData: beach.beach
+    })
+  }
   
   // Extract all additional data from comprehensive API
   const safetyScore = beach?.safetyScore
@@ -642,10 +706,7 @@ function ConditionCard({ icon: Icon, label, value, unit, trend }: ConditionCardP
   const formatValue = (val: number | null, unitType: string) => {
     if (val === null) return '--'
     
-    // Format based on unit type
-    if (unitType === 'ft') return Number(val).toFixed(1)
-    if (unitType === 'mph') return Number(val).toFixed(0)
-    if (unitType === '°F') return Number(val).toFixed(0)
+    // Always use 1 decimal place
     return Number(val).toFixed(1)
   }
 

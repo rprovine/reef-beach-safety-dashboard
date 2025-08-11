@@ -1,7 +1,13 @@
 // Test OpenWeather API with Hawaii beach coordinates
 const axios = require('axios')
+require('dotenv').config({ path: '.env.local' })
 
-const API_KEY = '6e2b2672dc3061a2c1d764c086024c9c'
+const API_KEY = process.env.OPENWEATHER_API_KEY
+
+if (!API_KEY) {
+  console.error('❌ OPENWEATHER_API_KEY not found in environment variables')
+  process.exit(1)
+}
 
 // Popular Hawaii beaches
 const beaches = [

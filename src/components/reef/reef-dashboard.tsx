@@ -174,7 +174,7 @@ export function ReefDashboard({ beachName, reefData }: ReefDashboardProps) {
                   <div className={`text-lg font-semibold ${
                     reefData.health.oceanAcidification.pH >= 8.0 ? 'text-green-600' : 'text-yellow-600'
                   }`}>
-                    {reefData.health.oceanAcidification.pH.toFixed(2)}
+                    {reefData.health.oceanAcidification.pH.toFixed(1)}
                   </div>
                   <div className="text-xs text-gray-500">
                     {reefData.health.oceanAcidification.trend}
