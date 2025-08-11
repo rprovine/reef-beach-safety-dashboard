@@ -2,6 +2,8 @@
 
 **The most comprehensive beach safety platform for Hawaii**
 
+<!-- Updated to trigger redeploy -->
+
 Making every beach day a safe beach day through real-time data, community intelligence, and family-focused features.
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-Available-green)](http://localhost:3001)
