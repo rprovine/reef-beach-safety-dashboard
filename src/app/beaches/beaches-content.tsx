@@ -148,6 +148,7 @@ export default function BeachesContent() {
                 </button>
               </div>
             </div>
+          </div>
 
             {/* Filters */}
             <div className="flex flex-col sm:flex-row gap-4">
