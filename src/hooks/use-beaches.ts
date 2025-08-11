@@ -38,23 +38,27 @@ export function useBeachDetail(slug: string) {
         const conditions = data.conditions || {}
         const tides = conditions.tides || []
         
+        // Extract real conditions from the comprehensive data
+        const forecast = data.forecast || {}
+        const currentConditions = conditions.lastReading || {}
+        
         return {
           beach: {
             ...data.beach,
-            currentStatus: 'good', // Default status
+            currentStatus: data.beach.status || 'good',
             lastUpdated: data.sources?.lastUpdated || new Date().toISOString(),
-            lat: data.beach.coordinates?.lat || 0,
-            lng: data.beach.coordinates?.lng || 0
+            lat: data.beach.coordinates?.lat,
+            lng: data.beach.coordinates?.lng
           },
           currentConditions: {
-            waveHeightFt: 2.5, // Mock data for now
-            windMph: 12, 
-            windDirection: 45,
-            waterTempF: 78,
-            tideFt: conditions.currentTide || 2.1,
+            waveHeightFt: currentConditions.waveHeightFt || forecast.next3Hours?.[0]?.waveHeight || null,
+            windMph: currentConditions.windMph || forecast.next3Hours?.[0]?.windSpeed || null,
+            windDirection: currentConditions.windDirDeg || 45,
+            waterTempF: currentConditions.waterTempF || conditions.waterTemp || null,
+            tideFt: conditions.currentTide || currentConditions.tideFt || null,
             timestamp: new Date(data.sources?.lastUpdated || Date.now())
           },
-          forecast7Day: [],
+          forecast7Day: forecast.next24Hours || [],
           history30Day: [],
           advisories: data.advisories || [],
           tides: tides.slice(0, 4).map((t: any) => ({
