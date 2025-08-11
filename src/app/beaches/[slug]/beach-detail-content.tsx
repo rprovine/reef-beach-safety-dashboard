@@ -768,6 +768,7 @@ export default function BeachDetailContent() {
     </div>
   )
 }
+}
 
 interface ConditionCardProps {
   icon: React.ElementType
