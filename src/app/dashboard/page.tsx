@@ -24,66 +24,49 @@ const tierFeatures = {
     borderColor: 'border-gray-300',
     features: [
       { name: 'View Beach Conditions', available: true, icon: Map },
-      { name: '3 Favorite Beaches', available: true, icon: Heart },
-      { name: 'Basic Alerts', available: true, icon: Bell },
-      { name: 'Advanced Alerts', available: false, icon: Bell },
+      { name: '3 Beach Alerts', available: true, icon: Bell },
+      { name: 'Basic Weather Data', available: true, icon: Calendar },
+      { name: 'Community Reports', available: true, icon: Users },
       { name: '7-Day Forecast', available: false, icon: Calendar },
-      { name: 'Marine Life Calendar', available: false, icon: Fish },
+      { name: 'Historical Trends', available: false, icon: TrendingUp },
+      { name: 'SMS/Push Alerts', available: false, icon: Siren },
       { name: 'API Access', available: false, icon: Code },
-      { name: 'Embeddable Widgets', available: false, icon: Globe },
-      { name: 'Emergency Features', available: false, icon: Siren },
-      { name: 'Offline Mode', available: false, icon: Download }
+      { name: 'Export Data', available: false, icon: Download },
+      { name: 'Priority Support', available: false, icon: Zap }
     ]
   },
-  consumer: {
-    icon: Shield,
-    color: 'bg-blue-100 text-blue-800',
-    borderColor: 'border-blue-300',
+  pro: {
+    icon: Crown,
+    color: 'bg-gradient-to-r from-yellow-400 to-yellow-500 text-white',
+    borderColor: 'border-yellow-300',
     features: [
       { name: 'View Beach Conditions', available: true, icon: Map },
-      { name: 'Unlimited Favorites', available: true, icon: Heart },
-      { name: 'Advanced Alerts', available: true, icon: Bell },
+      { name: 'Unlimited Alerts', available: true, icon: Bell },
       { name: '7-Day Forecast', available: true, icon: Calendar },
-      { name: 'Marine Life Calendar', available: true, icon: Fish },
+      { name: 'Historical Trends', available: true, icon: TrendingUp },
+      { name: 'SMS/Push Alerts', available: true, icon: Siren },
       { name: 'Community Reports', available: true, icon: Users },
-      { name: 'API Access', available: false, icon: Code },
-      { name: 'Embeddable Widgets', available: false, icon: Globe },
-      { name: 'Emergency Features', available: true, icon: Siren },
-      { name: 'Offline Mode', available: true, icon: Download }
+      { name: 'API Access (100/day)', available: true, icon: Code },
+      { name: 'Export Data', available: true, icon: Download },
+      { name: 'Priority Support', available: true, icon: Zap },
+      { name: 'Advanced Analytics', available: true, icon: BarChart3 }
     ]
   },
-  business: {
-    icon: Building2,
-    color: 'bg-purple-100 text-purple-800',
+  admin: {
+    icon: Shield,
+    color: 'bg-gradient-to-r from-purple-500 to-purple-600 text-white',
     borderColor: 'border-purple-300',
     features: [
-      { name: 'View Beach Conditions', available: true, icon: Map },
-      { name: 'Unlimited Favorites', available: true, icon: Heart },
-      { name: 'Advanced Alerts', available: true, icon: Bell },
-      { name: '7-Day Forecast', available: true, icon: Calendar },
-      { name: 'Marine Life Calendar', available: true, icon: Fish },
-      { name: 'Community Reports', available: true, icon: Users },
-      { name: 'API Access (1000 req/day)', available: true, icon: Code },
-      { name: 'Embeddable Widgets', available: true, icon: Globe },
-      { name: 'Analytics Dashboard', available: true, icon: BarChart3 },
-      { name: 'Priority Support', available: true, icon: Zap }
-    ]
-  },
-  enterprise: {
-    icon: Users,
-    color: 'bg-orange-100 text-orange-800',
-    borderColor: 'border-orange-300',
-    features: [
-      { name: 'Everything in Business', available: true, icon: Crown },
+      { name: 'Everything in Pro', available: true, icon: Crown },
+      { name: 'Edit Beach Data', available: true, icon: Building2 },
+      { name: 'Manage Reports', available: true, icon: Users },
+      { name: 'User Management', available: true, icon: Users },
+      { name: 'System Analytics', available: true, icon: BarChart3 },
       { name: 'Unlimited API Access', available: true, icon: Code },
-      { name: 'Custom Integrations', available: true, icon: Zap },
-      { name: 'White Label Options', available: true, icon: Globe },
-      { name: 'SLA Guarantee', available: true, icon: Shield },
-      { name: 'Dedicated Support', available: true, icon: Star },
-      { name: 'Custom Data Sources', available: true, icon: BarChart3 },
-      { name: 'Advanced Analytics', available: true, icon: TrendingUp },
-      { name: 'Team Management', available: true, icon: Users },
-      { name: 'Custom Features', available: true, icon: Crown }
+      { name: 'Data Source Config', available: true, icon: Globe },
+      { name: 'Emergency Overrides', available: true, icon: Siren },
+      { name: 'Custom Features', available: true, icon: Star },
+      { name: 'Direct Support', available: true, icon: Zap }
     ]
   }
 }
@@ -107,20 +90,29 @@ export default function DashboardPage() {
 
   useEffect(() => {
     // Check if user is logged in
-    const userData = localStorage.getItem('user')
-    if (!userData) {
-      router.push('/login')
+    const token = localStorage.getItem('auth-token')
+    const email = localStorage.getItem('user-email')
+    const tier = localStorage.getItem('user-tier')
+    
+    if (!token || !email || !tier) {
+      router.push('/auth/signin')
       return
     }
     
-    setUser(JSON.parse(userData))
+    setUser({
+      email,
+      tier,
+      name: email.split('@')[0], // Use email prefix as name
+      features: tierFeatures[tier as keyof typeof tierFeatures]?.features.filter(f => f.available).map(f => f.name) || []
+    })
     setLoading(false)
   }, [router])
 
   const handleLogout = () => {
-    localStorage.removeItem('user')
-    localStorage.removeItem('token')
-    router.push('/login')
+    localStorage.removeItem('auth-token')
+    localStorage.removeItem('user-email')
+    localStorage.removeItem('user-tier')
+    router.push('/auth/signin')
   }
 
   if (loading) {
@@ -193,41 +185,29 @@ export default function DashboardPage() {
                   <span className="text-sm font-medium text-gray-900">View Beaches</span>
                 </Link>
                 
-                <button
-                  className={`p-4 rounded-lg transition-colors text-center group ${
-                    user.tier !== 'free' 
-                      ? 'bg-blue-50 hover:bg-blue-100' 
-                      : 'bg-gray-50 cursor-not-allowed opacity-50'
-                  }`}
-                  disabled={user.tier === 'free'}
+                <Link
+                  href="/alerts"
+                  className="p-4 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors text-center group"
                 >
-                  <Bell className="h-6 w-6 text-blue-600 mx-auto mb-2" />
+                  <Bell className="h-6 w-6 text-blue-600 mx-auto mb-2 group-hover:scale-110 transition-transform" />
                   <span className="text-sm font-medium text-gray-900">Manage Alerts</span>
-                </button>
+                </Link>
                 
-                <button
-                  className={`p-4 rounded-lg transition-colors text-center group ${
-                    user.tier === 'business' || user.tier === 'enterprise'
-                      ? 'bg-purple-50 hover:bg-purple-100' 
-                      : 'bg-gray-50 cursor-not-allowed opacity-50'
-                  }`}
-                  disabled={user.tier !== 'business' && user.tier !== 'enterprise'}
+                <Link
+                  href="/community"
+                  className="p-4 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors text-center group"
                 >
-                  <Globe className="h-6 w-6 text-purple-600 mx-auto mb-2" />
-                  <span className="text-sm font-medium text-gray-900">Widgets</span>
-                </button>
+                  <Users className="h-6 w-6 text-purple-600 mx-auto mb-2 group-hover:scale-110 transition-transform" />
+                  <span className="text-sm font-medium text-gray-900">Community</span>
+                </Link>
                 
-                <button
-                  className={`p-4 rounded-lg transition-colors text-center group ${
-                    user.tier === 'business' || user.tier === 'enterprise'
-                      ? 'bg-green-50 hover:bg-green-100' 
-                      : 'bg-gray-50 cursor-not-allowed opacity-50'
-                  }`}
-                  disabled={user.tier !== 'business' && user.tier !== 'enterprise'}
+                <Link
+                  href="/analytics"
+                  className="p-4 bg-green-50 hover:bg-green-100 rounded-lg transition-colors text-center group"
                 >
-                  <BarChart3 className="h-6 w-6 text-green-600 mx-auto mb-2" />
+                  <BarChart3 className="h-6 w-6 text-green-600 mx-auto mb-2 group-hover:scale-110 transition-transform" />
                   <span className="text-sm font-medium text-gray-900">Analytics</span>
-                </button>
+                </Link>
               </div>
             </div>
 
@@ -342,22 +322,22 @@ export default function DashboardPage() {
                 ))}
               </div>
               
-              {user.tier !== 'enterprise' && (
-                <button className="w-full mt-4 px-4 py-2 bg-gradient-to-r from-ocean-500 to-ocean-600 text-white rounded-lg hover:from-ocean-600 hover:to-ocean-700 transition-all font-medium">
-                  Upgrade Plan
-                </button>
+              {user.tier === 'free' && (
+                <Link href="/auth/signin" className="block w-full mt-4 px-4 py-2 bg-gradient-to-r from-ocean-500 to-ocean-600 text-white rounded-lg hover:from-ocean-600 hover:to-ocean-700 transition-all font-medium text-center">
+                  Upgrade to Pro
+                </Link>
               )}
             </div>
 
-            {/* API Usage (Business/Enterprise) */}
-            {(user.tier === 'business' || user.tier === 'enterprise') && (
+            {/* API Usage (Pro/Admin) */}
+            {(user.tier === 'pro' || user.tier === 'admin') && (
               <div className="bg-white rounded-xl shadow-sm p-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">API Usage</h3>
                 <div className="space-y-3">
                   <div>
                     <div className="flex justify-between text-sm mb-1">
                       <span className="text-gray-600">Requests Today</span>
-                      <span className="font-medium">247 / {user.tier === 'enterprise' ? '∞' : '1000'}</span>
+                      <span className="font-medium">247 / {user.tier === 'admin' ? '∞' : '100'}</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
                       <div className="bg-ocean-600 h-2 rounded-full" style={{ width: '24.7%' }}></div>

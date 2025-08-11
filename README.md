@@ -23,13 +23,16 @@ Beach Hui ("beach community" in Hawaiian) is a comprehensive platform combining 
 | **Free Tier** | ✅ Essential safety always free | ❌ Subscription required |
 | **Multi-Activity** | ✅ Swimming, diving, snorkeling, fishing | ❌ Surfing only |
 
-## 🚀 What's New (January 2024)
+## 🚀 What's New (January 2025)
 
+- ✅ **Tiered Access System**: Free, Pro, and Admin tiers with feature gating
+- ✅ **Community Reporting**: Real-time beach reports from users
+- ✅ **Advanced Analytics**: Beach trends, visitor tracking, safety metrics
+- ✅ **Alert Management**: Custom beach alerts with email/SMS notifications
 - ✅ **Live Weather Integration**: Real-time data from OpenWeather API
 - ✅ **Extreme UV Monitoring**: Hawaii's UV index 11-12 warnings
 - ✅ **Comprehensive Reef Dashboard**: 5-tab interface with health, hazards, and conservation
-- ✅ **Enhanced Security**: Rate limiting, security headers, CORS protection
-- ✅ **7-Day Forecasts**: Detailed weather predictions for all beaches
+- ✅ **7-Day Forecasts**: Pro tier exclusive weather predictions
 - ✅ **Marine Life Tracking**: Monk seals, sea turtles, whales, dolphins
 
 ## ✨ Core Features
@@ -53,10 +56,12 @@ Beach Hui ("beach community" in Hawaiian) is a comprehensive platform combining 
 - **Educational features**: Tide pools, marine life spotting
 
 ### 📱 **Smart Features**
-- **Community reports**: Real-time updates from beachgoers
-- **Personalized alerts**: Custom notifications for favorite beaches
+- **Community reports**: Real-time updates from beachgoers with verification
+- **Personalized alerts**: Custom notifications for favorite beaches (email/SMS for Pro)
 - **Activity ratings**: Best conditions for swimming, diving, fishing
 - **Local insights**: Tips from Hawaii residents
+- **Historical trends**: 30-day analytics for Pro members
+- **Export capabilities**: Download beach data and reports (Pro)
 
 ## 🗺️ Beach Coverage
 
@@ -94,8 +99,8 @@ Beach Hui ("beach community" in Hawaiian) is a comprehensive platform combining 
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/reef-beach-safety-dashboard
-cd reef-beach-safety-dashboard/frontend
+git clone https://github.com/rprovine/reef-beach-safety-dashboard
+cd reef-beach-safety-dashboard
 
 # Install dependencies
 npm install
@@ -106,11 +111,20 @@ cp .env.local.example .env.local
 
 # Set up the database
 npx prisma db push
-npx prisma db seed
+npm run seed-beaches
+npm run seed-users
 
 # Start development server
 npm run dev
 ```
+
+### Demo Accounts
+
+Test the tiered features with these demo accounts:
+
+- **Free Tier**: `demo@beachhui.com` / `demo123`
+- **Pro Tier**: `pro@beachhui.com` / `pro123`
+- **Admin Tier**: `admin@beachhui.com` / `admin123`
 
 ### Environment Variables
 
@@ -140,22 +154,48 @@ GET /api/beaches
 # Get comprehensive beach data
 GET /api/beaches/{slug}/comprehensive
 
-# Get community reports
-GET /api/community/reports?beachId={id}
+# Get current conditions
+GET /api/beaches/{slug}/conditions
+
+# Get weather forecast
+GET /api/beaches/{slug}/weather
 ```
 
-### **Protected Endpoints**
+### **Protected Endpoints (Authentication Required)**
 ```bash
 # User authentication
 POST /api/auth/login
 POST /api/auth/register
+GET /api/auth/verify
 
-# Alert management
+# Alert management (Pro/Admin)
 GET /api/alerts
 POST /api/alerts
+DELETE /api/alerts/{id}
+
+# Community reports
+GET /api/community/reports
+POST /api/community/reports
+PUT /api/community/reports/{id}/verify
 
 # User dashboard
 GET /api/dashboard
+GET /api/dashboard/stats
+```
+
+### **Admin Endpoints**
+```bash
+# Beach management
+PUT /api/admin/beaches/{id}
+POST /api/admin/beaches/{id}/status
+
+# User management
+GET /api/admin/users
+PUT /api/admin/users/{id}/tier
+
+# System analytics
+GET /api/admin/analytics
+GET /api/admin/reports
 ```
 
 ## 🏗️ Tech Stack

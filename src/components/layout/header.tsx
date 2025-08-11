@@ -3,14 +3,16 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Menu, X, Waves, Bell, Map, BarChart3, User, LogOut } from 'lucide-react'
+import { Menu, X, Waves, Bell, Map, BarChart3, User, LogOut, Users } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useAuth } from '@/contexts/auth-context'
+import { TierBadge } from '@/components/tier-features'
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
-  const [user, setUser] = useState<{ email: string } | null>(null)
   const pathname = usePathname()
+  const { user, signOut } = useAuth()
 
   useEffect(() => {
     const handleScroll = () => {
@@ -20,23 +22,14 @@ export function Header() {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
-  // Check for user session
-  useEffect(() => {
-    const token = localStorage.getItem('auth-token')
-    if (token) {
-      // In production, validate token with API
-      setUser({ email: 'user@example.com' })
-    }
-  }, [])
-
   const handleSignOut = () => {
-    localStorage.removeItem('auth-token')
-    setUser(null)
+    signOut()
     window.location.href = '/'
   }
 
   const navigation = [
     { name: 'Beaches', href: '/beaches', icon: Map },
+    { name: 'Community', href: '/community', icon: Users },
     { name: 'Alerts', href: '/alerts', icon: Bell },
     { name: 'Analytics', href: '/analytics', icon: BarChart3 },
     { name: 'Reef Safety', href: '/reef-safety', icon: Waves },
@@ -104,6 +97,7 @@ export function Header() {
           <div className="hidden md:flex md:items-center md:space-x-4">
             {user ? (
               <>
+                <TierBadge />
                 <Link
                   href="/dashboard"
                   className="font-medium text-gray-700 hover:text-ocean-600"
@@ -115,6 +109,10 @@ export function Header() {
                     <User className="h-5 w-5" />
                   </button>
                   <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 hidden group-hover:block">
+                    <div className="px-4 py-2 border-b">
+                      <p className="text-xs text-gray-500">Signed in as</p>
+                      <p className="text-sm font-medium text-gray-900 truncate">{user.email}</p>
+                    </div>
                     <Link
                       href="/account"
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
