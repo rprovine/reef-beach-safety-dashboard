@@ -85,7 +85,7 @@ export default function HomePage() {
     <div className="min-h-screen">
       {/* Hero Section with Video Background */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-        {/* Background Video/Image */}
+        {/* Background Video */}
         <div className="absolute inset-0 z-0">
           <div className="absolute inset-0 bg-gradient-to-b from-ocean-900/50 via-ocean-800/30 to-ocean-900/50 z-10" />
           <video
@@ -193,6 +193,7 @@ export default function HomePage() {
               waveHeight="2.5 ft"
               windSpeed="8 mph"
               waterTemp="78°F"
+              image="/images/waikiki-beach.jpg"
             />
             <BeachStatusCard
               name="Pipeline"
@@ -201,6 +202,7 @@ export default function HomePage() {
               windSpeed="18 mph"
               waterTemp="76°F"
               advisory="High Surf Warning"
+              image="/images/pipeline-beach.jpg"
             />
             <BeachStatusCard
               name="Lanikai Beach"
@@ -208,6 +210,7 @@ export default function HomePage() {
               waveHeight="4 ft"
               windSpeed="14 mph"
               waterTemp="79°F"
+              image="/images/lanikai-beach.jpg"
             />
           </div>
 
@@ -344,9 +347,10 @@ interface BeachStatusCardProps {
   windSpeed: string
   waterTemp: string
   advisory?: string
+  image?: string
 }
 
-function BeachStatusCard({ name, status, waveHeight, windSpeed, waterTemp, advisory }: BeachStatusCardProps) {
+function BeachStatusCard({ name, status, waveHeight, windSpeed, waterTemp, advisory, image }: BeachStatusCardProps) {
   const statusColors = {
     green: 'bg-green-100 text-green-800 border-green-200',
     yellow: 'bg-yellow-100 text-yellow-800 border-yellow-200',
@@ -363,6 +367,11 @@ function BeachStatusCard({ name, status, waveHeight, windSpeed, waterTemp, advis
 
   return (
     <div className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
+      {image && (
+        <div className="h-48 overflow-hidden">
+          <img src={image} alt={name} className="w-full h-full object-cover hover:scale-105 transition-transform duration-300" />
+        </div>
+      )}
       <div className={`p-4 ${status === 'green' ? 'bg-green-50' : status === 'yellow' ? 'bg-yellow-50' : 'bg-red-50'}`}>
         <div className="flex items-center justify-between mb-2">
           <h3 className="font-semibold text-lg text-gray-900">{name}</h3>
