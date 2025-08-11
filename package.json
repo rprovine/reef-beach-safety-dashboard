@@ -1,4 +1,17 @@
 {
+  "name": "reef-beach-safety-dashboard",
+  "version": "1.0.0",
+  "description": "Comprehensive beach safety platform for Hawaii",
+  "scripts": {
+    "build": "cd frontend && npm run build",
+    "dev": "cd frontend && npm run dev", 
+    "start": "cd frontend && npm start",
+    "install:frontend": "cd frontend && npm install"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rprovine/reef-beach-safety-dashboard.git"
+  },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
     "@types/jsonwebtoken": "^9.0.10"
