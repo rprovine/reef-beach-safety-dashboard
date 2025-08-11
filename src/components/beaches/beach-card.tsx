@@ -50,11 +50,11 @@ export function BeachCard({ beach, selected, onClick, compact }: BeachCardProps)
             </div>
             <div className="flex items-center gap-1">
               <Wind className="h-3 w-3" />
-              {beach.currentConditions.windMph ? `${Number(beach.currentConditions.windMph).toFixed(0)}` : '--'} mph
+              {beach.currentConditions.windMph ? `${Number(beach.currentConditions.windMph).toFixed(1)}` : '--'} mph
             </div>
             <div className="flex items-center gap-1">
               <Thermometer className="h-3 w-3" />
-              {beach.currentConditions.waterTempF ? `${Number(beach.currentConditions.waterTempF).toFixed(0)}` : '--'}°F
+              {beach.currentConditions.waterTempF ? `${Number(beach.currentConditions.waterTempF).toFixed(1)}` : '--'}°F
             </div>
           </div>
         )}
@@ -124,7 +124,7 @@ export function BeachCard({ beach, selected, onClick, compact }: BeachCardProps)
                 <span className="text-sm">Wind</span>
               </div>
               <div className="font-semibold text-gray-900">
-                {Number(beach.currentConditions.windMph).toFixed(0)} mph
+                {Number(beach.currentConditions.windMph).toFixed(1)} mph
               </div>
             </div>
             <div>
@@ -133,7 +133,7 @@ export function BeachCard({ beach, selected, onClick, compact }: BeachCardProps)
                 <span className="text-sm">Water Temp</span>
               </div>
               <div className="font-semibold text-gray-900">
-                {Number(beach.currentConditions.waterTempF).toFixed(0)}°F
+                {Number(beach.currentConditions.waterTempF).toFixed(1)}°F
               </div>
             </div>
             <div>

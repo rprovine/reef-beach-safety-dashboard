@@ -50,7 +50,7 @@ export function ReefDashboard({ beachName, reefData }: ReefDashboardProps) {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
           <div className="bg-white/10 rounded-lg p-3">
             <div className="text-ocean-100 text-xs">Coral Coverage</div>
-            <div className="text-white font-bold text-lg">{reefData.health.coralCoverage.toFixed(0)}%</div>
+            <div className="text-white font-bold text-lg">{reefData.health.coralCoverage.toFixed(1)}%</div>
           </div>
           <div className="bg-white/10 rounded-lg p-3">
             <div className="text-ocean-100 text-xs">Water Visibility</div>
