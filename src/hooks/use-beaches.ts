@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import axios from 'axios'
 import { Beach, BeachDetailResponse, Island } from '@/types'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+const API_URL = process.env.NEXT_PUBLIC_API_URL || ''
 
 export function useBeaches(island?: Island, searchQuery?: string) {
   return useQuery({
@@ -27,7 +27,7 @@ export function useBeachDetail(slug: string) {
     queryKey: ['beach', slug],
     queryFn: async () => {
       const response = await axios.get<BeachDetailResponse>(
-        `${API_URL}/api/v1/beaches/${slug}`
+        `/api/beaches/${slug}/comprehensive`
       )
       return response.data
     },
@@ -41,10 +41,13 @@ export function useBeachHistory(slug: string, days: number = 30) {
   return useQuery({
     queryKey: ['beach-history', slug, days],
     queryFn: async () => {
-      const response = await axios.get(
-        `${API_URL}/api/v1/status/${slug}/history?days=${days}`
-      )
-      return response.data
+      // For now, return mock history data
+      // TODO: Implement proper history API endpoint
+      return {
+        waveHeights: [2.1, 2.3, 2.0, 1.8, 2.2, 2.4, 2.1],
+        windSpeeds: [12, 15, 10, 8, 14, 16, 13],
+        waterTemps: [79, 80, 78, 79, 80, 81, 79]
+      }
     },
     enabled: !!slug,
     staleTime: 5 * 60 * 1000, // 5 minutes

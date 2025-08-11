@@ -56,8 +56,12 @@ export async function GET(req: NextRequest) {
       slug: beach.slug,
       island: beach.island,
       description: beach.description,
-      coordinates: { lat: beach.lat, lng: beach.lng },
-      currentStatus: 'good', // Default status
+      coordinates: { 
+        lat: Number(beach.lat), 
+        lng: Number(beach.lng) 
+      },
+      status: 'good', // Default status - this should match Beach interface
+      currentStatus: 'good', // Legacy field
       lastUpdated: beach.updatedAt,
       imageUrl: null, // Beach images would need to be added to schema
       webcamUrl: null, // Webcam URLs would need to be added to schema

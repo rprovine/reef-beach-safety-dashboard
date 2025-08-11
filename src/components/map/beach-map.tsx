@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import L from 'leaflet'
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet'
 import { Beach } from '@/types'
@@ -89,7 +90,12 @@ export function BeachMap({
   className,
 }: BeachMapProps) {
   const [, setMap] = useState<L.Map | null>(null)
+  const router = useRouter()
   const selectedBeach = beaches.find((b) => b.slug === selectedBeachId)
+
+  const handleViewDetails = (beachSlug: string) => {
+    router.push(`/beaches/${beachSlug}`)
+  }
 
   // Determine initial center based on selected beach or first beach's island
   const getInitialCenter = (): [number, number] => {
@@ -194,7 +200,7 @@ export function BeachMap({
                   )}
 
                   <button
-                    onClick={() => onBeachSelect(beach.slug)}
+                    onClick={() => handleViewDetails(beach.slug)}
                     className="mt-2 w-full px-2 py-1 bg-ocean-500 text-white rounded text-xs font-medium hover:bg-ocean-600 transition-colors"
                   >
                     View Details
