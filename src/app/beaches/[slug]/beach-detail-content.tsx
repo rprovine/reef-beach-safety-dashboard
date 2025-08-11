@@ -58,8 +58,28 @@ export default function BeachDetailContent() {
 
   const { beach: beachData, currentConditions, forecast7Day, advisories, tides } = beach
   
-  // Generate reef data for this beach (only if beachData exists)
-  const reefData = beachData ? generateReefData(slug, beachData.name) : null
+  // Check if beachData exists
+  if (!beachData) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <AlertTriangle className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Beach Data Unavailable</h1>
+          <p className="text-gray-600 mb-4">Unable to load beach information.</p>
+          <Link
+            href="/beaches"
+            className="inline-flex items-center text-ocean-600 hover:text-ocean-700"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to beaches
+          </Link>
+        </div>
+      </div>
+    )
+  }
+  
+  // Generate reef data for this beach
+  const reefData = generateReefData(slug, beachData.name)
 
   // Calculate trend from history
   const getTrend = (current: number | null, history: number[] | null | undefined) => {
@@ -541,17 +561,22 @@ export default function BeachDetailContent() {
           {/* Sidebar */}
           <div className="space-y-6">
             {/* Map */}
-            <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-              <div className="h-64">
-                <BeachMap
-                  beaches={[beachData]}
-                  selectedBeachId={beachData.slug}
-                  onBeachSelect={() => {}}
-                  center={[beachData.coordinates?.lat || beachData.lat, beachData.coordinates?.lng || beachData.lng]}
-                  zoom={13}
-                />
+            {(beachData.coordinates?.lat || beachData.lat) && (beachData.coordinates?.lng || beachData.lng) && (
+              <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+                <div className="h-64">
+                  <BeachMap
+                    beaches={[beachData]}
+                    selectedBeachId={beachData.slug}
+                    onBeachSelect={() => {}}
+                    center={[
+                      beachData.coordinates?.lat || beachData.lat || 21.3099, 
+                      beachData.coordinates?.lng || beachData.lng || -157.8581
+                    ]}
+                    zoom={13}
+                  />
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Quick Actions */}
             <div className="bg-white rounded-xl shadow-sm p-6">
