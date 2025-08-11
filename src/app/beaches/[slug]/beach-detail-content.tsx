@@ -122,7 +122,6 @@ export default function BeachDetailContent() {
         </div>
       </div>
     )
-  }
 
   const { beach: beachData, currentConditions, forecast7Day, advisories, tides } = beach
   

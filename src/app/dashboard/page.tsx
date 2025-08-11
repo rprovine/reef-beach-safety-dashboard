@@ -9,6 +9,8 @@ import {
   Calendar, Fish, Siren, Share2, Download, Globe,
   BarChart3, Zap, Crown, Star
 } from 'lucide-react'
+import { ReferralSystem } from '@/components/referral-system'
+import { SocialShare } from '@/components/social-share'
 
 interface User {
   email: string
@@ -287,6 +289,19 @@ export default function DashboardPage() {
                 </div>
               </div>
             )}
+
+            {/* Referral System */}
+            <ReferralSystem />
+            
+            {/* Social Share */}
+            <div className="bg-white rounded-xl shadow-sm p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Share Beach Hui</h3>
+              <SocialShare 
+                url={typeof window !== 'undefined' ? window.location.origin : ''}
+                title="Beach Hui - Hawaii's Premier Beach Safety Platform"
+                description="Get real-time beach conditions, safety alerts, and reef health data"
+              />
+            </div>
           </div>
 
           {/* Sidebar - Plan Features */}
