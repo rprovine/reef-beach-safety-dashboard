@@ -115,7 +115,7 @@ export default function BeachesContent() {
           <div className="py-4 space-y-4">
             {/* Title and View Toggle */}
             <div className="flex items-center justify-between">
-              <h1 className="text-2xl font-bold text-gray-900">Beach Safety Dashboard</h1>
+              <h1 className="text-2xl font-bold text-gray-900">Beach Hui - Community Beach & Reef Safety</h1>
               <div className="flex items-center gap-4">
                 <Link 
                   href="/login" 

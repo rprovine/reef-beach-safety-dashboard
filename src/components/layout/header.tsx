@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Menu, X, Shield, Bell, Map, BarChart3, User, LogOut } from 'lucide-react'
+import { Menu, X, Waves, Bell, Map, BarChart3, User, LogOut } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export function Header() {
@@ -39,7 +39,7 @@ export function Header() {
     { name: 'Beaches', href: '/beaches', icon: Map },
     { name: 'Alerts', href: '/alerts', icon: Bell },
     { name: 'Analytics', href: '/analytics', icon: BarChart3 },
-    { name: 'Safety Info', href: '/safety', icon: Shield },
+    { name: 'Reef Safety', href: '/reef-safety', icon: Waves },
   ]
 
   const publicNavigation = [
@@ -67,16 +67,24 @@ export function Header() {
             <Link href="/" className="flex items-center space-x-2">
               <div className="relative">
                 <div className="h-8 w-8 rounded-full bg-gradient-to-br from-ocean-400 to-ocean-600 flex items-center justify-center">
-                  <Shield className="h-5 w-5 text-white" />
+                  <Waves className="h-5 w-5 text-white" />
                 </div>
                 <div className="absolute -bottom-1 -right-1 h-3 w-3 rounded-full bg-safe border-2 border-white"></div>
               </div>
-              <span className={cn(
-                "font-display font-bold text-xl",
-                scrolled ? "text-gray-900" : "text-white"
-              )}>
-                ReefSafe
-              </span>
+              <div className="flex flex-col">
+                <span className={cn(
+                  "font-display font-bold text-xl",
+                  scrolled ? "text-gray-900" : "text-white"
+                )}>
+                  Beach Hui
+                </span>
+                <span className={cn(
+                  "text-xs -mt-1",
+                  scrolled ? "text-gray-500" : "text-white/70"
+                )}>
+                  by LeniLani Consulting
+                </span>
+              </div>
             </Link>
           </div>
 

@@ -1,6 +1,7 @@
-# Hawaii Beach Safety Dashboard 🏖️
+# Beach Hui 🏖️🪸
+### *Powered by LeniLani Consulting*
 
-A comprehensive beach safety and conditions monitoring platform specifically designed for Hawaii's unique beach environment. This application provides real-time beach conditions, safety alerts, and community-driven reporting to help locals and visitors make informed decisions about ocean activities.
+A comprehensive beach safety, reef conservation, and ocean conditions platform for Hawaii. Beach Hui ("beach community" in Hawaiian) brings together real-time ocean data, reef health monitoring, marine life tracking, and community-driven reporting to help locals and visitors enjoy Hawaii's beaches responsibly while protecting our precious reef ecosystems.
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-Available-green)](http://localhost:3001)
 [![Beaches](https://img.shields.io/badge/Beaches-71%20Hawaiian-blue)](http://localhost:3001/beaches)
@@ -8,7 +9,7 @@ A comprehensive beach safety and conditions monitoring platform specifically des
 
 ## 🏆 Why We're Better Than Surfline
 
-| Feature | Reef & Beach Safety | Surfline |
+| Feature | Beach Hui | Surfline |
 |---------|-------------------|----------|
 | **Beach Coverage** | 70 Hawaiian beaches | ~20 beaches |
 | **Safety Focus** | ✅ Bacteria, UV, currents, hazards | ❌ Waves only |

@@ -1,6 +1,6 @@
 {
-  "name": "reef-beach-safety-dashboard",
-  "version": "0.1.0",
+  "name": "beach-hui",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev",

@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Shield, Mail, Phone, MapPin } from 'lucide-react'
+import { Waves, Mail, Phone, MapPin } from 'lucide-react'
 
 export function Footer() {
   return (
@@ -10,14 +10,17 @@ export function Footer() {
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
               <div className="h-8 w-8 rounded-full bg-gradient-to-br from-ocean-400 to-ocean-600 flex items-center justify-center">
-                <Shield className="h-5 w-5 text-white" />
+                <Waves className="h-5 w-5 text-white" />
               </div>
-              <span className="font-display font-bold text-xl text-gray-900">
-                ReefSafe
-              </span>
+              <div>
+                <span className="font-display font-bold text-xl text-gray-900">
+                  Beach Hui
+                </span>
+                <p className="text-xs text-gray-500">by LeniLani Consulting</p>
+              </div>
             </div>
             <p className="text-sm text-gray-600">
-              Real-time beach safety monitoring for Hawaii&apos;s beaches. Stay informed, stay safe.
+              Hawaii&apos;s premier beach safety, reef conservation, and ocean conditions platform. Protecting our beaches and reefs together.
             </p>
             <div className="flex space-x-4">
               <a href="#" className="text-gray-400 hover:text-ocean-600">
@@ -107,7 +110,7 @@ export function Footer() {
             <ul className="mt-4 space-y-3">
               <li className="flex items-center space-x-2 text-gray-600">
                 <Mail className="h-4 w-4" />
-                <span>aloha@reefsafe.com</span>
+                <span>aloha@beachhui.com</span>
               </li>
               <li className="flex items-center space-x-2 text-gray-600">
                 <Phone className="h-4 w-4" />
@@ -125,7 +128,7 @@ export function Footer() {
         <div className="mt-8 pt-8 border-t border-gray-200">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <p className="text-sm text-gray-500">
-              © {new Date().getFullYear()} ReefSafe Hawaii. All rights reserved.
+              © {new Date().getFullYear()} Beach Hui - LeniLani Consulting. All rights reserved.
             </p>
             <div className="flex space-x-6">
               <Link href="/privacy" className="text-sm text-gray-500 hover:text-ocean-600">

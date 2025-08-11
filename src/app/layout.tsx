@@ -8,16 +8,16 @@ import { Footer } from '@/components/layout/footer'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Reef & Beach Safety Dashboard - Hawaii Ocean Conditions',
-  description: 'Real-time beach safety conditions, surf reports, and ocean advisories for Hawaii beaches. Get alerts, forecasts, and embed widgets for your business.',
-  keywords: 'Hawaii beach safety, ocean conditions, surf report, bacteria advisory, wave height, tide charts, beach alerts',
+  title: 'Beach Hui - Hawaii Ocean & Reef Conservation Platform',
+  description: 'Hawaii\'s premier beach safety, reef conservation, and ocean conditions platform. Real-time reef health monitoring, marine life tracking, surf reports, and community-driven beach updates.',
+  keywords: 'Hawaii beach safety, reef conservation, coral health, marine life, ocean conditions, surf report, bacteria advisory, wave height, tide charts, beach alerts, reef safe, coral bleaching',
   authors: [{ name: 'LeniLani Consulting' }],
   openGraph: {
-    title: 'Reef & Beach Safety Dashboard',
-    description: 'Real-time Hawaii beach conditions and safety alerts',
+    title: 'Beach Hui - Powered by LeniLani Consulting',
+    description: 'Hawaii beach conditions, reef health, and marine conservation platform',
     type: 'website',
     locale: 'en_US',
-    siteName: 'Reef & Beach Safety',
+    siteName: 'Beach Hui',
   },
 }
 
