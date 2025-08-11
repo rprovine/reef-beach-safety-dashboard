@@ -4,6 +4,7 @@ import './globals.css'
 import { Providers } from '@/components/providers'
 import { Header } from '@/components/layout/header'
 import { Footer } from '@/components/layout/footer'
+import { AIBeachBuddy } from '@/components/ai-beach-buddy'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -36,6 +37,7 @@ export default function RootLayout({
               {children}
             </main>
             <Footer />
+            <AIBeachBuddy />
           </div>
         </Providers>
       </body>
