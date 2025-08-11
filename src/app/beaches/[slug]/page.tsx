@@ -21,6 +21,15 @@ export default function BeachDetailPage() {
   const { data: beach, isLoading, error } = useBeachDetail(slug)
   const { data: history } = useBeachHistory(slug, 7)
   const beachDetails = beachDetailsService.getBeachDetails(slug)
+  
+  // Extract all additional data from comprehensive API
+  const safetyScore = beach?.safetyScore
+  const activities = beach?.activities
+  const bacteriaLevel = beach?.bacteriaLevel
+  const warnings = beach?.warnings || []
+  const recommendations = beach?.recommendations || []
+  const trends = beach?.trends
+  const family = beach?.family
 
   if (isLoading) {
     return <BeachDetailSkeleton />
@@ -128,6 +137,83 @@ export default function BeachDetailPage() {
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
+            {/* Safety Score and Warnings */}
+            {(safetyScore !== undefined || warnings.length > 0) && (
+              <div className="bg-white rounded-xl shadow-sm p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-semibold text-gray-900">Safety Assessment</h2>
+                  {safetyScore !== undefined && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-gray-600">Safety Score:</span>
+                      <span className={`text-2xl font-bold ${
+                        safetyScore >= 80 ? 'text-green-600' :
+                        safetyScore >= 60 ? 'text-yellow-600' :
+                        safetyScore >= 40 ? 'text-orange-600' :
+                        'text-red-600'
+                      }`}>
+                        {safetyScore}/100
+                      </span>
+                    </div>
+                  )}
+                </div>
+                
+                {warnings.length > 0 && (
+                  <div className="space-y-2 mb-4">
+                    {warnings.map((warning: string, index: number) => (
+                      <div key={index} className="flex items-start gap-2 p-3 bg-yellow-50 rounded-lg">
+                        <AlertTriangle className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+                        <span className="text-sm text-yellow-800">{warning}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                
+                {bacteriaLevel && (
+                  <div className="p-3 bg-blue-50 rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-blue-900">Water Quality</span>
+                      <span className={`text-sm font-semibold ${
+                        bacteriaLevel === 'safe' ? 'text-green-600' :
+                        bacteriaLevel === 'caution' ? 'text-yellow-600' :
+                        'text-red-600'
+                      }`}>
+                        {bacteriaLevel.toUpperCase()}
+                      </span>
+                    </div>
+                    {beach?.enterococcus !== undefined && (
+                      <div className="text-xs text-blue-700 mt-1">
+                        Enterococcus: {Number(beach.enterococcus).toFixed(1)} MPN/100ml
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Activity Ratings from API */}
+            {activities && (
+              <div className="bg-white rounded-xl shadow-sm p-6">
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">Current Activity Conditions</h2>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {Object.entries(activities).map(([activity, rating]) => (
+                    <div key={activity} className="p-3 bg-gray-50 rounded-lg">
+                      <div className="text-sm font-medium text-gray-900 capitalize mb-1">
+                        {activity}
+                      </div>
+                      <div className={`text-sm font-semibold ${
+                        rating === 'excellent' ? 'text-green-600' :
+                        rating === 'good' ? 'text-green-500' :
+                        rating === 'fair' ? 'text-yellow-500' :
+                        'text-orange-500'
+                      }`}>
+                        {String(rating).toUpperCase()}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Current Conditions */}
             <div className="bg-white rounded-xl shadow-sm p-6">
               <div className="flex items-center justify-between mb-4">
@@ -169,6 +255,44 @@ export default function BeachDetailPage() {
                 />
               </div>
             </div>
+
+            {/* Recommendations from API */}
+            {recommendations.length > 0 && (
+              <div className="bg-white rounded-xl shadow-sm p-6">
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">Recommendations</h2>
+                <div className="space-y-2">
+                  {recommendations.map((rec: string, index: number) => (
+                    <div key={index} className="flex items-start gap-2">
+                      <ChevronRight className="h-4 w-4 text-ocean-500 mt-0.5 flex-shrink-0" />
+                      <span className="text-sm text-gray-700">{rec}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Trends */}
+            {trends && (
+              <div className="bg-white rounded-xl shadow-sm p-6">
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">Current Trends</h2>
+                <div className="grid grid-cols-3 gap-4">
+                  {Object.entries(trends).map(([key, value]) => (
+                    <div key={key} className="text-center">
+                      <div className="text-xs text-gray-600 capitalize mb-1">
+                        {key.replace(/([A-Z])/g, ' $1').trim()}
+                      </div>
+                      <div className={`text-sm font-semibold ${
+                        value === 'improving' ? 'text-green-600' :
+                        value === 'declining' ? 'text-red-600' :
+                        'text-gray-600'
+                      }`}>
+                        {String(value).toUpperCase()}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Beach Information */}
             {beachDetails && (

@@ -26,6 +26,10 @@ export interface Beach {
   webcamUrl?: string | null
   currentConditions?: Record<string, unknown> | null
   activeAdvisories: number
+  safetyScore?: number
+  activities?: Record<string, string>
+  bacteriaLevel?: string
+  enterococcus?: number
 }
 
 export interface CurrentConditions {

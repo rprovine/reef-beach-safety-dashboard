@@ -38,11 +38,12 @@ export function useBeachDetail(slug: string) {
         const conditions = data.conditions || {}
         const tides = conditions.tides || []
         
-        // Extract real conditions from the comprehensive data
+        // Extract ALL conditions from the comprehensive data
         const forecast = data.forecast || {}
         const currentConditions = conditions.lastReading || {}
         
-        return {
+        // Build complete response using all available data
+        const response = {
           beach: {
             ...data.beach,
             currentStatus: data.beach.status || 'good',
@@ -51,11 +52,11 @@ export function useBeachDetail(slug: string) {
             lng: data.beach.coordinates?.lng
           },
           currentConditions: {
-            waveHeightFt: currentConditions.waveHeightFt || forecast.next3Hours?.[0]?.waveHeight || null,
-            windMph: currentConditions.windMph || forecast.next3Hours?.[0]?.windSpeed || null,
+            waveHeightFt: conditions.waveHeight || currentConditions.waveHeightFt || forecast.next3Hours?.[0]?.waveHeight,
+            windMph: conditions.windSpeed || currentConditions.windMph || forecast.next3Hours?.[0]?.windSpeed,
             windDirection: currentConditions.windDirDeg || 45,
-            waterTempF: currentConditions.waterTempF || conditions.waterTemp || null,
-            tideFt: conditions.currentTide || currentConditions.tideFt || null,
+            waterTempF: conditions.waterTemp || currentConditions.waterTempF,
+            tideFt: conditions.currentTide || currentConditions.tideFt,
             timestamp: new Date(data.sources?.lastUpdated || Date.now())
           },
           forecast7Day: forecast.next24Hours || [],
@@ -65,8 +66,23 @@ export function useBeachDetail(slug: string) {
             time: new Date(t.t),
             height: parseFloat(t.v),
             type: t.type === 'H' ? 'high' : 'low'
-          })) || []
-        } as BeachDetailResponse
+          })) || [],
+          // Add additional data from API
+          safetyScore: conditions.safetyScore,
+          activities: conditions.activities,
+          bacteriaLevel: conditions.bacteriaLevel,
+          enterococcus: conditions.enterococcus,
+          bestTimeToday: conditions.bestTimeToday,
+          nextHighTide: conditions.nextHighTide,
+          nextLowTide: conditions.nextLowTide,
+          tidalRange: conditions.tidalRange,
+          family: data.family,
+          warnings: data.warnings,
+          recommendations: data.recommendations,
+          trends: data.trends
+        }
+        
+        return response as any
       } catch (error) {
         console.error('Beach detail error:', error)
         throw error

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { BeachMap } from '@/components/map'
 import { BeachList } from '@/components/beaches/beach-list'
@@ -21,6 +21,8 @@ export default function BeachesContent() {
   const [viewMode, setViewMode] = useState<'map' | 'list'>('map')
   const [selectedIsland, setSelectedIsland] = useState<Island | 'all'>('all')
   const [searchQuery, setSearchQuery] = useState('')
+  const [selectedActivity, setSelectedActivity] = useState<string>('all')
+  const [selectedSafety, setSelectedSafety] = useState<string>('all')
   const [selectedBeachId, setSelectedBeachId] = useState<string | null>(
     searchParams.get('beach')
   )
@@ -29,6 +31,69 @@ export default function BeachesContent() {
     selectedIsland === 'all' ? undefined : selectedIsland,
     searchQuery
   )
+
+  // Filter beaches based on activity and safety selections
+  const filteredBeaches = useMemo(() => {
+    if (!beaches) return []
+    
+    let filtered = [...beaches]
+    
+    // Filter by activity
+    if (selectedActivity !== 'all') {
+      filtered = filtered.filter(beach => {
+        // Check if beach has activity data from API
+        if (beach.activities && typeof beach.activities === 'object') {
+          const activities = beach.activities as Record<string, string>
+          
+          if (selectedActivity === 'family') {
+            // Check family safety score
+            return beach.safetyScore && beach.safetyScore >= 70
+          }
+          
+          // Check if specific activity has good or excellent rating
+          const activityRating = activities[selectedActivity]
+          return activityRating === 'excellent' || activityRating === 'good'
+        }
+        
+        // Fallback: check based on conditions for specific activities
+        if (selectedActivity === 'swimming') {
+          return beach.currentConditions?.waveHeightFt && beach.currentConditions.waveHeightFt < 3
+        } else if (selectedActivity === 'surfing') {
+          return beach.currentConditions?.waveHeightFt && beach.currentConditions.waveHeightFt >= 3
+        } else if (selectedActivity === 'snorkeling') {
+          return beach.currentConditions?.waveHeightFt && beach.currentConditions.waveHeightFt < 2
+        }
+        
+        return true
+      })
+    }
+    
+    // Filter by safety level
+    if (selectedSafety !== 'all') {
+      filtered = filtered.filter(beach => {
+        // Use safety score if available
+        if (beach.safetyScore !== undefined) {
+          if (selectedSafety === 'excellent') return beach.safetyScore >= 85
+          if (selectedSafety === 'good') return beach.safetyScore >= 70 && beach.safetyScore < 85
+          if (selectedSafety === 'fair') return beach.safetyScore >= 50 && beach.safetyScore < 70
+          if (selectedSafety === 'caution') return beach.safetyScore < 50
+        }
+        
+        // Fallback to status
+        if (selectedSafety === 'excellent' || selectedSafety === 'good') {
+          return beach.currentStatus === 'good'
+        } else if (selectedSafety === 'fair') {
+          return beach.currentStatus === 'caution'
+        } else if (selectedSafety === 'caution') {
+          return beach.currentStatus === 'dangerous'
+        }
+        
+        return true
+      })
+    }
+    
+    return filtered
+  }, [beaches, selectedActivity, selectedSafety])
 
   const handleBeachSelect = (beachId: string) => {
     setSelectedBeachId(beachId)
@@ -94,10 +159,8 @@ export default function BeachesContent() {
               {/* Activity Filter */}
               <div className="flex items-center gap-2">
                 <select
-                  onChange={(e) => {
-                    // Add activity filtering logic here
-                    console.log('Activity filter:', e.target.value)
-                  }}
+                  value={selectedActivity}
+                  onChange={(e) => setSelectedActivity(e.target.value)}
                   className="rounded-lg border-gray-300 text-sm focus:ring-ocean-500 focus:border-ocean-500"
                 >
                   <option value="all">All Activities</option>
@@ -113,10 +176,8 @@ export default function BeachesContent() {
               {/* Safety Filter */}
               <div className="flex items-center gap-2">
                 <select
-                  onChange={(e) => {
-                    // Add safety filtering logic here
-                    console.log('Safety filter:', e.target.value)
-                  }}
+                  value={selectedSafety}
+                  onChange={(e) => setSelectedSafety(e.target.value)}
                   className="rounded-lg border-gray-300 text-sm focus:ring-ocean-500 focus:border-ocean-500"
                 >
                   <option value="all">All Safety Levels</option>
@@ -141,9 +202,9 @@ export default function BeachesContent() {
 
               {/* Beach Count */}
               <div className="flex items-center text-sm text-gray-600">
-                {beaches && (
+                {filteredBeaches && (
                   <span>
-                    {beaches.length} {beaches.length === 1 ? 'beach' : 'beaches'} found
+                    {filteredBeaches.length} {filteredBeaches.length === 1 ? 'beach' : 'beaches'} found
                   </span>
                 )}
               </div>
@@ -173,24 +234,31 @@ export default function BeachesContent() {
               </button>
             </div>
           </div>
-        ) : !beaches || beaches.length === 0 ? (
+        ) : !filteredBeaches || filteredBeaches.length === 0 ? (
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
-              <p className="text-gray-600 mb-4">No beaches found</p>
-              <div className="mt-4 p-4 bg-gray-100 rounded-lg text-left text-sm">
-                <strong>Debug:</strong><br/>
-                Loading: {String(isLoading)}<br/>
-                Error: {error ? error.message : 'none'}<br/>
-                Beaches: {beaches ? `${beaches.length} items` : 'null/undefined'}<br/>
-                Island: {selectedIsland}<br/>
-                Search: "{searchQuery}"
-              </div>
+              <p className="text-gray-600 mb-4">
+                {beaches && beaches.length > 0 
+                  ? 'No beaches match your selected filters' 
+                  : 'No beaches found'}
+              </p>
+              {beaches && beaches.length > 0 && (
+                <button
+                  onClick={() => {
+                    setSelectedActivity('all')
+                    setSelectedSafety('all')
+                  }}
+                  className="px-4 py-2 bg-ocean-500 text-white rounded-lg hover:bg-ocean-600"
+                >
+                  Clear Filters
+                </button>
+              )}
             </div>
           </div>
         ) : viewMode === 'map' ? (
           <div className="h-[calc(100vh-12rem)]">
             <BeachMap
-              beaches={beaches}
+              beaches={filteredBeaches}
               selectedBeachId={selectedBeachId}
               onBeachSelect={handleBeachSelect}
               className="h-full"
@@ -199,7 +267,7 @@ export default function BeachesContent() {
         ) : (
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <BeachList
-              beaches={beaches}
+              beaches={filteredBeaches}
               loading={isLoading}
               error={error}
               selectedBeachId={selectedBeachId}
