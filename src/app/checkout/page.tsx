@@ -21,8 +21,10 @@ export default function CheckoutPage() {
   const price = billingCycle === 'yearly' ? yearlyPrice : monthlyPrice
   const displayPrice = billingCycle === 'yearly' ? 3.99 : monthlyPrice
   
-  // HubSpot payment link - will be replaced with actual link
-  const HUBSPOT_PAYMENT_LINK = process.env.NEXT_PUBLIC_HUBSPOT_PAYMENT_LINK || ''
+  // HubSpot payment links for monthly and yearly subscriptions
+  const HUBSPOT_MONTHLY_LINK = 'https://app-na2.hubspot.com/payments/2rHQSPqq4WdNPF?referrer=PAYMENT_LINK'
+  const HUBSPOT_YEARLY_LINK = 'https://app-na2.hubspot.com/payments/jHDnkpDpZ?referrer=PAYMENT_LINK'
+  const HUBSPOT_PAYMENT_LINK = billingCycle === 'yearly' ? HUBSPOT_YEARLY_LINK : HUBSPOT_MONTHLY_LINK
   
   useEffect(() => {
     // If not logged in, redirect to signup
@@ -34,19 +36,19 @@ export default function CheckoutPage() {
   const handleCheckout = () => {
     setLoading(true)
     
-    // Build HubSpot payment link with parameters
-    const paymentUrl = new URL(HUBSPOT_PAYMENT_LINK || 'https://pay.hubspot.com/placeholder')
-    paymentUrl.searchParams.append('email', user?.email || '')
-    paymentUrl.searchParams.append('plan', plan)
-    paymentUrl.searchParams.append('billing', billingCycle)
-    paymentUrl.searchParams.append('amount', price.toString())
+    // Build HubSpot payment link with user email parameter
+    const paymentUrl = new URL(HUBSPOT_PAYMENT_LINK)
+    if (user?.email) {
+      paymentUrl.searchParams.append('email', user.email)
+    }
     
     // Store checkout session for return
     localStorage.setItem('checkout-session', JSON.stringify({
       plan,
       billingCycle,
       price,
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      email: user?.email
     }))
     
     // Redirect to HubSpot payment page
@@ -164,7 +166,7 @@ export default function CheckoutPage() {
             {/* Checkout Button */}
             <button
               onClick={handleCheckout}
-              disabled={loading || !HUBSPOT_PAYMENT_LINK}
+              disabled={loading}
               className="w-full bg-gradient-to-r from-ocean-500 to-purple-600 text-white py-4 rounded-lg font-semibold hover:from-ocean-600 hover:to-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? (
@@ -172,20 +174,10 @@ export default function CheckoutPage() {
                   <Waves className="animate-spin h-5 w-5 mr-2" />
                   Redirecting to payment...
                 </span>
-              ) : !HUBSPOT_PAYMENT_LINK ? (
-                'Payment link not configured'
               ) : (
                 'Proceed to Secure Checkout'
               )}
             </button>
-            
-            {!HUBSPOT_PAYMENT_LINK && (
-              <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
-                <p className="text-sm text-amber-800">
-                  <strong>Setup Required:</strong> Add NEXT_PUBLIC_HUBSPOT_PAYMENT_LINK to environment variables
-                </p>
-              </div>
-            )}
             
             <p className="text-xs text-gray-500 text-center mt-4">
               By proceeding, you agree to our{' '}
