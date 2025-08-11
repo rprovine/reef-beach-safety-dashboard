@@ -208,7 +208,7 @@ export function generateReefData(beachId: string, beachName: string): BeachReefD
   const ecosystem: MarineEcosystem = {
     beachId,
     lastSurvey: new Date(now.getTime() - Math.random() * 30 * 24 * 60 * 60 * 1000),
-    biodiversityScore: hasGoodReef ? 70 + Math.random() * 25 : 40 + Math.random() * 30,
+    biodiversityScore: Math.round(hasGoodReef ? 70 + Math.random() * 25 : 40 + Math.random() * 30),
     speciesCount: hasGoodReef ? Math.floor(80 + Math.random() * 60) : Math.floor(30 + Math.random() * 40),
     fishPopulation: {
       abundance: hasGoodReef ? 'abundant' : 'moderate',

@@ -54,7 +54,7 @@ export function ReefDashboard({ beachName, reefData }: ReefDashboardProps) {
           </div>
           <div className="bg-white/10 rounded-lg p-3">
             <div className="text-ocean-100 text-xs">Water Visibility</div>
-            <div className="text-white font-bold text-lg">{reefData.health.waterClarity.visibility}m</div>
+            <div className="text-white font-bold text-lg">{reefData.health.waterClarity.visibility.toFixed(1)}m</div>
           </div>
           <div className="bg-white/10 rounded-lg p-3">
             <div className="text-ocean-100 text-xs">Safety Score</div>
@@ -220,7 +220,7 @@ export function ReefDashboard({ beachName, reefData }: ReefDashboardProps) {
                 <div>
                   <div className="text-sm text-gray-600 mb-2">Biodiversity Score</div>
                   <div className="text-2xl font-bold text-ocean-600">
-                    {reefData.ecosystem.biodiversityScore}/100
+                    {reefData.ecosystem.biodiversityScore.toFixed(1)}/100
                   </div>
                   <div className="text-sm text-gray-500 mt-1">
                     {reefData.ecosystem.speciesCount} species recorded
@@ -405,7 +405,7 @@ export function ReefDashboard({ beachName, reefData }: ReefDashboardProps) {
                 <div>
                   <div className="text-sm text-gray-600">Minimum Depth</div>
                   <div className="text-lg font-semibold text-gray-800">
-                    {reefData.hazards.shallowReef.minDepth} ft
+                    {reefData.hazards.shallowReef.minDepth.toFixed(1)} ft
                   </div>
                   <div className="text-xs text-gray-500">at low tide</div>
                 </div>
@@ -452,7 +452,7 @@ export function ReefDashboard({ beachName, reefData }: ReefDashboardProps) {
                     {reefData.education.snorkeling.quality.toUpperCase()}
                   </div>
                   <div className="text-sm text-gray-500 mt-1">
-                    Visibility: {reefData.education.snorkeling.visibility}m
+                    Visibility: {reefData.education.snorkeling.visibility.toFixed(1)}m
                   </div>
                 </div>
                 <div>
