@@ -98,16 +98,6 @@ export default function SignInPage() {
             Sign in to access beach conditions and alerts
           </p>
 
-          {/* Demo Account Info */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-            <p className="text-sm text-blue-800 font-medium mb-2">Demo Accounts Available:</p>
-            <div className="space-y-1 text-xs text-blue-700">
-              <div>• <strong>Free:</strong> demo@beachhui.com / demo123</div>
-              <div>• <strong>Pro:</strong> pro@beachhui.com / pro123</div>
-              <div>• <strong>Admin:</strong> admin@beachhui.com / admin123</div>
-            </div>
-          </div>
-
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
               <p className="text-sm">{error}</p>
