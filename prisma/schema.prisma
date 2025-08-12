@@ -17,6 +17,8 @@ model User {
   tier              String            @default("free") // free, consumer, business, enterprise
   subscriptionStatus String           @default("active") // active, trial, past_due, canceled
   trialEndDate      DateTime?
+  resetToken        String?
+  resetTokenExpiry  DateTime?
   hubspotContactId  String?
   hubspotDealId     String?
   createdAt         DateTime          @default(now())

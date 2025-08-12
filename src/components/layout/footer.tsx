@@ -112,10 +112,6 @@ export function Footer() {
                 <Mail className="h-4 w-4" />
                 <span>info@lenilani.com</span>
               </li>
-              <li className="flex items-center space-x-2 text-gray-600">
-                <Phone className="h-4 w-4" />
-                <span>info@lenilani.com</span>
-              </li>
               <li className="flex items-start space-x-2 text-gray-600">
                 <MapPin className="h-4 w-4 mt-0.5" />
                 <span>Honolulu, Hawaii</span>
