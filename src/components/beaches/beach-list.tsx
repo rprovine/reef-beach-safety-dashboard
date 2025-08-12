@@ -2,9 +2,12 @@
 
 import { Beach } from '@/types'
 import { BeachCard } from './beach-card'
+import { RestrictedBeachCard } from './restricted-beach-card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { AlertCircle } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import { useAuth } from '@/contexts/auth-context'
+import { getUserAccessLevel } from '@/lib/access-control'
 
 interface BeachListProps {
   beaches?: Beach[]
@@ -24,6 +27,8 @@ export function BeachList({
   compact = false,
 }: BeachListProps) {
   const router = useRouter()
+  const { user, isPro } = useAuth()
+  const access = getUserAccessLevel(user)
 
   const handleBeachClick = (beach: Beach) => {
     router.push(`/beaches/${beach.slug}`)
@@ -77,14 +82,28 @@ export function BeachList({
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {beaches.map((beach) => (
-        <BeachCard
-          key={beach.id}
-          beach={beach}
-          selected={selectedBeachId === beach.slug}
-          onClick={() => handleBeachClick(beach)}
-        />
-      ))}
+      {beaches.map((beach) => {
+        // Show restricted card for anonymous users or free users without full access
+        if (!user || (!isPro && !access.beaches.viewCurrentConditions)) {
+          return (
+            <RestrictedBeachCard
+              key={beach.id}
+              beach={beach}
+              onClick={() => handleBeachClick(beach)}
+            />
+          )
+        }
+        
+        // Show full card for authenticated users with access
+        return (
+          <BeachCard
+            key={beach.id}
+            beach={beach}
+            selected={selectedBeachId === beach.slug}
+            onClick={() => handleBeachClick(beach)}
+          />
+        )
+      })}
     </div>
   )
 }
