@@ -91,12 +91,23 @@ export default function AccountPage() {
                     {isTrialExpiring ? 'Trial Ending Soon!' : 'Pro Trial Active'}
                   </h2>
                 </div>
-                <p className="text-gray-700 mb-4">
+                <p className="text-gray-700 mb-2">
                   {daysRemainingInTrial} day{daysRemainingInTrial !== 1 ? 's' : ''} remaining in your free trial
                 </p>
-                <p className="text-sm text-gray-600 mb-4">
-                  You currently have access to all Pro features. After your trial ends, you'll be downgraded to the Free tier unless you upgrade.
-                </p>
+                
+                {/* Clear trial process explanation */}
+                <div className="bg-white/50 rounded-lg p-3 mb-4">
+                  <p className="text-sm font-semibold text-gray-800 mb-2">What happens next:</p>
+                  <ul className="text-xs text-gray-700 space-y-1 list-disc list-inside">
+                    <li>Right now: You have <span className="font-medium text-green-700">FULL Pro access</span> (all features unlocked)</li>
+                    <li>Day {14 - daysRemainingInTrial + 1}-14: Continue enjoying Pro features for free</li>
+                    <li>Day 14: Last day to upgrade and keep Pro features</li>
+                    <li>Day 15+: <span className="font-medium text-orange-700">Automatically switches to Free tier</span> if not upgraded</li>
+                  </ul>
+                  <p className="text-xs text-gray-600 mt-2 italic">
+                    Free tier = Limited to 3 beach alerts, basic features only
+                  </p>
+                </div>
                 <button
                   onClick={handleUpgrade}
                   className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-ocean-500 to-purple-600 text-white rounded-lg font-semibold hover:shadow-lg transition-all"

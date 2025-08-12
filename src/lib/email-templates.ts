@@ -14,6 +14,19 @@ export const emailTemplates = {
             <p style="margin: 0; font-size: 16px;">Experience all Pro features FREE for ${trialDays} days</p>
           </div>
           
+          <div style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border: 2px solid #86efac; padding: 20px; border-radius: 8px; margin-bottom: 25px;">
+            <h3 style="color: #166534; margin: 0 0 12px 0; font-size: 16px;">📅 How Your Trial Works:</h3>
+            <ol style="color: #15803d; line-height: 1.8; font-size: 14px; margin: 0; padding-left: 20px;">
+              <li><strong>Days 1-14:</strong> You have <span style="background: #bbf7d0; padding: 2px 6px; border-radius: 4px;">FULL Pro access</span> - all features unlocked!</li>
+              <li><strong>Day 11:</strong> We'll send you a reminder email</li>
+              <li><strong>Day 14:</strong> Last day to upgrade for $4.99/mo to keep Pro features</li>
+              <li><strong>Day 15+:</strong> <span style="background: #fed7aa; padding: 2px 6px; border-radius: 4px; color: #9a3412;">Automatically becomes Free tier</span> if not upgraded</li>
+            </ol>
+            <p style="color: #166534; font-size: 12px; margin: 12px 0 0 0; font-style: italic;">
+              💡 <strong>No surprises:</strong> You'll always have free access with basic features, even after trial ends!
+            </p>
+          </div>
+          
           <h3 style="color: #111827; font-size: 20px; margin-bottom: 20px;">What you can do with Pro:</h3>
           <ul style="color: #4b5563; line-height: 1.8; font-size: 15px;">
             <li>🏖️ Monitor unlimited beaches with real-time alerts</li>
@@ -44,7 +57,8 @@ export const emailTemplates = {
           
           <div style="border-top: 1px solid #e5e7eb; padding-top: 20px; margin-top: 40px;">
             <p style="color: #6b7280; font-size: 13px; line-height: 1.6; text-align: center;">
-              Your trial ends in ${trialDays} days. No credit card required during trial.<br>
+              <strong>Your trial ends in ${trialDays} days.</strong> After that, you'll automatically switch to Free tier (limited features) unless you upgrade.<br>
+              No credit card required during trial • No surprise charges<br>
               Questions? Reply to this email or visit our <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://beachhui.com'}/help" style="color: #06b6d4;">help center</a>.
             </p>
           </div>
@@ -57,7 +71,7 @@ export const emailTemplates = {
         </div>
       </div>
     `,
-    text: `Aloha ${name}! Welcome to Beach Hui. Your 14-day Pro trial is now active! Access unlimited beaches, get SMS alerts, use our API, and more. Visit ${process.env.NEXT_PUBLIC_APP_URL || 'https://beachhui.com'}/dashboard to get started. Your trial ends in ${trialDays} days.`
+    text: `Aloha ${name}! Welcome to Beach Hui. Your 14-day Pro trial is now active! You have FULL Pro access for 14 days, then automatically switch to Free tier (limited features) unless you upgrade for $4.99/mo. Visit ${process.env.NEXT_PUBLIC_APP_URL || 'https://beachhui.com'}/dashboard to get started.`
   }),
 
   // Trial expiring reminder (3 days before)

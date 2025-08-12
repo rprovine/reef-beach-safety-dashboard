@@ -55,10 +55,12 @@ export function TrialBanner() {
             <div className="flex-1">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="font-semibold text-gray-900">
-                  {showUrgency ? '⚡ Last Chance!' : '🎁 Free Trial:'} {daysRemaining} days remaining
+                  {showUrgency ? '⚡ Trial Ending Soon!' : '🎁 Pro Trial:'} {daysRemaining} days left
                 </span>
-                <span className="text-gray-600 hidden sm:inline">
-                  • Unlock unlimited beaches, AI insights, and reef monitoring
+                <span className="text-gray-600 text-sm hidden sm:inline">
+                  {showUrgency 
+                    ? '• After trial ends, you\'ll be switched to FREE tier with limited features'
+                    : '• Enjoying Pro features? Upgrade to keep them after Day 14'}
                 </span>
               </div>
             </div>

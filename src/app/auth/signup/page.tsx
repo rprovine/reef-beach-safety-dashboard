@@ -75,11 +75,25 @@ export default function SignUpPage() {
           </p>
 
           {/* Free Trial Notice */}
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
-            <p className="text-sm text-green-800 font-medium">🎉 14-Day Free Trial</p>
-            <p className="text-xs text-green-700 mt-1">
-              Start with full Pro features free for 14 days. No credit card required.
-            </p>
+          <div className="bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-lg p-4 mb-6">
+            <div className="flex items-start gap-3">
+              <div className="text-2xl">🎉</div>
+              <div className="flex-1">
+                <p className="text-sm text-green-800 font-semibold mb-2">Here's How Your 14-Day Trial Works:</p>
+                <ol className="text-xs text-gray-700 space-y-1.5 list-decimal list-inside">
+                  <li><span className="font-medium">Days 1-14:</span> Enjoy <span className="text-green-700 font-medium">FULL Pro features</span> absolutely free</li>
+                  <li><span className="font-medium">Day 11:</span> We'll remind you that your trial is ending soon</li>
+                  <li><span className="font-medium">Day 14:</span> Choose to upgrade for $4.99/mo to keep Pro features</li>
+                  <li><span className="font-medium">Day 15+:</span> <span className="text-orange-700 font-medium">Automatically switches to Free tier</span> if not upgraded</li>
+                </ol>
+                <div className="mt-3 p-2 bg-white/70 rounded border border-gray-200">
+                  <p className="text-xs text-gray-600">
+                    <span className="font-semibold">No credit card required</span> • No surprise charges • 
+                    You'll <span className="font-medium">always have free access</span> with limited features after trial
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
 
           {error && (
