@@ -92,16 +92,20 @@ export async function POST(request: NextRequest) {
     
   } catch (error) {
     console.error('Forgot password error:', error)
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace')
     
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: 'Invalid email address' },
+        { error: 'Invalid email address', details: error.errors },
         { status: 400 }
       )
     }
     
     return NextResponse.json(
-      { error: 'Failed to process password reset request' },
+      { 
+        error: 'Failed to process password reset request',
+        details: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : String(error)) : 'Internal server error'
+      },
       { status: 500 }
     )
   }
