@@ -59,17 +59,17 @@ export function Header() {
           {/* Logo */}
           <div className="flex items-center">
             <Link href="/" className="flex items-center space-x-2">
-              <div className="relative">
+              <div className="relative flex-shrink-0">
                 <div className="h-8 w-8 rounded-full bg-gradient-to-br from-ocean-400 to-ocean-600 flex items-center justify-center">
                   <Waves className="h-5 w-5 text-white" />
                 </div>
                 <div className="absolute -bottom-1 -right-1 h-3 w-3 rounded-full bg-safe border-2 border-white"></div>
               </div>
               <div className="flex flex-col">
-                <span className="font-display font-bold text-xl text-gray-900">
+                <span className="font-display font-bold text-lg sm:text-xl text-gray-900 whitespace-nowrap">
                   Beach Hui
                 </span>
-                <span className="text-xs -mt-1 text-gray-500">
+                <span className="hidden sm:block text-xs -mt-1 text-gray-500 whitespace-nowrap">
                   by LeniLani Consulting
                 </span>
               </div>
@@ -110,7 +110,7 @@ export function Header() {
                   <button className="flex items-center space-x-2 p-2 rounded-lg transition-colors hover:bg-gray-100">
                     <User className="h-5 w-5" />
                   </button>
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 hidden group-hover:block">
+                  <div className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-lg py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
                     <div className="px-4 py-2 border-b">
                       <p className="text-xs text-gray-500">Signed in as</p>
                       <p className="text-sm font-medium text-gray-900 truncate">{user.email}</p>

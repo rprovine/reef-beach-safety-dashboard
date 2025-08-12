@@ -12,6 +12,10 @@ export interface HubSpotContact {
   beach_tier?: string
   subscription_status?: string
   trial_end_date?: string
+  upgraded_at?: string
+  canceled_at?: string
+  trial_expired_at?: string
+  subscription_expired_at?: string
 }
 
 export interface HubSpotDeal {
@@ -76,6 +80,19 @@ export class HubSpotService {
       return contactId
     } catch (error) {
       console.error('HubSpot contact error:', error)
+      throw error
+    }
+  }
+
+  // Update contact properties
+  async updateContact(contactId: string, properties: Partial<HubSpotContact>) {
+    try {
+      await this.client.crm.contacts.basicApi.update(contactId, {
+        properties: properties as unknown as { [key: string]: string }
+      })
+      return true
+    } catch (error) {
+      console.error('HubSpot update contact error:', error)
       throw error
     }
   }
