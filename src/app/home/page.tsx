@@ -34,17 +34,17 @@ export default function HomePage() {
               Powered by OpenWeather, NOAA, and community reports.
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
               <Link
                 href="/beaches"
-                className="inline-flex items-center justify-center px-8 py-4 bg-white text-ocean-600 font-semibold rounded-full shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all"
+                className="inline-flex items-center justify-center px-6 sm:px-8 py-3 sm:py-4 bg-white text-ocean-600 font-semibold rounded-full shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all w-auto"
               >
                 View Live Beaches
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
               <Link
                 href="/auth/signup"
-                className="inline-flex items-center justify-center px-8 py-4 bg-white/20 backdrop-blur text-white font-semibold rounded-full border-2 border-white/30 hover:bg-white/30 transition-all"
+                className="inline-flex items-center justify-center px-6 sm:px-8 py-3 sm:py-4 bg-white/20 backdrop-blur text-white font-semibold rounded-full border-2 border-white/30 hover:bg-white/30 transition-all w-auto"
               >
                 Get Started Free
               </Link>
