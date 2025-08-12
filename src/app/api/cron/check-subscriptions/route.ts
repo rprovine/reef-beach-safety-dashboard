@@ -119,7 +119,46 @@ export async function GET(request: NextRequest) {
       updatedSubscriptions++
     }
 
-    // 3. Send reminder emails for trials expiring soon (3 days before)
+    // 3. Send reminder emails at strategic points during trial
+    let remindersSent = 0
+    
+    // Day 7 reminder - Halfway through trial
+    const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
+    const sixDaysFromNow = new Date(now.getTime() + 6 * 24 * 60 * 60 * 1000)
+    
+    const halfwayTrialUsers = await prisma.user.findMany({
+      where: {
+        tier: 'free',
+        subscriptionStatus: 'trial',
+        trialEndDate: {
+          gte: sixDaysFromNow,
+          lte: sevenDaysFromNow
+        }
+      }
+    })
+    
+    for (const user of halfwayTrialUsers) {
+      try {
+        const emailTemplate = emailTemplates.trialHalfway(
+          user.name || user.email.split('@')[0],
+          7
+        )
+        
+        await sendEmail({
+          to: user.email,
+          subject: emailTemplate.subject,
+          html: emailTemplate.html,
+          text: emailTemplate.text
+        })
+        
+        remindersSent++
+        console.log(`Trial halfway reminder sent to: ${user.email}`)
+      } catch (emailError) {
+        console.error(`Failed to send halfway reminder to ${user.email}:`, emailError)
+      }
+    }
+    
+    // Day 11 reminder - 3 days before expiration
     const threeDaysFromNow = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000)
     const twoDaysFromNow = new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000)
     
@@ -134,8 +173,6 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    // Send trial expiring reminder emails
-    let remindersSent = 0
     for (const user of expiringTrialUsers) {
       const daysRemaining = Math.ceil((user.trialEndDate!.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
       
@@ -158,13 +195,48 @@ export async function GET(request: NextRequest) {
         console.error(`Failed to send trial reminder to ${user.email}:`, emailError)
       }
     }
+    
+    // Day 13 reminder - Last chance (1 day before)
+    const oneDayFromNow = new Date(now.getTime() + 1 * 24 * 60 * 60 * 1000)
+    const twelveHoursFromNow = new Date(now.getTime() + 12 * 60 * 60 * 1000)
+    
+    const lastChanceUsers = await prisma.user.findMany({
+      where: {
+        tier: 'free',
+        subscriptionStatus: 'trial',
+        trialEndDate: {
+          gte: twelveHoursFromNow,
+          lte: oneDayFromNow
+        }
+      }
+    })
+    
+    for (const user of lastChanceUsers) {
+      try {
+        const emailTemplate = emailTemplates.trialLastChance(
+          user.name || user.email.split('@')[0]
+        )
+        
+        await sendEmail({
+          to: user.email,
+          subject: emailTemplate.subject,
+          html: emailTemplate.html,
+          text: emailTemplate.text
+        })
+        
+        remindersSent++
+        console.log(`Trial last chance reminder sent to: ${user.email}`)
+      } catch (emailError) {
+        console.error(`Failed to send last chance reminder to ${user.email}:`, emailError)
+      }
+    }
 
     return NextResponse.json({
       success: true,
       updated: {
         trials: updatedTrials,
         subscriptions: updatedSubscriptions,
-        reminders: expiringTrialUsers.length
+        reminders: remindersSent
       },
       message: `Updated ${updatedTrials} expired trials and ${updatedSubscriptions} expired subscriptions`
     })

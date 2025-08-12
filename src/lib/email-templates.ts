@@ -74,6 +74,68 @@ export const emailTemplates = {
     text: `Aloha ${name}! Welcome to Beach Hui. Your 14-day Pro trial is now active! You have FULL Pro access for 14 days, then automatically switch to Free tier (limited features) unless you upgrade for $4.99/mo. Visit ${process.env.NEXT_PUBLIC_APP_URL || 'https://beachhui.com'}/dashboard to get started.`
   }),
 
+  // Trial halfway reminder (Day 7 - 7 days left)
+  trialHalfway: (name: string, daysRemaining: number) => ({
+    subject: '🌊 You\'re halfway through your Beach Hui Pro Trial!',
+    html: `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%); padding: 40px 20px; text-align: center; border-radius: 10px 10px 0 0;">
+          <h1 style="color: white; margin: 0; font-size: 28px;">Enjoying Beach Hui Pro? 🏖️</h1>
+        </div>
+        <div style="padding: 40px 30px; background: white; border: 1px solid #e5e7eb; border-top: none;">
+          <p style="color: #111827; font-size: 16px; line-height: 1.6;">Hi ${name},</p>
+          
+          <div style="background: #f0f9ff; border-left: 4px solid #06b6d4; padding: 15px 20px; margin: 20px 0;">
+            <p style="color: #075985; margin: 0; font-weight: 600;">
+              You're halfway through your 14-day Pro trial! (${daysRemaining} days remaining)
+            </p>
+          </div>
+          
+          <h3 style="color: #111827; font-size: 18px; margin: 25px 0 15px 0;">How's your experience so far?</h3>
+          
+          <p style="color: #4b5563; font-size: 15px; line-height: 1.6;">
+            We hope you're loving these Pro features:
+          </p>
+          
+          <ul style="color: #4b5563; line-height: 1.8; font-size: 14px;">
+            <li>✅ Unlimited beach monitoring across all Hawaiian islands</li>
+            <li>✅ Real-time SMS alerts for critical conditions</li>
+            <li>✅ 7-day forecasts to plan your beach visits</li>
+            <li>✅ API access for your own applications</li>
+            <li>✅ Priority support when you need help</li>
+          </ul>
+          
+          <div style="background: #f0fdf4; border: 1px solid #86efac; padding: 20px; border-radius: 8px; margin: 25px 0;">
+            <h3 style="color: #166534; margin: 0 0 10px 0; font-size: 16px;">💡 Pro Tip</h3>
+            <p style="color: #166534; margin: 0; font-size: 14px;">
+              Have you tried setting up custom alerts for your favorite beaches? 
+              Go to your dashboard and click "Add Alert" to get notified when conditions are perfect!
+            </p>
+          </div>
+          
+          <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); padding: 20px; border-radius: 8px; margin: 25px 0; text-align: center;">
+            <p style="color: #92400e; margin: 0 0 15px 0; font-size: 16px; font-weight: 600;">
+              Keep Pro features after your trial!
+            </p>
+            <p style="color: #92400e; margin: 0 0 20px 0; font-size: 24px; font-weight: bold;">
+              Just $4.99/month
+            </p>
+            <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://beachhui.com'}/pricing" 
+               style="background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%); color: white; padding: 12px 28px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: 600; font-size: 15px;">
+              View Upgrade Options
+            </a>
+          </div>
+          
+          <p style="color: #6b7280; font-size: 13px; text-align: center; margin-top: 20px;">
+            No pressure! You still have ${daysRemaining} days to explore all Pro features.<br>
+            Your trial will automatically convert to our Free tier if you don't upgrade.
+          </p>
+        </div>
+      </div>
+    `,
+    text: `Hi ${name}, you're halfway through your Beach Hui Pro trial with ${daysRemaining} days remaining. Enjoying unlimited beaches, SMS alerts, and forecasts? Keep them for just $4.99/month. Visit ${process.env.NEXT_PUBLIC_APP_URL || 'https://beachhui.com'}/pricing to view options.`
+  }),
+
   // Trial expiring reminder (3 days before)
   trialExpiring: (name: string, daysRemaining: number) => ({
     subject: `⏰ Your Beach Hui Pro Trial Expires in ${daysRemaining} Days`,
@@ -125,6 +187,86 @@ export const emailTemplates = {
       </div>
     `,
     text: `Hi ${name}, your Beach Hui Pro trial expires in ${daysRemaining} days. Upgrade now and save 20% on your first year! Visit ${process.env.NEXT_PUBLIC_APP_URL || 'https://beachhui.com'}/checkout to keep your Pro features.`
+  }),
+
+  // Trial last chance reminder (1 day before expiration)
+  trialLastChance: (name: string) => ({
+    subject: '🚨 LAST CHANCE: Your Beach Hui Pro Trial Expires Tomorrow!',
+    html: `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); padding: 40px 20px; text-align: center; border-radius: 10px 10px 0 0;">
+          <h1 style="color: white; margin: 0; font-size: 28px;">⏰ Trial Expires Tomorrow!</h1>
+        </div>
+        <div style="padding: 40px 30px; background: white; border: 1px solid #e5e7eb; border-top: none;">
+          <p style="color: #111827; font-size: 16px; line-height: 1.6;">Hi ${name},</p>
+          
+          <div style="background: #fef2f2; border-left: 4px solid #dc2626; padding: 15px 20px; margin: 20px 0;">
+            <p style="color: #991b1b; margin: 0; font-weight: 600; font-size: 18px;">
+              ⚠️ Your Pro trial expires in less than 24 hours!
+            </p>
+          </div>
+          
+          <h3 style="color: #111827; font-size: 18px; margin: 25px 0 15px 0;">Tomorrow, you'll lose access to:</h3>
+          
+          <ul style="color: #dc2626; line-height: 1.8; font-size: 14px; font-weight: 500;">
+            <li>❌ Unlimited beach monitoring (limited to 3 beaches)</li>
+            <li>❌ SMS and push notifications</li>
+            <li>❌ 7-day forecasts and historical trends</li>
+            <li>❌ API access for integrations</li>
+            <li>❌ Data exports and priority support</li>
+            <li>❌ Unlimited AI Beach Buddy queries</li>
+          </ul>
+          
+          <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 25px; border-radius: 8px; margin: 30px 0; text-align: center;">
+            <h2 style="color: white; margin: 0 0 10px 0; font-size: 24px;">
+              🎁 EXCLUSIVE: Save 40% Today Only!
+            </h2>
+            <p style="color: white; margin: 0 0 15px 0; font-size: 18px;">
+              Upgrade now for just <span style="font-size: 28px; font-weight: bold;">$2.99/month</span>
+            </p>
+            <p style="color: rgba(255,255,255,0.9); margin: 0 0 20px 0; font-size: 14px;">
+              (Regular price: $4.99/month - Save $24/year!)
+            </p>
+            <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://beachhui.com'}/checkout?plan=pro&billing=monthly&discount=LASTCHANCE40" 
+               style="background: white; color: #059669; padding: 14px 32px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: 700; font-size: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+              🔒 Lock In 40% Discount Forever
+            </a>
+            <p style="color: rgba(255,255,255,0.9); margin: 15px 0 0 0; font-size: 12px;">
+              This special rate is only available until midnight tonight
+            </p>
+          </div>
+          
+          <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 25px 0;">
+            <h4 style="color: #111827; margin: 0 0 10px 0;">What happens if I don't upgrade?</h4>
+            <p style="color: #4b5563; font-size: 14px; margin: 0;">
+              Tomorrow at midnight, your account automatically switches to our Free tier. 
+              You'll still have access to Beach Hui, but with limited features (3 beaches max, 
+              no SMS alerts, current conditions only).
+            </p>
+          </div>
+          
+          <div style="text-align: center; margin: 35px 0;">
+            <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://beachhui.com'}/checkout?plan=pro&billing=monthly&discount=LASTCHANCE40" 
+               style="background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: 600; font-size: 16px;">
+              Claim Your 40% Discount Now
+            </a>
+            <p style="color: #6b7280; font-size: 12px; margin-top: 15px;">
+              Or choose annual billing for even more savings:<br>
+              <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://beachhui.com'}/checkout?plan=pro&billing=yearly&discount=LASTCHANCE40" 
+                 style="color: #06b6d4; text-decoration: underline;">
+                Get 12 months for $28.68 (Save $31.20!)
+              </a>
+            </p>
+          </div>
+          
+          <p style="color: #6b7280; font-size: 13px; text-align: center; border-top: 1px solid #e5e7eb; padding-top: 20px; margin-top: 30px;">
+            Don't want to lose your Pro features? This is your last chance to lock in our best price.<br>
+            <strong>Offer expires at midnight tonight!</strong>
+          </p>
+        </div>
+      </div>
+    `,
+    text: `Hi ${name}, URGENT: Your Beach Hui Pro trial expires tomorrow! You'll lose unlimited beaches, SMS alerts, forecasts, and more. Last chance offer: Get 40% OFF - just $2.99/month (reg $4.99). Visit ${process.env.NEXT_PUBLIC_APP_URL || 'https://beachhui.com'}/checkout?discount=LASTCHANCE40 before midnight!`
   }),
 
   // Trial expired
