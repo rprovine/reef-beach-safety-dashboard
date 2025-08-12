@@ -18,6 +18,12 @@ export function MobileBeachCard({ beach, onClick }: MobileBeachCardProps) {
   const { user } = useAuth()
   
   const handleClick = () => {
+    // Don't navigate if user is not logged in
+    if (!user) {
+      // Show sign up prompt instead
+      window.location.href = '/auth/signup'
+      return
+    }
     if (onClick) onClick()
   }
   

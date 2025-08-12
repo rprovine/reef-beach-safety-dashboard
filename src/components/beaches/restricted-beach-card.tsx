@@ -19,12 +19,22 @@ export function RestrictedBeachCard({ beach, onClick }: RestrictedBeachCardProps
   const { user } = useAuth()
   const access = getUserAccessLevel(user)
   
+  const handleClick = () => {
+    // Don't navigate if user is not logged in
+    if (!user) {
+      // Redirect to signup instead
+      window.location.href = '/auth/signup'
+      return
+    }
+    if (onClick) onClick()
+  }
+  
   // For anonymous users - show very limited info
   if (!user) {
     return (
       <div 
         className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 cursor-pointer hover:shadow-md transition-all relative overflow-hidden"
-        onClick={onClick}
+        onClick={handleClick}
       >
         {/* Beach basic info */}
         <div className="mb-4">
@@ -93,7 +103,7 @@ export function RestrictedBeachCard({ beach, onClick }: RestrictedBeachCardProps
     return (
       <div 
         className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden cursor-pointer hover:shadow-md transition-all"
-        onClick={onClick}
+        onClick={handleClick}
       >
         {/* Header with status */}
         <div className={cn(

@@ -111,10 +111,10 @@ export default function BeachesContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 overflow-x-hidden">
       {/* Header */}
       <div className="bg-white border-b sticky top-16 z-40">
-        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+        <div className="w-full px-3 sm:px-6 lg:px-8">
           <div className="py-3 sm:py-4 space-y-3 sm:space-y-4">
             {/* Title and View Toggle */}
             <div className="flex items-center justify-between gap-2">

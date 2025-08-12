@@ -25,6 +25,31 @@ export default function BeachDetailContent() {
   const slug = params.slug as string
   const { user, isPro, isAdmin } = useAuth()
   
+  // Redirect to signup if not logged in
+  React.useEffect(() => {
+    if (!user) {
+      window.location.href = '/auth/signup'
+    }
+  }, [user])
+  
+  // Show nothing while checking auth
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Sign Up Required</h2>
+          <p className="text-gray-600 mb-4">Create a free account to view beach details</p>
+          <Link
+            href="/auth/signup"
+            className="inline-flex items-center px-6 py-3 bg-ocean-500 text-white rounded-lg font-semibold hover:bg-ocean-600"
+          >
+            Get Started Free
+          </Link>
+        </div>
+      </div>
+    )
+  }
+  
   const [beach, setBeach] = React.useState<any>(null)
   const [isLoading, setIsLoading] = React.useState(true)
   const [error, setError] = React.useState<any>(null)
