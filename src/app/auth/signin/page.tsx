@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Waves } from 'lucide-react'
+import { useAuth } from '@/contexts/auth-context'
 
 export default function SignInPage() {
   const [email, setEmail] = useState('')
@@ -11,6 +12,7 @@ export default function SignInPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const { signIn: contextSignIn } = useAuth()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -28,10 +30,9 @@ export default function SignInPage() {
       const account = demoAccounts[email as keyof typeof demoAccounts]
       
       if (account && password === account.password) {
-        // Store demo session
-        localStorage.setItem('auth-token', 'demo-token')
-        localStorage.setItem('user-email', email)
-        localStorage.setItem('user-tier', account.tier)
+        // Store demo session and update context
+        const userData = { email, tier: account.tier as 'free' | 'pro' | 'admin' }
+        contextSignIn(email, account.tier, userData)
         
         // Redirect to dashboard
         router.push('/dashboard')
@@ -58,9 +59,10 @@ export default function SignInPage() {
           throw new Error(data.error || 'Invalid email or password')
         }
 
-        // Store token in localStorage
+        // Store token in localStorage and update context
         localStorage.setItem('beach-hui-token', data.token)
         localStorage.setItem('beach-hui-user', JSON.stringify(data.user))
+        contextSignIn(data.user.email, data.user.tier, data.user)
 
         // Redirect to dashboard
         router.push('/dashboard')

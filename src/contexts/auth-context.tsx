@@ -3,8 +3,11 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
 
 interface User {
+  id?: string
   email: string
   tier: 'free' | 'pro' | 'admin'
+  createdAt?: string
+  trialEndsAt?: string
 }
 
 interface AuthContextType {
@@ -22,19 +25,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
 
   useEffect(() => {
-    // Check for existing session
-    const token = localStorage.getItem('auth-token')
-    const email = localStorage.getItem('user-email')
-    const tier = localStorage.getItem('user-tier')
+    // Check for existing session - support both old and new format
+    const token = localStorage.getItem('beach-hui-token') || localStorage.getItem('auth-token')
+    const userStr = localStorage.getItem('beach-hui-user')
     
-    if (token && email && tier) {
-      setUser({ email, tier: tier as User['tier'] })
+    if (token && userStr) {
+      try {
+        const userData = JSON.parse(userStr)
+        setUser(userData)
+      } catch {
+        // Fall back to old format
+        const email = localStorage.getItem('user-email')
+        const tier = localStorage.getItem('user-tier')
+        if (email && tier) {
+          setUser({ email, tier: tier as User['tier'] })
+        }
+      }
+    } else {
+      // Check old format
+      const oldToken = localStorage.getItem('auth-token')
+      const email = localStorage.getItem('user-email')
+      const tier = localStorage.getItem('user-tier')
+      
+      if (oldToken && email && tier) {
+        setUser({ email, tier: tier as User['tier'] })
+      }
     }
   }, [])
 
-  const signIn = (email: string, tier: string) => {
-    const userTier = tier as User['tier']
-    setUser({ email, tier: userTier })
+  const signIn = (email: string, tier: string, userData?: User) => {
+    const user = userData || { email, tier: tier as User['tier'] }
+    setUser(user)
+    
+    // Store in new format
+    localStorage.setItem('beach-hui-token', 'demo-token')
+    localStorage.setItem('beach-hui-user', JSON.stringify(user))
+    
+    // Also store in old format for compatibility
     localStorage.setItem('auth-token', 'demo-token')
     localStorage.setItem('user-email', email)
     localStorage.setItem('user-tier', tier)
@@ -42,6 +69,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = () => {
     setUser(null)
+    // Clear both old and new format
+    localStorage.removeItem('beach-hui-token')
+    localStorage.removeItem('beach-hui-user')
     localStorage.removeItem('auth-token')
     localStorage.removeItem('user-email')
     localStorage.removeItem('user-tier')
