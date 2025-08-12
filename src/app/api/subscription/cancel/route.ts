@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import jwt from 'jsonwebtoken'
 import { prisma } from '@/lib/prisma'
 import { hubspot } from '@/lib/hubspot'
+import { sendEmail } from '@/lib/email'
+import { emailTemplates } from '@/lib/email-templates'
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production'
 
@@ -70,6 +72,25 @@ export async function POST(request: NextRequest) {
         // Keep tier as 'pro' until endDate
       }
     })
+
+    // Send cancellation confirmation email
+    try {
+      const emailTemplate = emailTemplates.subscriptionCanceled(
+        user.name || user.email.split('@')[0],
+        activeSubscription.endDate.toLocaleDateString()
+      )
+      
+      await sendEmail({
+        to: user.email,
+        subject: emailTemplate.subject,
+        html: emailTemplate.html,
+        text: emailTemplate.text
+      })
+      
+      console.log(`Cancellation email sent to: ${user.email}`)
+    } catch (emailError) {
+      console.error(`Failed to send cancellation email to ${user.email}:`, emailError)
+    }
 
     // Sync with HubSpot
     try {

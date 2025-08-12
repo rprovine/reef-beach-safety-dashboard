@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { hubspot } from '@/lib/hubspot'
+import { sendEmail } from '@/lib/email'
+import { emailTemplates } from '@/lib/email-templates'
 
 // This endpoint should be called periodically (e.g., daily) to check and update subscription statuses
 // Can be triggered by Vercel Cron Jobs or external cron services
@@ -40,6 +42,24 @@ export async function GET(request: NextRequest) {
           subscriptionStatus: 'none'
         }
       })
+
+      // Send trial expired email
+      try {
+        const emailTemplate = emailTemplates.trialExpired(
+          user.name || user.email.split('@')[0]
+        )
+        
+        await sendEmail({
+          to: user.email,
+          subject: emailTemplate.subject,
+          html: emailTemplate.html,
+          text: emailTemplate.text
+        })
+        
+        console.log(`Trial expired email sent to: ${user.email}`)
+      } catch (emailError) {
+        console.error(`Failed to send trial expired email to ${user.email}:`, emailError)
+      }
 
       // Update HubSpot
       try {
@@ -100,22 +120,43 @@ export async function GET(request: NextRequest) {
     }
 
     // 3. Send reminder emails for trials expiring soon (3 days before)
+    const threeDaysFromNow = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000)
+    const twoDaysFromNow = new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000)
+    
     const expiringTrialUsers = await prisma.user.findMany({
       where: {
         tier: 'free',
         subscriptionStatus: 'trial',
         trialEndDate: {
-          gte: now,
-          lte: new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000)
+          gte: twoDaysFromNow,
+          lte: threeDaysFromNow
         }
       }
     })
 
-    // In a real implementation, you would send emails here
-    // For now, we'll just log them
+    // Send trial expiring reminder emails
+    let remindersSent = 0
     for (const user of expiringTrialUsers) {
-      console.log(`Trial expiring soon for user: ${user.email}`)
-      // TODO: Send reminder email via your email service
+      const daysRemaining = Math.ceil((user.trialEndDate!.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+      
+      try {
+        const emailTemplate = emailTemplates.trialExpiring(
+          user.name || user.email.split('@')[0],
+          daysRemaining
+        )
+        
+        await sendEmail({
+          to: user.email,
+          subject: emailTemplate.subject,
+          html: emailTemplate.html,
+          text: emailTemplate.text
+        })
+        
+        remindersSent++
+        console.log(`Trial expiring reminder sent to: ${user.email}`)
+      } catch (emailError) {
+        console.error(`Failed to send trial reminder to ${user.email}:`, emailError)
+      }
     }
 
     return NextResponse.json({

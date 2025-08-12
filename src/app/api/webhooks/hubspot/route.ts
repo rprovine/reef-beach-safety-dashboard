@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { hubspot } from '@/lib/hubspot'
+import { sendEmail } from '@/lib/email'
+import { emailTemplates } from '@/lib/email-templates'
 import crypto from 'crypto'
 
 // HubSpot webhook types
@@ -124,6 +126,9 @@ async function handlePaymentSuccess(event: HubSpotPaymentEvent) {
     const billingCycle = event.properties.billing_cycle || 
                          (event.properties.description?.includes('yearly') ? 'yearly' : 'monthly')
     
+    const amount = parseFloat(event.properties.amount || '0')
+    const formattedAmount = billingCycle === 'yearly' ? '$47.88/year' : '$4.99/month'
+    
     await prisma.subscription.upsert({
       where: { userId: user.id },
       create: {
@@ -135,20 +140,40 @@ async function handlePaymentSuccess(event: HubSpotPaymentEvent) {
         endDate: billingCycle === 'yearly' 
           ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
           : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-        amount: parseFloat(event.properties.amount || '0'),
+        amount,
         currency: event.properties.currency || 'USD'
       },
       update: {
         status: 'active',
         tier: 'pro',
         billingCycle,
-        amount: parseFloat(event.properties.amount || '0'),
+        amount,
         currency: event.properties.currency || 'USD',
         endDate: billingCycle === 'yearly' 
           ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
           : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
       }
     })
+    
+    // Send subscription confirmation email
+    try {
+      const emailTemplate = emailTemplates.subscriptionConfirmed(
+        user.name || user.email.split('@')[0],
+        billingCycle,
+        formattedAmount
+      )
+      
+      await sendEmail({
+        to: user.email,
+        subject: emailTemplate.subject,
+        html: emailTemplate.html,
+        text: emailTemplate.text
+      })
+      
+      console.log(`Subscription confirmation email sent to: ${user.email}`)
+    } catch (emailError) {
+      console.error(`Failed to send subscription confirmation to ${user.email}:`, emailError)
+    }
     
     // Update HubSpot contact
     if (user.hubspotContactId) {

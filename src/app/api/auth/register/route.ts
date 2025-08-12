@@ -4,6 +4,8 @@ import jwt from 'jsonwebtoken'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import { hubspot } from '@/lib/hubspot'
+import { sendEmail } from '@/lib/email'
+import { emailTemplates } from '@/lib/email-templates'
 
 const registerSchema = z.object({
   email: z.string().email(),
@@ -82,6 +84,20 @@ export async function POST(request: NextRequest) {
     } catch (hubspotError) {
       console.error('HubSpot sync error:', hubspotError)
       // Continue even if HubSpot sync fails
+    }
+    
+    // Send welcome email with trial information
+    try {
+      const emailTemplate = emailTemplates.welcomeWithTrial(user.name || user.email.split('@')[0], 14)
+      await sendEmail({
+        to: user.email,
+        subject: emailTemplate.subject,
+        html: emailTemplate.html,
+        text: emailTemplate.text
+      })
+    } catch (emailError) {
+      console.error('Welcome email error:', emailError)
+      // Don't fail registration if email fails
     }
     
     // Create JWT token
