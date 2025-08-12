@@ -8,13 +8,28 @@ export function useBeaches(island?: Island, searchQuery?: string) {
   return useQuery({
     queryKey: ['beaches', island, searchQuery],
     queryFn: async () => {
-      const params = new URLSearchParams()
-      if (island) params.append('island', island)
-      if (searchQuery) params.append('search', searchQuery)
-      
-      const url = `/api/beaches?${params.toString()}`
-      const response = await axios.get<Beach[]>(url)
-      return response.data
+      try {
+        const params = new URLSearchParams()
+        if (island) params.append('island', island)
+        if (searchQuery) params.append('search', searchQuery)
+        
+        const url = `/api/beaches?${params.toString()}`
+        console.log('[useBeaches] Fetching:', url)
+        
+        // Use fetch instead of axios
+        const response = await fetch(url)
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+        const data = await response.json() as Beach[]
+        
+        console.log('[useBeaches] Response:', data?.length, 'beaches')
+        
+        return data
+      } catch (error) {
+        console.error('[useBeaches] Error:', error)
+        throw error
+      }
     },
     staleTime: 60 * 1000, // 1 minute
     refetchInterval: 5 * 60 * 1000, // 5 minutes

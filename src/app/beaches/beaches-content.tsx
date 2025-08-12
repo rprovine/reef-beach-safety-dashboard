@@ -32,6 +32,9 @@ export default function BeachesContent() {
     selectedIsland === 'all' ? undefined : selectedIsland,
     searchQuery
   )
+  
+  // Debug logging
+  console.log('Beaches data:', { beaches, isLoading, error, count: beaches?.length })
 
   // Filter beaches based on activity and safety selections
   const filteredBeaches = useMemo(() => {
