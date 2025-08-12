@@ -12,7 +12,14 @@ export function TrialBanner() {
   const [showUrgency, setShowUrgency] = useState(false)
 
   useEffect(() => {
-    if (user?.tier === 'free' && user?.createdAt) {
+    if (user?.tier === 'free' && user?.trialEndDate) {
+      const trialEnd = new Date(user.trialEndDate)
+      const now = new Date()
+      const days = Math.ceil((trialEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+      setDaysRemaining(Math.max(0, days))
+      setShowUrgency(days <= 3)
+    } else if (user?.tier === 'free' && user?.createdAt) {
+      // Fallback for older users who might not have trialEndDate
       const trialEnd = new Date(user.createdAt)
       trialEnd.setDate(trialEnd.getDate() + 14)
       const now = new Date()
@@ -103,7 +110,13 @@ export function TrialDaysIndicator() {
   const [daysRemaining, setDaysRemaining] = useState(14)
 
   useEffect(() => {
-    if (user?.tier === 'free' && user?.createdAt) {
+    if (user?.tier === 'free' && user?.trialEndDate) {
+      const trialEnd = new Date(user.trialEndDate)
+      const now = new Date()
+      const days = Math.ceil((trialEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+      setDaysRemaining(Math.max(0, days))
+    } else if (user?.tier === 'free' && user?.createdAt) {
+      // Fallback for older users who might not have trialEndDate
       const trialEnd = new Date(user.createdAt)
       trialEnd.setDate(trialEnd.getDate() + 14)
       const now = new Date()

@@ -7,9 +7,9 @@ interface User {
   email: string
   tier: 'free' | 'pro' | 'admin'
   createdAt?: string
-  trialEndsAt?: string
+  trialEndDate?: string  // Changed to match database schema
   isTrialing?: boolean
-  subscriptionStatus?: 'active' | 'canceled' | 'past_due' | 'trialing' | 'none'
+  subscriptionStatus?: 'active' | 'canceled' | 'past_due' | 'trial' | 'none'  // Changed 'trialing' to 'trial' to match database
 }
 
 interface AuthContextType {
@@ -83,8 +83,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Check if user is in trial period
   const isInTrial = () => {
-    if (!user?.trialEndsAt) return false
-    const trialEnd = new Date(user.trialEndsAt)
+    if (!user?.trialEndDate) return false
+    const trialEnd = new Date(user.trialEndDate)
     return new Date() < trialEnd && user.tier === 'free'
   }
 
@@ -103,8 +103,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isPro: hasProAccess(),
     isAdmin: user?.tier === 'admin',
     isInTrial: isInTrial(),
-    daysRemainingInTrial: user?.trialEndsAt ? 
-      Math.max(0, Math.ceil((new Date(user.trialEndsAt).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))) : 0
+    daysRemainingInTrial: user?.trialEndDate ? 
+      Math.max(0, Math.ceil((new Date(user.trialEndDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))) : 0
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
