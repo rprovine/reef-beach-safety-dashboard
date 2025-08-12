@@ -114,40 +114,44 @@ export default function BeachesContent() {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white border-b sticky top-16 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="py-4 space-y-4">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+          <div className="py-3 sm:py-4 space-y-3 sm:space-y-4">
             {/* Title and View Toggle */}
-            <div className="flex items-center justify-between">
-              <h1 className="text-2xl font-bold text-gray-900">Beach Hui - Community Beach & Reef Safety</h1>
-              <div className="flex items-center gap-4">
+            <div className="flex items-center justify-between gap-2">
+              <h1 className="text-lg sm:text-2xl font-bold text-gray-900 truncate">
+                <span className="hidden sm:inline">Beach Hui - Community Beach & Reef Safety</span>
+                <span className="sm:hidden">Beach Hui</span>
+              </h1>
+              <div className="flex items-center gap-2 sm:gap-4">
                 <Link 
-                  href="/login" 
-                  className="px-4 py-2 bg-ocean-500 text-white rounded-lg hover:bg-ocean-600 transition-colors text-sm font-medium"
+                  href="/auth/signin" 
+                  className="px-3 py-1.5 sm:px-4 sm:py-2 bg-ocean-500 text-white rounded-lg hover:bg-ocean-600 transition-colors text-sm font-medium whitespace-nowrap"
                 >
-                  Login / Demo
+                  <span className="hidden sm:inline">Sign In</span>
+                  <span className="sm:hidden">Login</span>
                 </Link>
-                <div className="flex items-center gap-2 bg-gray-100 p-1 rounded-lg">
+                <div className="flex items-center gap-1 bg-gray-100 p-0.5 rounded-lg">
                   <button
                   onClick={() => setViewMode('map')}
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                  className={`flex items-center gap-1 px-2 py-1 sm:px-3 sm:py-1.5 rounded-md text-xs sm:text-sm font-medium transition-colors ${
                     viewMode === 'map'
                       ? 'bg-white text-ocean-600 shadow-sm'
                       : 'text-gray-600 hover:text-gray-900'
                   }`}
                 >
-                  <Map className="h-4 w-4" />
-                  Map
+                  <Map className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <span className="hidden sm:inline">Map</span>
                 </button>
                 <button
                   onClick={() => setViewMode('list')}
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                  className={`flex items-center gap-1 px-2 py-1 sm:px-3 sm:py-1.5 rounded-md text-xs sm:text-sm font-medium transition-colors ${
                     viewMode === 'list'
                       ? 'bg-white text-ocean-600 shadow-sm'
                       : 'text-gray-600 hover:text-gray-900'
                   }`}
                 >
-                  <List className="h-4 w-4" />
-                  List
+                  <List className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <span className="hidden sm:inline">List</span>
                 </button>
               </div>
             </div>
