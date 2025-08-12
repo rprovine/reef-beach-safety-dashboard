@@ -238,7 +238,7 @@ export default function BeachesContent() {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 relative">
+      <div className="flex-1 relative pt-4">
         {isLoading ? (
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
