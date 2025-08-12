@@ -43,10 +43,10 @@ export default function HomePage() {
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
               <Link
-                href="/auth/signin"
+                href="/auth/signup"
                 className="inline-flex items-center px-8 py-4 bg-white/20 backdrop-blur text-white font-semibold rounded-full border-2 border-white/30 hover:bg-white/30 transition-all"
               >
-                Sign In (Demo Available)
+                Get Started Free
               </Link>
             </div>
 
