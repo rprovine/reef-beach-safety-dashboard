@@ -31,14 +31,36 @@ export async function POST(request: NextRequest) {
     const resetToken = crypto.randomBytes(32).toString('hex')
     const resetTokenExpiry = new Date(Date.now() + 60 * 60 * 1000) // 1 hour
     
-    // Save reset token to database
-    await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        resetToken,
-        resetTokenExpiry
-      }
-    })
+    // Save reset token using sessions table as fallback
+    try {
+      // Try to update user table first (if resetToken fields exist)
+      await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          resetToken,
+          resetTokenExpiry
+        }
+      })
+    } catch (updateError) {
+      console.log('User table missing resetToken fields, using sessions table as fallback')
+      
+      // Delete any existing reset sessions for this user
+      await prisma.session.deleteMany({
+        where: {
+          userId: user.id,
+          token: { startsWith: 'reset_' }
+        }
+      })
+      
+      // Create a reset session
+      await prisma.session.create({
+        data: {
+          userId: user.id,
+          token: `reset_${resetToken}`,
+          expiresAt: resetTokenExpiry
+        }
+      })
+    }
     
     // Create reset link
     const resetLink = `${process.env.NEXT_PUBLIC_APP_URL || 'https://beachhui.com'}/auth/reset-password?token=${resetToken}`

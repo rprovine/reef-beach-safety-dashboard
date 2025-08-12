@@ -13,15 +13,41 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { token, password } = resetPasswordSchema.parse(body)
     
-    // Find user with valid reset token
-    const user = await prisma.user.findFirst({
-      where: {
-        resetToken: token,
-        resetTokenExpiry: {
-          gt: new Date() // Token must not be expired
+    // Find user with valid reset token - try multiple methods
+    let user = null
+    
+    // Method 1: Try user table resetToken fields
+    try {
+      user = await prisma.user.findFirst({
+        where: {
+          resetToken: token,
+          resetTokenExpiry: {
+            gt: new Date() // Token must not be expired
+          }
         }
+      })
+    } catch (error) {
+      console.log('User table resetToken fields not available, trying sessions table')
+    }
+    
+    // Method 2: Try sessions table as fallback
+    if (!user) {
+      const resetSession = await prisma.session.findFirst({
+        where: {
+          token: `reset_${token}`,
+          expiresAt: {
+            gt: new Date() // Token must not be expired
+          }
+        },
+        include: {
+          user: true
+        }
+      })
+      
+      if (resetSession) {
+        user = resetSession.user
       }
-    })
+    }
     
     if (!user) {
       return NextResponse.json(
@@ -38,8 +64,16 @@ export async function POST(request: NextRequest) {
       where: { id: user.id },
       data: {
         password: hashedPassword,
-        resetToken: null,
-        resetTokenExpiry: null
+        // Try to clear reset token fields if they exist
+        ...(user.resetToken ? { resetToken: null, resetTokenExpiry: null } : {})
+      }
+    })
+    
+    // Also clear any reset sessions
+    await prisma.session.deleteMany({
+      where: {
+        userId: user.id,
+        token: { startsWith: 'reset_' }
       }
     })
     
