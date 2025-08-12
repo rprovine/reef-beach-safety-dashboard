@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useAuth } from '@/contexts/auth-context'
 import { TierFeature } from '@/components/tier-features'
+import { InlineUpgradePrompt } from '@/components/upgrade-prompt'
 import { 
   Bell, BellOff, AlertTriangle, Waves, Wind, 
   Fish, Shield, Mail, Phone, Plus, X,
@@ -163,6 +164,13 @@ export default function AlertsPage() {
           <div className="grid lg:grid-cols-3 gap-8">
             {/* Alerts List */}
             <div className="lg:col-span-2">
+              {/* Free Tier Limit Notice */}
+              {user?.tier === 'free' && alerts.length >= 3 && (
+                <div className="mb-6">
+                  <InlineUpgradePrompt feature="unlimited beach alerts" />
+                </div>
+              )}
+              
               {alerts.length === 0 ? (
                 <div className="bg-white rounded-xl shadow-sm p-12 text-center">
                   <BellOff className="h-16 w-16 text-gray-400 mx-auto mb-4" />
@@ -173,7 +181,14 @@ export default function AlertsPage() {
                     Create your first alert to get started
                   </p>
                   <button
-                    onClick={() => setShowCreateForm(true)}
+                    onClick={() => {
+                      if (user?.tier === 'free' && alerts.length >= 3) {
+                        // Will show upgrade prompt
+                        alert('Upgrade to Pro for unlimited alerts!')
+                        return
+                      }
+                      setShowCreateForm(true)
+                    }}
                     className="inline-flex items-center px-6 py-3 bg-ocean-500 text-white font-medium rounded-lg hover:bg-ocean-600"
                   >
                     <Plus className="h-5 w-5 mr-2" />

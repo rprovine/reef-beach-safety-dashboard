@@ -5,6 +5,7 @@ import { Providers } from '@/components/providers'
 import { Header } from '@/components/layout/header'
 import { Footer } from '@/components/layout/footer'
 import { AIBeachBuddy } from '@/components/ai-beach-buddy'
+import { TrialBanner } from '@/components/trial-banner'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -33,6 +34,7 @@ export default function RootLayout({
         <Providers>
           <div className="flex flex-col min-h-screen">
             <Header />
+            <TrialBanner />
             <main className="flex-grow">
               {children}
             </main>

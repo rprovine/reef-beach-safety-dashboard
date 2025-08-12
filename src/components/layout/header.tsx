@@ -7,6 +7,7 @@ import { Menu, X, Waves, Bell, Map, BarChart3, User, LogOut, Users } from 'lucid
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/contexts/auth-context'
 import { TierBadge } from '@/components/tier-features'
+import { TrialDaysIndicator } from '@/components/trial-banner'
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -38,7 +39,7 @@ export function Header() {
   const publicNavigation = [
     { name: 'Beaches', href: '/beaches' },
     { name: 'Pricing', href: '/pricing' },
-    { name: 'For Business', href: '/business' },
+    { name: 'For Business', href: '/for-business' },
     { name: 'About', href: '/about' },
   ]
 
@@ -97,6 +98,7 @@ export function Header() {
           <div className="hidden md:flex md:items-center md:space-x-4">
             {user ? (
               <>
+                <TrialDaysIndicator />
                 <TierBadge />
                 <Link
                   href="/dashboard"
