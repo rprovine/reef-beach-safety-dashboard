@@ -154,74 +154,79 @@ export default function BeachesContent() {
           </div>
 
             {/* Filters */}
-            <div className="flex flex-col sm:flex-row gap-4">
-              {/* Island Filter */}
-              <div className="flex items-center gap-2">
-                <Filter className="h-4 w-4 text-gray-500" />
-                <select
-                  value={selectedIsland}
-                  onChange={(e) => setSelectedIsland(e.target.value as Island | 'all')}
-                  className="rounded-lg border-gray-300 text-sm focus:ring-ocean-500 focus:border-ocean-500"
-                >
-                  {islands.map((island) => (
-                    <option key={island.value} value={island.value}>
-                      {island.label}
-                    </option>
-                  ))}
-                </select>
+            <div className="flex flex-col gap-3">
+              {/* Mobile: Horizontal scrollable filters */}
+              <div className="flex gap-2 overflow-x-auto pb-2 sm:overflow-visible sm:flex-wrap">
+                {/* Island Filter */}
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <Filter className="h-4 w-4 text-gray-500 hidden sm:block" />
+                  <select
+                    value={selectedIsland}
+                    onChange={(e) => setSelectedIsland(e.target.value as Island | 'all')}
+                    className="rounded-lg border-gray-300 text-sm focus:ring-ocean-500 focus:border-ocean-500 min-w-[120px]"
+                  >
+                    {islands.map((island) => (
+                      <option key={island.value} value={island.value}>
+                        {island.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Activity Filter */}
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <select
+                    value={selectedActivity}
+                    onChange={(e) => setSelectedActivity(e.target.value)}
+                    className="rounded-lg border-gray-300 text-sm focus:ring-ocean-500 focus:border-ocean-500 min-w-[140px]"
+                  >
+                    <option value="all">All Activities</option>
+                    <option value="swimming">Swimming</option>
+                    <option value="surfing">Surfing</option>
+                    <option value="snorkeling">Snorkeling</option>
+                    <option value="diving">Diving</option>
+                    <option value="fishing">Fishing</option>
+                    <option value="family">Family Friendly</option>
+                  </select>
+                </div>
+
+                {/* Safety Filter */}
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <select
+                    value={selectedSafety}
+                    onChange={(e) => setSelectedSafety(e.target.value)}
+                    className="rounded-lg border-gray-300 text-sm focus:ring-ocean-500 focus:border-ocean-500 min-w-[140px]"
+                  >
+                    <option value="all">All Safety Levels</option>
+                    <option value="excellent">Excellent</option>
+                    <option value="good">Good</option>
+                    <option value="fair">Fair</option>
+                    <option value="caution">Use Caution</option>
+                  </select>
+                </div>
               </div>
 
-              {/* Activity Filter */}
-              <div className="flex items-center gap-2">
-                <select
-                  value={selectedActivity}
-                  onChange={(e) => setSelectedActivity(e.target.value)}
-                  className="rounded-lg border-gray-300 text-sm focus:ring-ocean-500 focus:border-ocean-500"
-                >
-                  <option value="all">All Activities</option>
-                  <option value="swimming">Swimming</option>
-                  <option value="surfing">Surfing</option>
-                  <option value="snorkeling">Snorkeling</option>
-                  <option value="diving">Diving</option>
-                  <option value="fishing">Fishing</option>
-                  <option value="family">Family Friendly</option>
-                </select>
-              </div>
-
-              {/* Safety Filter */}
-              <div className="flex items-center gap-2">
-                <select
-                  value={selectedSafety}
-                  onChange={(e) => setSelectedSafety(e.target.value)}
-                  className="rounded-lg border-gray-300 text-sm focus:ring-ocean-500 focus:border-ocean-500"
-                >
-                  <option value="all">All Safety Levels</option>
-                  <option value="excellent">Excellent</option>
-                  <option value="good">Good</option>
-                  <option value="fair">Fair</option>
-                  <option value="caution">Use Caution</option>
-                </select>
-              </div>
-
-              {/* Search */}
-              <div className="relative flex-1 max-w-md">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Search beaches..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 rounded-lg border-gray-300 text-sm focus:ring-ocean-500 focus:border-ocean-500"
-                />
-              </div>
-
-              {/* Beach Count */}
-              <div className="flex items-center text-sm text-gray-600">
-                {filteredBeaches && (
-                  <span>
-                    {filteredBeaches.length} {filteredBeaches.length === 1 ? 'beach' : 'beaches'} found
-                  </span>
-                )}
+              {/* Search bar on its own row */}
+              <div className="flex gap-2 items-center">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Search beaches..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 rounded-lg border-gray-300 text-sm focus:ring-ocean-500 focus:border-ocean-500"
+                  />
+                </div>
+                
+                {/* Beach Count */}
+                <div className="flex items-center text-sm text-gray-600 flex-shrink-0">
+                  {filteredBeaches && (
+                    <span className="whitespace-nowrap">
+                      {filteredBeaches.length} {filteredBeaches.length === 1 ? 'beach' : 'beaches'}
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
           </div>
