@@ -6,7 +6,7 @@
 import { DATA_SOURCES, HAWAII_STATIONS, ComprehensiveBeachData } from '@/lib/data-sources'
 import { noaaService } from '@/lib/api-integrations/noaa-service'
 import { weatherService } from '@/lib/api-integrations/weather-service'
-import { dataAggregator } from '@/lib/api-integrations/data-aggregator'
+import { dataAggregator as libDataAggregator } from '@/lib/api-integrations/data-aggregator'
 import { prisma } from '@/lib/prisma'
 
 export class DataAggregatorService {
@@ -20,7 +20,7 @@ export class DataAggregatorService {
     const beachSlug = await this.getBeachSlug(beachId)
     if (beachSlug) {
       try {
-        const comprehensiveData = await dataAggregator.getComprehensiveBeachData(beachSlug)
+        const comprehensiveData = await libDataAggregator.getComprehensiveBeachData(beachSlug)
         return comprehensiveData
       } catch (error) {
         console.error('Error getting comprehensive data:', error)
@@ -283,16 +283,10 @@ export class DataAggregatorService {
   }
 
   /**
-   * Fetch webcams for beach
+   * Fetch webcams for beach (removed - no longer supported)
    */
   async fetchWebcams(beachSlug: string) {
-    try {
-      const webcams = getBeachWebcams(beachSlug)
-      return webcams
-    } catch (error) {
-      console.error('Webcam fetch error:', error)
-      return []
-    }
+    return []
   }
 
   /**
