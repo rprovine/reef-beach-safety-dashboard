@@ -28,6 +28,20 @@ export default function AuthDebugPage() {
     })
     window.location.reload()
   }
+
+  const handleTrialSignIn = () => {
+    const trialUser = {
+      id: 'cmeaf4ghj0000s3n4amknioq',
+      email: 'rprovine@gmail.com',
+      tier: 'free' as const,
+      subscriptionStatus: 'trial',
+      trialEndDate: '2025-08-27T20:23:46.805Z',
+      createdAt: '2025-08-13T20:23:46.807Z'
+    }
+    
+    signIn(trialUser.email, trialUser.tier, trialUser)
+    window.location.reload()
+  }
   
   return (
     <div className="min-h-screen pt-20 p-8">
@@ -52,7 +66,13 @@ export default function AuthDebugPage() {
           onClick={handleTestSignIn}
           className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
         >
-          Test Sign In
+          Test Sign In (Pro)
+        </button>
+        <button
+          onClick={handleTrialSignIn}
+          className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+        >
+          Sign In as Trial User
         </button>
         <button
           onClick={() => {

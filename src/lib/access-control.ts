@@ -126,9 +126,13 @@ export function getUserAccessLevel(user: any) {
   
   if (user.tier === 'admin') return ACCESS_LEVELS.admin
   
+  // Check if user is in trial period (using same logic as auth context)
+  const isInTrial = user.trialEndDate && 
+    new Date() < new Date(user.trialEndDate) && 
+    user.tier === 'free'
+  
   // Check if user is in trial or has pro subscription
-  if (user.tier === 'pro' || 
-      (user.tier === 'free' && user.isTrialing)) {
+  if (user.tier === 'pro' || isInTrial) {
     return ACCESS_LEVELS.pro
   }
   
