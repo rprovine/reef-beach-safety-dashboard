@@ -7,13 +7,15 @@ const rateLimit = new Map<string, { count: number; resetTime: number }>()
 // Rate limit configuration
 const RATE_LIMIT_WINDOW = 60 * 1000 // 1 minute
 const RATE_LIMIT_MAX_REQUESTS = 60 // 60 requests per minute
+const API_RATE_LIMIT = 20 // 20 API requests per minute
+const BEACHES_API_LIMIT = 5 // 5 beaches API requests per minute (expensive)
 
 function getRateLimitKey(request: NextRequest): string {
   const ip = request.ip || request.headers.get('x-forwarded-for') || 'unknown'
   return `${ip}:${request.nextUrl.pathname}`
 }
 
-function checkRateLimit(key: string): boolean {
+function checkRateLimit(key: string, maxRequests: number = RATE_LIMIT_MAX_REQUESTS): boolean {
   const now = Date.now()
   const limit = rateLimit.get(key)
 
@@ -25,7 +27,7 @@ function checkRateLimit(key: string): boolean {
     return true
   }
 
-  if (limit.count >= RATE_LIMIT_MAX_REQUESTS) {
+  if (limit.count >= maxRequests) {
     return false
   }
 
@@ -38,22 +40,45 @@ export function middleware(request: NextRequest) {
   if (request.nextUrl.pathname.startsWith('/api')) {
     const rateLimitKey = getRateLimitKey(request)
     
-    if (!checkRateLimit(rateLimitKey)) {
-      return new NextResponse(
-        JSON.stringify({
-          error: 'Too many requests',
-          message: 'Rate limit exceeded. Please try again later.'
-        }),
-        {
-          status: 429,
-          headers: {
-            'Content-Type': 'application/json',
-            'X-RateLimit-Limit': RATE_LIMIT_MAX_REQUESTS.toString(),
-            'X-RateLimit-Window': (RATE_LIMIT_WINDOW / 1000).toString(),
-            'Retry-After': '60'
+    // Special handling for beaches API (most expensive)
+    if (request.nextUrl.pathname === '/api/beaches') {
+      if (!checkRateLimit(rateLimitKey, BEACHES_API_LIMIT)) {
+        return new NextResponse(
+          JSON.stringify({
+            error: 'Beach API rate limit exceeded',
+            message: 'This endpoint fetches live data from multiple external APIs. Limit: 5 requests per minute per IP.',
+            retryAfter: 60
+          }),
+          {
+            status: 429,
+            headers: {
+              'Content-Type': 'application/json',
+              'X-RateLimit-Limit': BEACHES_API_LIMIT.toString(),
+              'X-RateLimit-Window': (RATE_LIMIT_WINDOW / 1000).toString(),
+              'Retry-After': '60'
+            }
           }
-        }
-      )
+        )
+      }
+    } else {
+      // General API rate limiting
+      if (!checkRateLimit(rateLimitKey, API_RATE_LIMIT)) {
+        return new NextResponse(
+          JSON.stringify({
+            error: 'API rate limit exceeded',
+            message: `Too many API requests. Limit: ${API_RATE_LIMIT} requests per minute.`
+          }),
+          {
+            status: 429,
+            headers: {
+              'Content-Type': 'application/json',
+              'X-RateLimit-Limit': API_RATE_LIMIT.toString(),
+              'X-RateLimit-Window': (RATE_LIMIT_WINDOW / 1000).toString(),
+              'Retry-After': '60'
+            }
+          }
+        )
+      }
     }
   }
 

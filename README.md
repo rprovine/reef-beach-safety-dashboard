@@ -25,6 +25,13 @@ Beach Hui ("beach community" in Hawaiian) is a comprehensive platform combining 
 
 ## 🚀 What's New (January 2025)
 
+- ✅ **API Abuse Protection**: Comprehensive rate limiting and quota management
+- ✅ **Live Data Integration**: Real-time OpenWeather, StormGlass, and NOAA APIs
+- ✅ **Authentication System**: Fixed login/logout state management
+- ✅ **Smart Caching**: 10-30 minute cache to protect API quotas
+- ✅ **Rate Limiting**: Multi-level protection (60/20/5 requests per minute)
+- ✅ **Quota Management**: Daily/monthly tracking for all external APIs
+- ✅ **Security Headers**: XSS protection, CORS, content-type enforcement
 - ✅ **Tiered Access System**: Free, Pro, and Admin tiers with feature gating
 - ✅ **Community Reporting**: Real-time beach reports from users
 - ✅ **Advanced Analytics**: Beach trends, visitor tracking, safety metrics
@@ -36,7 +43,6 @@ Beach Hui ("beach community" in Hawaiian) is a comprehensive platform combining 
 - ✅ **Marine Life Tracking**: Monk seals, sea turtles, whales, dolphins
 - ✅ **Enhanced Data Variance**: Realistic safety scores (20-100 range) with proper distribution
 - ✅ **Activity-Based Filtering**: Filter beaches by swimming, surfing, snorkeling, diving, fishing
-- ✅ **Live Beach Webcams**: Integration with Hawaii webcam networks
 - ✅ **Comprehensive API**: Full beach data aggregation from multiple sources
 
 ## ✨ Core Features
@@ -81,10 +87,16 @@ Beach Hui ("beach community" in Hawaiian) is a comprehensive platform combining 
 
 ### **Active APIs**
 - **OpenWeatherMap** ☀️ - ✅ LIVE - Current weather, UV index (11-12!), 7-day forecasts
-- **StormGlass** 🌊 - Professional marine weather data
-- **NOAA** 🌡️ - Tide predictions and buoy readings  
+- **StormGlass** 🌊 - ✅ LIVE - Professional marine weather data (wave height, periods, direction)
+- **NOAA** 🌡️ - ✅ LIVE - Tide predictions and buoy readings  
 - **Hawaii DOH** 💧 - Water quality and bacteria levels
 - **Community** 👥 - Real-time user reports and photos
+
+### **API Protection System**
+- **Rate Limiting**: 60 general / 20 API / 5 beaches requests per minute per IP
+- **Smart Caching**: 15min weather / 20min marine / 30min tide data
+- **Quota Management**: Daily/monthly tracking for OpenWeather (1000/day), StormGlass (50/day), NOAA (1000/day)
+- **Admin Monitoring**: Live usage stats at `/api/admin/quota`
 
 ### **Planned Integrations**
 - **PacIOOS** 🏄 - Hawaii-specific ocean models
@@ -203,6 +215,10 @@ PUT /api/admin/users/{id}/tier
 # System analytics
 GET /api/admin/analytics
 GET /api/admin/reports
+
+# API quota monitoring
+GET /api/admin/quota
+# Returns: Daily/monthly usage for all APIs, reset times, quota limits
 ```
 
 ## 🏗️ Tech Stack
@@ -388,18 +404,19 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ### **Security Headers**
 - Strict-Transport-Security (HSTS)
-- X-Frame-Options: SAMEORIGIN
+- X-Frame-Options: DENY
 - X-Content-Type-Options: nosniff
 - X-XSS-Protection: 1; mode=block
-- Content Security Policy (CSP)
-- Referrer-Policy: origin-when-cross-origin
+- Referrer-Policy: strict-origin-when-cross-origin
+- CORS protection with origin validation
 
-### **API Security**
-- Rate limiting per IP/user
-- API key authentication for partners
-- Request validation and sanitization
-- Error message sanitization
-- Audit logging
+### **API Security & Abuse Protection**
+- **Multi-level Rate Limiting**: 60 general / 20 API / 5 beaches requests per minute per IP
+- **Intelligent Caching**: Weather (15min), Marine (20min), Tide (30min) data
+- **Quota Management**: Daily/monthly limits for all external APIs
+- **Request Validation**: Input sanitization and type checking
+- **Error Sanitization**: Secure error messages without data leaks
+- **Admin Monitoring**: Real-time usage statistics and alerts
 
 ## 📚 Documentation
 
@@ -494,4 +511,34 @@ Special thanks to:
 
 **Built with 🌊 by LeniLani Consulting for safer beach experiences in Hawaii.**
 
-**Contact**: info@lenilani.com | [lenilani.com](https://lenilani.com)# Deployment trigger: Tue Aug 12 18:13:46 HST 2025
+**Contact**: info@lenilani.com | [lenilani.com](https://lenilani.com)
+
+---
+
+## 📋 Recent Updates (August 13, 2025)
+
+### ✅ Authentication & Security Fixes
+- **Fixed Login State**: Authentication now properly shows/hides login options
+- **Enhanced Security**: Added comprehensive rate limiting and abuse protection
+- **API Quotas**: Implemented daily/monthly tracking for all external APIs
+
+### ✅ Live Data Integration
+- **OpenWeather API**: ✅ Working - Real weather, UV index (11-12!), wind data  
+- **StormGlass API**: ✅ Working - Wave height, periods, marine conditions
+- **NOAA API**: ✅ Working - Tide predictions and water temperature
+
+### ✅ Performance & Protection
+- **Smart Caching**: 15-30 minute cache durations to protect API quotas
+- **Rate Limiting**: Multi-level protection (60/20/5 requests per minute)
+- **Quota Management**: Automatic enforcement with admin monitoring
+- **Security Headers**: XSS protection, CORS validation, content-type enforcement
+
+### 🔧 Technical Improvements  
+- **Middleware Enhancement**: Added comprehensive request throttling
+- **Admin Tools**: New `/api/admin/quota` endpoint for usage monitoring
+- **Error Handling**: Improved API error responses and fallback data
+- **Documentation**: Updated with all new security and API features
+
+---
+
+**Built with 🌊 by LeniLani Consulting for safer beach experiences in Hawaii.**

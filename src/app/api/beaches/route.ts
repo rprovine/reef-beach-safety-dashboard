@@ -1,26 +1,36 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { quotaManager } from '@/lib/api-quota'
 
 // Force dynamic runtime
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
-// Cache for API responses (5 minutes)
+// Cache for API responses - longer cache to protect API quotas
 const apiCache = new Map<string, { data: any; timestamp: number }>()
-const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
+const CACHE_DURATION = 10 * 60 * 1000 // 10 minutes for external APIs
+const OPENWEATHER_CACHE = 15 * 60 * 1000 // 15 minutes for weather (changes slowly)
+const STORMGLASS_CACHE = 20 * 60 * 1000 // 20 minutes for marine data (protect quotas)
+const NOAA_CACHE = 30 * 60 * 1000 // 30 minutes for NOAA (government data, slower updates)
 
 // Fetch real weather data from OpenWeather API
 async function fetchOpenWeatherData(lat: number, lng: number) {
   const cacheKey = `weather-${lat}-${lng}`
   const cached = apiCache.get(cacheKey)
   
-  if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+  if (cached && Date.now() - cached.timestamp < OPENWEATHER_CACHE) {
     return cached.data
   }
 
   const apiKey = process.env.OPENWEATHER_API_KEY
   if (!apiKey) {
     console.warn('OpenWeather API key not configured')
+    return null
+  }
+
+  // Check quota before making API call
+  if (!quotaManager.canMakeAPICall('openweather')) {
+    console.warn('OpenWeather API quota exceeded, using cached/fallback data')
     return null
   }
 
@@ -34,6 +44,9 @@ async function fetchOpenWeatherData(lat: number, lng: number) {
       return null
     }
 
+    // Record successful API call
+    quotaManager.recordAPICall('openweather')
+    
     const data = await response.json()
     
     // Also fetch UV index
@@ -72,13 +85,19 @@ async function fetchStormGlassData(lat: number, lng: number) {
   const cacheKey = `marine-${lat}-${lng}`
   const cached = apiCache.get(cacheKey)
   
-  if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+  if (cached && Date.now() - cached.timestamp < STORMGLASS_CACHE) {
     return cached.data
   }
 
   const apiKey = process.env.STORMGLASS_API_KEY
   if (!apiKey) {
     console.warn('StormGlass API key not configured')
+    return null
+  }
+
+  // Check quota before making API call
+  if (!quotaManager.canMakeAPICall('stormglass')) {
+    console.warn('StormGlass API quota exceeded, using cached/fallback data')
     return null
   }
 
@@ -109,6 +128,9 @@ async function fetchStormGlassData(lat: number, lng: number) {
       return null
     }
 
+    // Record successful API call
+    quotaManager.recordAPICall('stormglass')
+    
     const data = await response.json()
     const currentHour = data.hours?.[0]
 
