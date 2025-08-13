@@ -20,8 +20,8 @@ const QUOTA_LIMITS = {
     monthly: 60000    // About 60K per month
   },
   stormglass: {
-    daily: 50,        // StormGlass: adjust based on your plan
-    monthly: 1000     // Adjust based on your plan
+    daily: 5000,      // StormGlass: 5000 requests per day
+    monthly: 150000   // About 5000 * 30 days
   },
   noaa: {
     daily: 1000,      // NOAA has no strict limits but be respectful

@@ -95,7 +95,7 @@ Beach Hui ("beach community" in Hawaiian) is a comprehensive platform combining 
 ### **API Protection System**
 - **Rate Limiting**: 60 general / 20 API / 5 beaches requests per minute per IP
 - **Smart Caching**: 15min weather / 20min marine / 30min tide data
-- **Quota Management**: Daily/monthly tracking for OpenWeather (1000/day), StormGlass (50/day), NOAA (1000/day)
+- **Quota Management**: Daily/monthly tracking for OpenWeather (1000/day), StormGlass (5000/day), NOAA (1000/day)
 - **Admin Monitoring**: Live usage stats at `/api/admin/quota`
 
 ### **Planned Integrations**
@@ -530,7 +530,7 @@ Special thanks to:
 ### ✅ Performance & Protection
 - **Smart Caching**: 15-30 minute cache durations to protect API quotas
 - **Rate Limiting**: Multi-level protection (60/20/5 requests per minute)
-- **Quota Management**: Automatic enforcement with admin monitoring
+- **Quota Management**: Automatic enforcement with admin monitoring (5000 StormGlass/day)
 - **Security Headers**: XSS protection, CORS validation, content-type enforcement
 
 ### 🔧 Technical Improvements  
