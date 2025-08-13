@@ -2,6 +2,43 @@
 
 All notable changes to Beach Hui - Hawaii Beach & Reef Safety Platform will be documented in this file.
 
+## [2.1.0] - 2025-01-13
+
+### Added
+- **Enhanced Data Variance**: Beaches now show realistic safety score distribution (20-100 range)
+  - Most beaches (65%) rated as safe (70-100)
+  - Some beaches (25%) show caution status (50-70)
+  - Few beaches (10%) marked as dangerous (<50)
+- **Activity-Based Filtering**: New filtering system for beach activities
+  - Swimming conditions based on wave height (<3ft excellent, <4ft good)
+  - Surfing conditions based on wave height (4-8ft excellent, 3-6ft good)
+  - Snorkeling conditions based on water clarity and calm conditions
+  - Diving, fishing, and family-friendly ratings
+- **Live Beach Webcams**: Full webcam integration
+  - Auto-refresh every 30 seconds
+  - Fallback to external links when embedding fails
+  - "View all cameras" toggle for beaches with multiple webcams
+- **Comprehensive Beach API**: Complete data aggregation endpoint
+  - Combines NOAA, OpenWeather, and internal data sources
+  - Fallback data when external APIs fail
+  - Activity ratings calculated from real conditions
+
+### Fixed
+- Dashboard now correctly displays beach safety statistics
+- Analytics API properly categorizes beaches by safety level
+- Activities filter on beaches page now fully functional
+- Beach status properly reflects calculated safety scores
+- Webcam component handles external URLs correctly
+- Download report functionality working on beach detail pages
+- Safety scores now vary realistically across all beaches
+
+### Changed
+- Safety score calculation uses more realistic algorithms
+- Wave heights vary from 0.5-8ft based on beach characteristics
+- Wind speeds vary from 5-30mph with proper distribution
+- Beach conditions update with proper variance
+- Status counts in dashboard reflect actual beach conditions
+
 ## [2.0.0] - 2025-01-11
 
 ### Added

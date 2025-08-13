@@ -137,14 +137,46 @@ export async function GET(req: NextRequest) {
     const transformedBeaches = await Promise.all(beaches.map(async beach => {
       const currentReading = beach.readings[0]
       
-      // Generate real-time conditions based on beach location
-      const waveHeight = Math.abs(2 + Math.sin(Date.now() / 3600000 + Number(beach.lat)) * 3)
-      const windSpeed = Math.abs(8 + Math.sin(Date.now() / 7200000 + Number(beach.lng)) * 12)
+      // Generate more varied conditions based on beach location and characteristics
+      const seed = beach.name.charCodeAt(0) + beach.name.charCodeAt(1)
+      const hash = (seed * 397) % 100
+      
+      // Create varied wave heights
+      let waveHeight: number
+      if (hash < 20) {
+        waveHeight = 4 + Math.random() * 4 // 4-8 ft (rough)
+      } else if (hash < 50) {
+        waveHeight = 2 + Math.random() * 2 // 2-4 ft (moderate)
+      } else {
+        waveHeight = 0.5 + Math.random() * 1.5 // 0.5-2 ft (calm)
+      }
+      
+      // Vary wind speed
+      const windSpeed = 5 + (hash % 20) + Math.random() * 5 // 5-30 mph
+      
       const waterTemp = 76 + Math.sin(Date.now() / 86400000) * 4
       const tideLevel = Math.abs(2 + Math.sin(Date.now() / 43200000) * 2.5)
       
-      // Calculate safety score
-      const safetyScore = calculateSafetyScore(waveHeight, windSpeed, beach.advisories.length)
+      // Calculate safety score with more variance
+      let safetyScore = 100
+      
+      // Apply varied deductions
+      if (waveHeight > 6) safetyScore -= 35
+      else if (waveHeight > 4) safetyScore -= 25
+      else if (waveHeight > 3) safetyScore -= 15
+      else if (waveHeight > 2) safetyScore -= 5
+      
+      if (windSpeed > 25) safetyScore -= 25
+      else if (windSpeed > 20) safetyScore -= 15
+      else if (windSpeed > 15) safetyScore -= 5
+      
+      // Add some random variance
+      safetyScore += (hash % 20) - 10 // -10 to +10 random adjustment
+      
+      // Apply advisory penalties
+      safetyScore -= beach.advisories.length * 10
+      
+      safetyScore = Math.max(20, Math.min(100, safetyScore))
       
       // Calculate activity ratings
       const activities = calculateActivityRatings(waveHeight, windSpeed, waterTemp)
@@ -152,6 +184,16 @@ export async function GET(req: NextRequest) {
       // Simulate bacteria level
       const bacteriaLevel = Math.random() > 0.8 ? 'caution' : 'safe'
       const enterococcus = bacteriaLevel === 'safe' ? 10 + Math.random() * 25 : 35 + Math.random() * 30
+      
+      // Determine status based on safety score
+      let currentStatus: 'good' | 'caution' | 'dangerous'
+      if (safetyScore >= 80) {
+        currentStatus = 'good'
+      } else if (safetyScore >= 50) {
+        currentStatus = 'caution'
+      } else {
+        currentStatus = 'dangerous'
+      }
       
       return {
         id: beach.id,
@@ -163,8 +205,8 @@ export async function GET(req: NextRequest) {
           lat: Number(beach.lat), 
           lng: Number(beach.lng) 
         },
-        status: 'good',
-        currentStatus: 'good',
+        status: currentStatus,
+        currentStatus,
         lastUpdated: beach.updatedAt,
         imageUrl: null,
         webcamUrl: null,

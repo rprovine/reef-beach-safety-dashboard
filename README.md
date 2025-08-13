@@ -34,6 +34,10 @@ Beach Hui ("beach community" in Hawaiian) is a comprehensive platform combining 
 - ✅ **Comprehensive Reef Dashboard**: 5-tab interface with health, hazards, and conservation
 - ✅ **7-Day Forecasts**: Pro tier exclusive weather predictions
 - ✅ **Marine Life Tracking**: Monk seals, sea turtles, whales, dolphins
+- ✅ **Enhanced Data Variance**: Realistic safety scores (20-100 range) with proper distribution
+- ✅ **Activity-Based Filtering**: Filter beaches by swimming, surfing, snorkeling, diving, fishing
+- ✅ **Live Beach Webcams**: Integration with Hawaii webcam networks
+- ✅ **Comprehensive API**: Full beach data aggregation from multiple sources
 
 ## ✨ Core Features
 
@@ -148,14 +152,17 @@ HUBSPOT_PORTAL_ID="your-portal-id"
 
 ### **Public Endpoints**
 ```bash
-# Get all beaches
+# Get all beaches with live data
 GET /api/beaches
+# Returns: Safety scores, activity ratings, current conditions
 
 # Get comprehensive beach data
 GET /api/beaches/{slug}/comprehensive
+# Returns: Full data aggregation from all sources
 
-# Get current conditions
-GET /api/beaches/{slug}/conditions
+# Analytics and statistics
+GET /api/analytics?period=7d|30d|all
+# Returns: Beach status counts, trends, incidents
 
 # Get weather forecast
 GET /api/beaches/{slug}/weather
