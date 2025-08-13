@@ -25,24 +25,29 @@ export default function AnalyticsPage() {
     setLoading(true)
     try {
       const response = await fetch(`/api/analytics?period=${period}`)
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
       const data = await response.json()
+      console.log('Analytics data:', data)
       setAnalyticsData(data)
     } catch (error) {
       console.error('Error fetching analytics:', error)
+      setAnalyticsData(null) // Set to null to use fallback data
     } finally {
       setLoading(false)
     }
   }
   
   // Use real data or fallback to mock
-  const stats = analyticsData ? {
-    totalBeaches: analyticsData.overview.totalBeaches,
-    safeToday: analyticsData.overview.statusCounts.safe,
-    cautionToday: analyticsData.overview.statusCounts.caution,
-    dangerousToday: analyticsData.overview.statusCounts.dangerous,
-    totalVisitors: analyticsData.overview.totalUsers,
+  const stats = analyticsData && analyticsData.overview ? {
+    totalBeaches: analyticsData.overview?.totalBeaches || 0,
+    safeToday: analyticsData.overview?.statusCounts?.safe || 0,
+    cautionToday: analyticsData.overview?.statusCounts?.caution || 0,
+    dangerousToday: analyticsData.overview?.statusCounts?.dangerous || 0,
+    totalVisitors: analyticsData.overview?.totalUsers || '0',
     visitorChange: '+18%', // Would calculate from historical data
-    avgSafetyScore: analyticsData.overview.avgSafetyScore,
+    avgSafetyScore: analyticsData.overview?.avgSafetyScore || 0,
     safetyChange: '+5%', // Would calculate from historical data
     topBeaches: analyticsData.topBeaches || [],
     recentIncidents: analyticsData.recentIncidents || [],
@@ -203,10 +208,10 @@ export default function AnalyticsPage() {
                       <div className="flex-1 bg-gray-100 rounded-full h-6 relative overflow-hidden">
                         <div 
                           className="absolute left-0 top-0 h-full bg-blue-500 rounded-full"
-                          style={{ width: `${(day.visitors / 20000) * 100}%` }}
+                          style={{ width: `${typeof day.visitors === 'number' ? (day.visitors / 20000) * 100 : 0}%` }}
                         />
                         <span className="absolute left-2 top-0.5 text-xs text-white font-medium">
-                          {(day.visitors / 1000).toFixed(1)}k
+                          {typeof day.visitors === 'number' ? (day.visitors / 1000).toFixed(1) : '0'}k
                         </span>
                       </div>
                     </div>
@@ -233,7 +238,7 @@ export default function AnalyticsPage() {
                       </div>
                       <div>
                         <div className="font-medium text-gray-900">{beach.name}</div>
-                        <div className="text-sm text-gray-600">{beach.visitors.toLocaleString()} visitors</div>
+                        <div className="text-sm text-gray-600">{typeof beach.visitors === 'number' ? beach.visitors.toLocaleString() : beach.visitors || 0} visitors</div>
                       </div>
                     </div>
                     <div className="flex items-center gap-4">
