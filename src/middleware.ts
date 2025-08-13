@@ -6,9 +6,9 @@ const rateLimit = new Map<string, { count: number; resetTime: number }>()
 
 // Rate limit configuration
 const RATE_LIMIT_WINDOW = 60 * 1000 // 1 minute
-const RATE_LIMIT_MAX_REQUESTS = 60 // 60 requests per minute
-const API_RATE_LIMIT = 20 // 20 API requests per minute
-const BEACHES_API_LIMIT = 5 // 5 beaches API requests per minute (expensive)
+const RATE_LIMIT_MAX_REQUESTS = 200 // 200 requests per minute
+const API_RATE_LIMIT = 100 // 100 API requests per minute
+const BEACHES_API_LIMIT = 50 // 50 beaches API requests per minute (increased for testing)
 
 function getRateLimitKey(request: NextRequest): string {
   const ip = request.ip || request.headers.get('x-forwarded-for') || 'unknown'
