@@ -32,7 +32,39 @@ export default function APITestPage() {
     <div className="min-h-screen pt-20 p-8">
       <h1 className="text-3xl font-bold mb-4">Live API Data Test</h1>
       
-      <div className="mb-4 flex items-center gap-4">
+      <div className="mb-4 flex flex-wrap items-center gap-4">
+        <button
+          onClick={() => {
+            // Set trial user
+            localStorage.removeItem('beach-hui-token')
+            localStorage.removeItem('beach-hui-user')
+            localStorage.removeItem('auth-token')
+            localStorage.removeItem('user-email')
+            localStorage.removeItem('user-tier')
+
+            const trialUser = {
+              id: 'cmeaf4ghj0000s3n4amknioq',
+              email: 'rprovine@gmail.com',
+              tier: 'free',
+              subscriptionStatus: 'trial',
+              trialEndDate: '2025-08-27T20:23:46.805Z',
+              createdAt: '2025-08-13T20:23:46.807Z'
+            }
+            
+            localStorage.setItem('beach-hui-token', 'demo-token')
+            localStorage.setItem('beach-hui-user', JSON.stringify(trialUser))
+            localStorage.setItem('auth-token', 'demo-token')
+            localStorage.setItem('user-email', trialUser.email)
+            localStorage.setItem('user-tier', trialUser.tier)
+            
+            alert('Trial user set! Click OK to reload page.')
+            window.location.reload()
+          }}
+          className="px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 font-bold"
+        >
+          🚀 SET TRIAL USER
+        </button>
+        
         <button
           onClick={fetchData}
           disabled={loading}

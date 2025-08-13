@@ -149,7 +149,7 @@ export async function GET(
     }
 
     // Combine all data
-    const response = {
+    let response = {
       beach: {
         id: beach.id,
         name: beach.name,
@@ -238,6 +238,8 @@ export async function GET(
         'Stay hydrated'
       ],
     }
+
+    // Note: Access control will be handled on the frontend
 
     return NextResponse.json(response)
     

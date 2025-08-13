@@ -19,11 +19,24 @@ import { ReefDashboard } from '@/components/reef/reef-dashboard'
 import { generateReefData } from '@/lib/reef-data'
 import { useAuth } from '@/contexts/auth-context'
 import { TierFeature } from '@/components/tier-features'
+import { getUserAccessLevel } from '@/lib/access-control'
 
 export default function BeachDetailContent() {
   const params = useParams()
   const slug = params.slug as string
   const { user, isPro, isAdmin } = useAuth()
+  const access = getUserAccessLevel(user)
+  
+  // Debug access control
+  console.log('[BeachDetail] Access control:', {
+    hasUser: !!user,
+    userTier: user?.tier,
+    isTrialing: user?.trialEndDate && new Date() < new Date(user.trialEndDate) && user?.tier === 'free',
+    trialEndDate: user?.trialEndDate,
+    canViewConditions: access.beaches.viewCurrentConditions,
+    canViewForecast: access.beaches.viewForecast,
+    isPro
+  })
   
   // Function to download beach report
   const downloadReport = () => {
@@ -389,7 +402,7 @@ For real-time updates, visit https://beachhui.lenilani.com
             )}
 
             {/* Activity Ratings from API */}
-            {activities && (
+            {activities && access.beaches.viewCurrentConditions && (
               <div className="bg-white rounded-xl shadow-sm p-6">
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">Current Activity Conditions</h2>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -413,46 +426,65 @@ For real-time updates, visit https://beachhui.lenilani.com
             )}
 
             {/* Current Conditions */}
-            <div className="bg-white rounded-xl shadow-sm p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-gray-900">Current Conditions</h2>
-                <div className="flex items-center text-sm text-gray-500">
-                  <Clock className="h-4 w-4 mr-1" />
-                  Updated {currentConditions?.timestamp ? formatDateTime(currentConditions.timestamp) : 'Recently'}
+            {access.beaches.viewCurrentConditions ? (
+              <div className="bg-white rounded-xl shadow-sm p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-semibold text-gray-900">Current Conditions</h2>
+                  <div className="flex items-center text-sm text-gray-500">
+                    <Clock className="h-4 w-4 mr-1" />
+                    Updated {currentConditions?.timestamp ? formatDateTime(currentConditions.timestamp) : 'Recently'}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <ConditionCard
+                    icon={Waves}
+                    label="Wave Height"
+                    value={currentConditions?.waveHeightFt}
+                    unit="ft"
+                    trend={getTrend(currentConditions?.waveHeightFt, history?.waveHeights)}
+                  />
+                  <ConditionCard
+                    icon={Wind}
+                    label="Wind Speed"
+                    value={currentConditions?.windMph}
+                    unit="mph"
+                    trend={getTrend(currentConditions?.windMph, history?.windSpeeds)}
+                  />
+                  <ConditionCard
+                    icon={Thermometer}
+                    label="Water Temp"
+                    value={currentConditions?.waterTempF}
+                    unit="°F"
+                    trend={getTrend(currentConditions?.waterTempF, history?.waterTemps)}
+                  />
+                  <ConditionCard
+                    icon={Activity}
+                    label="Tide"
+                    value={currentConditions?.tideFt}
+                    unit="ft"
+                    trend={currentConditions?.tideFt && currentConditions.tideFt > 0 ? 'up' : 'down'}
+                  />
                 </div>
               </div>
-
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <ConditionCard
-                  icon={Waves}
-                  label="Wave Height"
-                  value={currentConditions?.waveHeightFt}
-                  unit="ft"
-                  trend={getTrend(currentConditions?.waveHeightFt, history?.waveHeights)}
-                />
-                <ConditionCard
-                  icon={Wind}
-                  label="Wind Speed"
-                  value={currentConditions?.windMph}
-                  unit="mph"
-                  trend={getTrend(currentConditions?.windMph, history?.windSpeeds)}
-                />
-                <ConditionCard
-                  icon={Thermometer}
-                  label="Water Temp"
-                  value={currentConditions?.waterTempF}
-                  unit="°F"
-                  trend={getTrend(currentConditions?.waterTempF, history?.waterTemps)}
-                />
-                <ConditionCard
-                  icon={Activity}
-                  label="Tide"
-                  value={currentConditions?.tideFt}
-                  unit="ft"
-                  trend={currentConditions?.tideFt && currentConditions.tideFt > 0 ? 'up' : 'down'}
-                />
+            ) : (
+              <div className="bg-white rounded-xl shadow-sm p-6 border-l-4 border-yellow-400">
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">Current Conditions</h2>
+                <div className="text-center py-8">
+                  <div className="bg-yellow-50 rounded-lg p-6">
+                    <AlertTriangle className="h-8 w-8 text-yellow-600 mx-auto mb-3" />
+                    <h3 className="text-lg font-medium text-yellow-900 mb-2">Sign Up for Live Conditions</h3>
+                    <p className="text-yellow-700 mb-4">Get real-time wave heights, wind speeds, water temperature, and safety scores.</p>
+                    <Link
+                      href="/auth/signup"
+                      className="inline-flex items-center px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors"
+                    >
+                      Start Free Trial
+                    </Link>
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Recommendations from API */}
             {recommendations.length > 0 && (
