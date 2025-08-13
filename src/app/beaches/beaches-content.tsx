@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { BeachMap } from '@/components/map'
@@ -36,10 +36,17 @@ export default function BeachesContent() {
   )
   const [isRefreshing, setIsRefreshing] = useState(false)
   
-  // Debug logging
-  console.log('Beaches data:', { beaches, isLoading, error, count: beaches?.length })
-  console.log('Auth state:', { user: !!user, email: user?.email, tier: user?.tier, isTrialing: user?.isTrialing, trialEndDate: user?.trialEndDate })
-  console.log('Full user object:', user)
+  // Debug logging - only log when data changes
+  useEffect(() => {
+    if (beaches || error) {
+      console.log('Beaches data update:', { 
+        beaches: beaches?.length, 
+        isLoading, 
+        error: error?.message,
+        user: user?.email 
+      })
+    }
+  }, [beaches, isLoading, error, user])
 
   // Filter beaches based on activity and safety selections
   const filteredBeaches = useMemo(() => {
@@ -294,7 +301,7 @@ export default function BeachesContent() {
 
       {/* Main Content */}
       <div className="flex-1 relative pt-4">
-        {isLoading ? (
+        {isLoading && !beaches ? (
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-ocean-500 mx-auto mb-4"></div>

@@ -12,8 +12,6 @@ export function useBeaches(island?: Island, searchQuery?: string) {
         const params = new URLSearchParams()
         if (island) params.append('island', island)
         if (searchQuery) params.append('search', searchQuery)
-        // Add cache-busting parameter
-        params.append('t', Date.now().toString())
         
         const url = `/api/beaches?${params.toString()}`
         console.log('[useBeaches] Fetching:', url)
@@ -48,8 +46,10 @@ export function useBeaches(island?: Island, searchQuery?: string) {
         throw error
       }
     },
-    staleTime: 60 * 1000, // 1 minute
-    refetchInterval: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchInterval: false, // Disable auto-refetch
+    refetchOnWindowFocus: false, // Disable refetch on focus
+    retry: 1 // Limit retries
   })
 }
 

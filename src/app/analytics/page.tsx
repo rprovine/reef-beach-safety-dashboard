@@ -39,8 +39,9 @@ export default function AnalyticsPage() {
     }
   }
   
-  // Use real data when available
-  const stats = analyticsData && analyticsData.overview ? {
+  // Use real data when available, with better error handling
+  const hasData = analyticsData && analyticsData.overview && !loading
+  const stats = hasData ? {
     totalBeaches: analyticsData.overview?.totalBeaches || 0,
     safeToday: analyticsData.overview?.statusCounts?.safe || 0,
     cautionToday: analyticsData.overview?.statusCounts?.caution || 0,
