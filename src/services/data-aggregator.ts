@@ -1,64 +1,116 @@
 /**
- * Data Aggregation Service
- * Fetches and combines data from multiple APIs
+ * Enhanced Data Aggregation Service
+ * Fetches and combines data from ALL available APIs
  */
 
-import { DATA_SOURCES, HAWAII_STATIONS, API_KEYS, ComprehensiveBeachData } from '@/lib/data-sources'
-import { getCurrentWeather, getUVIndex, getForecast, calculateBeachConditions } from '@/lib/openweather'
+import { DATA_SOURCES, HAWAII_STATIONS, ComprehensiveBeachData } from '@/lib/data-sources'
+import { noaaService } from '@/lib/api-integrations/noaa-service'
+import { weatherService } from '@/lib/api-integrations/weather-service'
+import { dataAggregator } from '@/lib/api-integrations/data-aggregator'
+import { getBeachWebcams } from '@/lib/hawaii-webcams'
+import { prisma } from '@/lib/prisma'
 
 export class DataAggregatorService {
   private cache: Map<string, { data: Record<string, unknown>; timestamp: number }> = new Map()
 
   /**
-   * Get comprehensive data for a beach
+   * Get comprehensive data for a beach - uses ALL available APIs
    */
   async getBeachData(beachId: string, lat: number, lng: number): Promise<Partial<ComprehensiveBeachData>> {
+    // Use our new comprehensive data aggregator
+    const beachSlug = await this.getBeachSlug(beachId)
+    if (beachSlug) {
+      try {
+        const comprehensiveData = await dataAggregator.getComprehensiveBeachData(beachSlug)
+        return comprehensiveData
+      } catch (error) {
+        console.error('Error getting comprehensive data:', error)
+      }
+    }
+
+    // Fallback to fetching individual sources
     const data: Partial<ComprehensiveBeachData> = {}
 
-    // Fetch from multiple sources in parallel
+    // Fetch from ALL sources in parallel
     const [
       noaaData,
       weatherData,
+      marineData,
       waterQuality,
-      uvData,
       tideData,
-      stormglassData,
-      // Add more as needed
+      waveData,
+      currentData,
+      marineWeather,
+      buoyData,
+      webcams,
+      pacioosData,
+      dohData,
+      satelliteData
     ] = await Promise.allSettled([
       this.fetchNOAAData(lat, lng),
       this.fetchWeatherData(lat, lng),
+      this.fetchMarineData(lat, lng),
       this.fetchWaterQuality(beachId),
-      this.fetchUVIndex(lat, lng),
       this.fetchTideData(lat, lng),
-      this.fetchStormGlassData(lat, lng),
+      this.fetchWaveData(lat, lng),
+      this.fetchCurrentData(lat, lng),
+      this.fetchMarineWeather(lat, lng),
+      this.fetchBuoyData(lat, lng),
+      this.fetchWebcams(beachSlug || beachId),
+      this.fetchPacIOOSData(lat, lng),
+      this.fetchDOHData(beachId),
+      this.fetchSatelliteData(lat, lng)
     ])
 
-    // Combine results
+    // Combine ALL results
     if (noaaData.status === 'fulfilled' && noaaData.value) {
       Object.assign(data, noaaData.value)
     }
     if (weatherData.status === 'fulfilled' && weatherData.value) {
       Object.assign(data, weatherData.value)
     }
+    if (marineData.status === 'fulfilled' && marineData.value) {
+      Object.assign(data, marineData.value)
+    }
     if (waterQuality.status === 'fulfilled' && waterQuality.value) {
       data.bacteriaLevel = waterQuality.value.bacteriaLevel
       data.enterococcus = waterQuality.value.enterococcus
-    }
-    if (uvData.status === 'fulfilled' && uvData.value) {
-      data.uvIndex = uvData.value.uvIndex
+      data.turbidity = waterQuality.value.turbidity
     }
     if (tideData.status === 'fulfilled' && tideData.value) {
       Object.assign(data, tideData.value)
     }
-    if (stormglassData.status === 'fulfilled' && stormglassData.value) {
-      Object.assign(data, stormglassData.value)
+    if (waveData.status === 'fulfilled' && waveData.value) {
+      Object.assign(data, waveData.value)
+    }
+    if (currentData.status === 'fulfilled' && currentData.value) {
+      data.currentSpeed = currentData.value.speed
+      data.currentDirection = currentData.value.direction
+    }
+    if (marineWeather.status === 'fulfilled' && marineWeather.value) {
+      Object.assign(data, marineWeather.value)
+    }
+    if (buoyData.status === 'fulfilled' && buoyData.value) {
+      Object.assign(data, buoyData.value)
+    }
+    if (webcams.status === 'fulfilled' && webcams.value) {
+      data.webcamUrls = webcams.value.map((cam: any) => cam.url)
+    }
+    if (pacioosData.status === 'fulfilled' && pacioosData.value) {
+      Object.assign(data, pacioosData.value)
+    }
+    if (dohData.status === 'fulfilled' && dohData.value) {
+      data.activeAdvisories = dohData.value.advisories || []
+    }
+    if (satelliteData.status === 'fulfilled' && satelliteData.value) {
+      data.algaePresent = satelliteData.value.algaeBloom || false
     }
 
     return data
   }
 
   /**
-   * Fetch NOAA tide and current data
+   * Fetch NOAA comprehensive data
    */
   async fetchNOAAData(lat: number, lng: number) {
     const cacheKey = `noaa-${lat}-${lng}`
@@ -66,30 +118,23 @@ export class DataAggregatorService {
     if (cached) return cached
 
     try {
-      // Find nearest station
       const station = this.findNearestStation(lat, lng)
       
-      const params = new URLSearchParams({
-        product: 'predictions',
-        application: 'reef_beach_safety',
-        begin_date: new Date().toISOString().split('T')[0].replace(/-/g, ''),
-        end_date: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0].replace(/-/g, ''),
-        datum: 'MLLW',
-        station: station,
-        time_zone: 'lst_ldt',
-        units: 'english',
-        interval: 'hilo',
-        format: 'json'
-      })
-
-      const response = await fetch(`${DATA_SOURCES.NOAA.TIDES}?${params}`)
-      const data = await response.json()
+      const [tideData, currentData, waterTemp] = await Promise.all([
+        noaaService.getTideData(station),
+        noaaService.getCurrentData(station),
+        noaaService.getWaterTemperature(station)
+      ])
 
       const result = {
-        tides: data.predictions,
-        currentTide: this.getCurrentTide(data.predictions),
-        nextHighTide: this.getNextHighTide(data.predictions),
-        nextLowTide: this.getNextLowTide(data.predictions),
+        currentTide: tideData.current,
+        tideType: tideData.type,
+        nextHighTide: tideData.nextHigh.time,
+        nextLowTide: tideData.nextLow.time,
+        tidalRange: Math.abs(tideData.nextHigh.height - tideData.nextLow.height),
+        currentSpeed: currentData.speed,
+        currentDirection: this.degreesToCompass(currentData.direction),
+        waterTemp: waterTemp
       }
 
       this.setCache(cacheKey, result)
@@ -101,7 +146,7 @@ export class DataAggregatorService {
   }
 
   /**
-   * Fetch weather data from OpenWeatherMap
+   * Fetch comprehensive weather data
    */
   async fetchWeatherData(lat: number, lng: number) {
     const cacheKey = `weather-${lat}-${lng}`
@@ -109,58 +154,22 @@ export class DataAggregatorService {
     if (cached) return cached
 
     try {
-      // Use our enhanced OpenWeather service with working API key
-      const weather = await getCurrentWeather(lat, lng)
+      const weatherData = await weatherService.getWeatherData(lat, lng)
       
-      if (!weather) {
-        console.error('Failed to fetch weather data')
-        return null
-      }
-
-      // Get UV Index
-      const uvIndex = await getUVIndex(lat, lng)
-      
-      // Calculate beach conditions
-      const conditions = calculateBeachConditions(weather)
-      
-      // Get forecast
-      const forecast = await getForecast(lat, lng)
-
       const result = {
-        // Current conditions
-        airTemp: weather.temperature * 9/5 + 32, // Convert to Fahrenheit for consistency
-        waterTemp: weather.temperature - 2, // Approximate water temp
-        humidity: weather.humidity,
-        pressure: weather.pressure,
-        windSpeed: weather.windSpeed * 2.237, // Convert m/s to mph
-        windDirection: weather.windDirection,
-        windGusts: weather.windSpeed * 2.237 * 1.2, // Approximate gusts
-        cloudCover: weather.cloudCover,
-        visibility: weather.visibility,
-        sunrise: weather.sunrise,
-        sunset: weather.sunset,
-        description: weather.description,
-        
-        // UV Index (extremely high in Hawaii!)
-        uvIndex: uvIndex || weather.uvIndex || 11, // Default to high UV in Hawaii
-        
-        // Beach-specific conditions
-        activities: {
-          swimming: conditions.swimming,
-          surfing: conditions.surfing,
-          snorkeling: conditions.snorkeling
-        },
-        overallCondition: conditions.overall,
-        
-        // 7-day forecast
-        forecast: forecast?.slice(0, 7).map(day => ({
-          date: day.date,
-          tempMin: day.temperature.min * 9/5 + 32,
-          tempMax: day.temperature.max * 9/5 + 32,
-          windSpeed: day.windSpeed.avg * 2.237,
-          humidity: day.humidity,
-          condition: day.condition
-        }))
+        airTemp: weatherData.temperature,
+        humidity: weatherData.humidity,
+        pressure: weatherData.pressure,
+        visibility: weatherData.visibility,
+        cloudCover: weatherData.cloudCover,
+        precipitation: weatherData.precipitation,
+        uvIndex: weatherData.uvIndex,
+        windSpeed: weatherData.windSpeed,
+        windDirection: this.degreesToCompass(weatherData.windDirection),
+        windGusts: weatherData.windGust,
+        forecast3Hour: weatherData.hourlyForecast.slice(0, 1),
+        forecast24Hour: weatherData.hourlyForecast.slice(0, 8),
+        forecast7Day: weatherData.dailyForecast
       }
 
       this.setCache(cacheKey, result)
@@ -172,243 +181,102 @@ export class DataAggregatorService {
   }
 
   /**
-   * Fetch UV Index
+   * Fetch marine conditions
    */
-  async fetchUVIndex(lat: number, lng: number) {
-    const cacheKey = `uv-${lat}-${lng}`
-    const cached = this.getFromCache(cacheKey, 60 * 60 * 1000) // 1 hour cache
+  async fetchMarineData(lat: number, lng: number) {
+    const cacheKey = `marine-${lat}-${lng}`
+    const cached = this.getFromCache(cacheKey, 15 * 60 * 1000) // 15 min cache
     if (cached) return cached
 
     try {
-      // Use our OpenWeather service with working API key
-      const uvIndex = await getUVIndex(lat, lng)
-      
-      // Hawaii typically has very high UV index (10-12+)
-      const value = uvIndex || 11 // Default to high UV for Hawaii
+      const marineData = await weatherService.getMarineData(lat, lng)
       
       const result = {
-        uvIndex: Math.round(value),
-        uvRisk: this.getUVRisk(value),
+        waveHeight: marineData.waveHeight,
+        wavePeriod: marineData.wavePeriod,
+        waveDirection: this.degreesToCompass(marineData.waveDirection),
+        swellHeight: marineData.swellHeight,
+        swellPeriod: marineData.swellPeriod,
+        swellDirection: this.degreesToCompass(marineData.swellDirection),
+        windWaveHeight: marineData.windWaveHeight,
+        windWavePeriod: marineData.windWavePeriod,
+        waterClarity: marineData.visibility
       }
 
       this.setCache(cacheKey, result)
       return result
     } catch (error) {
-      console.error('UV fetch error:', error)
-      // Return typical Hawaii UV values as fallback
-      return {
-        uvIndex: 11,
-        uvRisk: 'extreme'
-      }
-    }
-  }
-
-  /**
-   * Fetch water quality data (mock for now)
-   */
-  async fetchWaterQuality() {
-    // This would connect to Hawaii DOH API
-    // For now, return mock data
-    return {
-      bacteriaLevel: 'safe' as const,
-      enterococcus: Math.random() * 50, // CFU/100ml
-      turbidity: Math.random() * 5,
-      lastSample: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000),
-    }
-  }
-
-  /**
-   * Fetch tide data
-   */
-  async fetchTideData(lat: number, lng: number) {
-    const cacheKey = `tide-${lat}-${lng}`
-    const cached = this.getFromCache(cacheKey, 60 * 60 * 1000) // 1 hour cache
-    if (cached) return cached
-
-    // Mock tide data for now
-    const now = new Date()
-    const result = {
-      currentTide: 2.5 + Math.sin(now.getHours() / 24 * Math.PI * 2) * 2,
-      tidalRange: 4.5,
-      nextHighTide: new Date(now.getTime() + 6 * 60 * 60 * 1000),
-      nextLowTide: new Date(now.getTime() + 3 * 60 * 60 * 1000),
-    }
-
-    this.setCache(cacheKey, result)
-    return result
-  }
-
-  /**
-   * Fetch StormGlass Marine Weather Data
-   */
-  async fetchStormGlassData(lat: number, lng: number) {
-    if (!API_KEYS.STORMGLASS) return null
-
-    const cacheKey = `stormglass-${lat}-${lng}`
-    const cached = this.getFromCache(cacheKey, 30 * 60 * 1000) // 30 min cache (preserve API quota)
-    if (cached) return cached
-
-    try {
-      // StormGlass parameters we want
-      const params = [
-        'waveHeight',
-        'wavePeriod',
-        'waveDirection',
-        'windSpeed',
-        'windDirection',
-        'swellHeight',
-        'swellPeriod',
-        'swellDirection',
-        'waterTemperature',
-        'currentSpeed',
-        'currentDirection',
-        'airTemperature',
-        'humidity',
-        'visibility',
-        'seaLevel'
-      ].join(',')
-
-      const response = await fetch(
-        `${DATA_SOURCES.STORMGLASS.WEATHER}?lat=${lat}&lng=${lng}&params=${params}`,
-        {
-          headers: {
-            'Authorization': API_KEYS.STORMGLASS
-          }
-        }
-      )
-
-      if (!response.ok) {
-        console.error('StormGlass API error:', response.status)
-        return null
-      }
-
-      const data = await response.json()
-      
-      // Get the first hour's data
-      const current = data.hours?.[0]
-      if (!current) return null
-
-      // Extract and format the data
-      const result = {
-        // Wave data
-        waveHeight: current.waveHeight?.noaa || current.waveHeight?.sg,
-        wavePeriod: current.wavePeriod?.noaa || current.wavePeriod?.sg,
-        waveDirection: current.waveDirection?.noaa || current.waveDirection?.sg,
-        
-        // Swell data
-        swellHeight: current.swellHeight?.noaa || current.swellHeight?.sg,
-        swellPeriod: current.swellPeriod?.noaa || current.swellPeriod?.sg,
-        swellDirection: current.swellDirection?.noaa || current.swellDirection?.sg,
-        
-        // Wind data
-        windSpeed: current.windSpeed?.noaa || current.windSpeed?.sg,
-        windDirection: this.degreesToDirection(current.windDirection?.noaa || current.windDirection?.sg),
-        
-        // Water data
-        waterTemp: current.waterTemperature?.noaa || current.waterTemperature?.sg,
-        
-        // Current data
-        currentSpeed: current.currentSpeed?.sg,
-        currentDirection: current.currentDirection?.sg ? this.degreesToDirection(current.currentDirection.sg) : null,
-        
-        // Weather data
-        visibility: current.visibility?.noaa || current.visibility?.sg,
-        humidity: current.humidity?.noaa || current.humidity?.sg,
-        
-        // Determine rip current risk based on conditions
-        ripCurrentRisk: this.calculateRipCurrentRisk(
-          current.waveHeight?.noaa || 0,
-          current.wavePeriod?.noaa || 0,
-          current.currentSpeed?.sg || 0
-        ),
-        
-        // Water clarity estimate (based on wave height and period)
-        waterClarity: this.estimateWaterClarity(
-          current.waveHeight?.noaa || 0,
-          current.swellHeight?.noaa || 0
-        ),
-        
-        // Source tracking
-        dataSource: 'StormGlass',
-        lastUpdated: new Date().toISOString()
-      }
-
-      this.setCache(cacheKey, result)
-      return result
-    } catch (error) {
-      console.error('StormGlass fetch error:', error)
+      console.error('Marine data fetch error:', error)
       return null
     }
   }
 
   /**
-   * Calculate rip current risk based on conditions
+   * Fetch wave data from NOAA
    */
-  private calculateRipCurrentRisk(waveHeight: number, wavePeriod: number, currentSpeed: number): 'low' | 'moderate' | 'high' {
-    // Simple heuristic - would be more sophisticated in production
-    if (waveHeight > 6 || currentSpeed > 2) return 'high'
-    if (waveHeight > 3 || currentSpeed > 1 || wavePeriod > 10) return 'moderate'
-    return 'low'
-  }
-
-  /**
-   * Estimate water clarity based on conditions
-   */
-  private estimateWaterClarity(waveHeight: number, swellHeight: number): number {
-    // Estimate visibility in feet based on wave action
-    const totalWaveAction = waveHeight + swellHeight
-    if (totalWaveAction < 2) return 40 // Excellent clarity
-    if (totalWaveAction < 4) return 25 // Good clarity
-    if (totalWaveAction < 6) return 15 // Fair clarity
-    return 5 // Poor clarity
-  }
-
-  /**
-   * Fetch PacIOOS data for Hawaii-specific conditions
-   */
-  async fetchPacIOOSData() {
+  async fetchWaveData(lat: number, lng: number) {
     try {
-      // This would connect to PacIOOS ERDDAP server
-      // Example: Wave height, period, direction
-      const response = await fetch(
-        `${DATA_SOURCES.PACIOOS.BASE}/griddap/hmrg_west_swan.json?` +
-        `Thgt[(last)][(20.0):(22.0)][(200.0):(203.0)]`
-      )
-      const data = await response.json()
-      
+      const waveData = await noaaService.getWaveData(lat, lng)
       return {
-        waveHeight: data.table.rows[0]?.[3] || 0,
-        wavePeriod: data.table.rows[0]?.[4] || 0,
-        waveDirection: data.table.rows[0]?.[5] || 0,
+        waveHeight: waveData.height,
+        wavePeriod: waveData.period,
+        waveDirection: this.degreesToCompass(waveData.direction),
+        dominantPeriod: waveData.dominantPeriod,
+        peakDirection: this.degreesToCompass(waveData.peakDirection)
       }
     } catch (error) {
-      console.error('PacIOOS fetch error:', error)
+      console.error('Wave data fetch error:', error)
       return null
     }
   }
 
   /**
-   * Fetch real-time buoy data from NDBC
+   * Fetch current data
    */
-  async fetchBuoyData(buoyId: string) {
+  async fetchCurrentData(lat: number, lng: number) {
     try {
-      const response = await fetch(
-        `${DATA_SOURCES.NOAA.WATER_TEMP}/${buoyId}.txt`
-      )
-      const text = await response.text()
-      const lines = text.split('\n')
-      const headers = lines[0].split(/\s+/)
-      const data = lines[2].split(/\s+/) // Most recent reading
+      const station = this.findNearestStation(lat, lng)
+      const currentData = await noaaService.getCurrentData(station)
+      return {
+        speed: currentData.speed,
+        direction: currentData.direction
+      }
+    } catch (error) {
+      console.error('Current data fetch error:', error)
+      return null
+    }
+  }
 
-      const result: Record<string, unknown> = {}
-      headers.forEach((header, index) => {
-        if (header === 'WTMP') result.waterTemp = parseFloat(data[index])
-        if (header === 'WVHT') result.waveHeight = parseFloat(data[index])
-        if (header === 'DPD') result.wavePeriod = parseFloat(data[index])
-        if (header === 'WSPD') result.windSpeed = parseFloat(data[index])
-      })
+  /**
+   * Fetch marine weather
+   */
+  async fetchMarineWeather(lat: number, lng: number) {
+    try {
+      const marineWeather = await noaaService.getMarineWeather(lat, lng)
+      return {
+        seas: marineWeather.seas,
+        swells: marineWeather.swells
+      }
+    } catch (error) {
+      console.error('Marine weather fetch error:', error)
+      return null
+    }
+  }
 
-      return result
+  /**
+   * Fetch buoy data
+   */
+  async fetchBuoyData(lat: number, lng: number) {
+    try {
+      const buoyData = await noaaService.getNearestBuoy(lat, lng)
+      return {
+        buoyName: buoyData.name,
+        buoyDistance: this.calculateDistance(lat, lng, buoyData.lat, buoyData.lon),
+        waterTemp: buoyData.waterTemp,
+        waveHeight: buoyData.waveHeight,
+        windSpeed: buoyData.windSpeed,
+        pressure: buoyData.pressure
+      }
     } catch (error) {
       console.error('Buoy data fetch error:', error)
       return null
@@ -416,89 +284,226 @@ export class DataAggregatorService {
   }
 
   /**
-   * Get activity recommendations based on conditions
+   * Fetch webcams for beach
    */
-  getActivityRatings(data: Partial<ComprehensiveBeachData>) {
-    const ratings = {
-      swimming: 'good' as const,
-      surfing: 'good' as const,
-      snorkeling: 'good' as const,
-      diving: 'good' as const,
-      fishing: 'good' as const,
+  async fetchWebcams(beachSlug: string) {
+    try {
+      const webcams = getBeachWebcams(beachSlug)
+      return webcams
+    } catch (error) {
+      console.error('Webcam fetch error:', error)
+      return []
     }
-
-    const waveHeight = data.waveHeight || 2
-    const wavePeriod = data.wavePeriod || 8
-    const waterClarity = data.waterClarity || 20
-
-    // Swimming rating
-    if (data.ripCurrentRisk === 'high' || waveHeight > 6) {
-      ratings.swimming = 'dangerous'
-    } else if (waveHeight > 3 || data.ripCurrentRisk === 'moderate') {
-      ratings.swimming = 'fair'
-    } else if (waveHeight < 2 && data.bacteriaLevel === 'safe') {
-      ratings.swimming = 'excellent'
-    }
-
-    // Surfing rating
-    if (waveHeight < 2) {
-      ratings.surfing = 'flat'
-    } else if (waveHeight > 8 && wavePeriod > 12) {
-      ratings.surfing = 'excellent'
-    } else if (waveHeight > 4) {
-      ratings.surfing = 'good'
-    }
-
-    // Snorkeling rating
-    if (waterClarity > 30 && waveHeight < 2) {
-      ratings.snorkeling = 'excellent'
-    } else if (waterClarity < 10 || waveHeight > 4) {
-      ratings.snorkeling = 'poor'
-    }
-
-    return ratings
   }
 
-  // Helper functions
+  /**
+   * Fetch PacIOOS data (Hawaii-specific ocean data)
+   */
+  async fetchPacIOOSData(lat: number, lng: number) {
+    const cacheKey = `pacioos-${lat}-${lng}`
+    const cached = this.getFromCache(cacheKey, 30 * 60 * 1000) // 30 min cache
+    if (cached) return cached
+
+    try {
+      // Fetch from PacIOOS API
+      const response = await fetch(
+        `${DATA_SOURCES.PACIOOS.BASE}/griddap/hmrg_bathymetry.json?` +
+        `latitude,longitude,z&latitude>=${lat-0.1}&latitude<=${lat+0.1}` +
+        `&longitude>=${lng-0.1}&longitude<=${lng+0.1}`
+      )
+      
+      if (response.ok) {
+        const data = await response.json()
+        const result = {
+          waterDepth: data.table?.rows?.[0]?.[2] || 0,
+          bathymetry: data
+        }
+        this.setCache(cacheKey, result)
+        return result
+      }
+    } catch (error) {
+      console.error('PacIOOS fetch error:', error)
+    }
+    return null
+  }
+
+  /**
+   * Fetch DOH water quality data
+   */
+  async fetchDOHData(beachId: string) {
+    const cacheKey = `doh-${beachId}`
+    const cached = this.getFromCache(cacheKey, 60 * 60 * 1000) // 1 hour cache
+    if (cached) return cached
+
+    try {
+      // This would connect to Hawaii DOH API when available
+      // For now, fetch from our database
+      const beach = await prisma.beach.findUnique({
+        where: { id: beachId },
+        include: {
+          advisories: {
+            where: { status: 'active' }
+          }
+        }
+      })
+
+      const result = {
+        advisories: beach?.advisories.map(a => a.title) || [],
+        bacteriaWarning: beach?.advisories.some(a => a.title.toLowerCase().includes('bacteria'))
+      }
+
+      this.setCache(cacheKey, result)
+      return result
+    } catch (error) {
+      console.error('DOH data fetch error:', error)
+      return null
+    }
+  }
+
+  /**
+   * Fetch satellite data for algae blooms
+   */
+  async fetchSatelliteData(lat: number, lng: number) {
+    const cacheKey = `satellite-${lat}-${lng}`
+    const cached = this.getFromCache(cacheKey, 24 * 60 * 60 * 1000) // 24 hour cache
+    if (cached) return cached
+
+    try {
+      // This would connect to NASA MODIS or other satellite APIs
+      // For now, return mock data
+      const result = {
+        algaeBloom: Math.random() > 0.9,
+        chlorophyll: Math.random() * 10,
+        turbidity: Math.random() * 5
+      }
+
+      this.setCache(cacheKey, result)
+      return result
+    } catch (error) {
+      console.error('Satellite data fetch error:', error)
+      return null
+    }
+  }
+
+  /**
+   * Fetch water quality from database
+   */
+  async fetchWaterQuality(beachId: string) {
+    const cacheKey = `water-quality-${beachId}`
+    const cached = this.getFromCache(cacheKey, 60 * 60 * 1000) // 1 hour cache
+    if (cached) return cached
+
+    try {
+      // Fetch from database
+      const beach = await prisma.beach.findUnique({
+        where: { id: beachId },
+        include: {
+          readings: {
+            orderBy: { timestamp: 'desc' },
+            take: 1
+          }
+        }
+      })
+
+      const latestReading = beach?.readings[0]
+      
+      const result = {
+        bacteriaLevel: latestReading?.bacteriaLevel || 'safe',
+        enterococcus: 10, // Mock value - would come from DOH
+        turbidity: 1 // Mock value
+      }
+
+      this.setCache(cacheKey, result)
+      return result
+    } catch (error) {
+      console.error('Water quality fetch error:', error)
+      return null
+    }
+  }
+
+  /**
+   * Fetch tide data
+   */
+  async fetchTideData(lat: number, lng: number) {
+    try {
+      const station = this.findNearestStation(lat, lng)
+      const tideData = await noaaService.getTideData(station)
+      
+      return {
+        currentTide: tideData.current,
+        nextHighTide: tideData.nextHigh.time,
+        nextLowTide: tideData.nextLow.time,
+        predictions: tideData.predictions
+      }
+    } catch (error) {
+      console.error('Tide data fetch error:', error)
+      return null
+    }
+  }
+
+  /**
+   * Helper: Get beach slug from ID
+   */
+  private async getBeachSlug(beachId: string): Promise<string | null> {
+    try {
+      const beach = await prisma.beach.findUnique({
+        where: { id: beachId },
+        select: { slug: true }
+      })
+      return beach?.slug || null
+    } catch {
+      return null
+    }
+  }
+
+  /**
+   * Helper: Find nearest NOAA station
+   */
   private findNearestStation(lat: number, lng: number): string {
-    // Simple implementation - would be more sophisticated in production
-    if (lat > 21.5) return HAWAII_STATIONS.OAHU.HALEIWA // North Shore
-    if (lat < 19.5) return HAWAII_STATIONS.HAWAII.HILO // Big Island
-    if (lng < -159) return HAWAII_STATIONS.KAUAI.NAWILIWILI // Kauai
+    // Determine which island based on coordinates
+    if (lat > 21.5 && lng < -157.5) {
+      return HAWAII_STATIONS.OAHU.HONOLULU // Oahu North Shore
+    } else if (lat > 21 && lat < 21.5 && lng < -157.5) {
+      return HAWAII_STATIONS.OAHU.HONOLULU // Oahu South Shore
+    } else if (lat > 20.5 && lat < 21 && lng > -157 && lng < -156) {
+      return HAWAII_STATIONS.MAUI.KAHULUI // Maui
+    } else if (lat > 21.8 && lng < -159) {
+      return HAWAII_STATIONS.KAUAI.NAWILIWILI // Kauai
+    } else if (lat < 20 && lng < -155) {
+      return HAWAII_STATIONS.HAWAII.HILO // Big Island
+    }
+    
     return HAWAII_STATIONS.OAHU.HONOLULU // Default
   }
 
-  private degreesToDirection(degrees: number): string {
-    const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE',
-                       'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW']
+  /**
+   * Helper: Calculate distance between coordinates
+   */
+  private calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+    const R = 6371 // Earth's radius in km
+    const dLat = (lat2 - lat1) * Math.PI / 180
+    const dLon = (lon2 - lon1) * Math.PI / 180
+    const a = 
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+      Math.sin(dLon/2) * Math.sin(dLon/2)
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))
+    return R * c
+  }
+
+  /**
+   * Helper: Convert degrees to compass direction
+   */
+  private degreesToCompass(degrees: number): string {
+    const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW']
     const index = Math.round(degrees / 22.5) % 16
     return directions[index]
   }
 
-  private getUVRisk(uvIndex: number): string {
-    if (uvIndex <= 2) return 'Low'
-    if (uvIndex <= 5) return 'Moderate'
-    if (uvIndex <= 7) return 'High'
-    if (uvIndex <= 10) return 'Very High'
-    return 'Extreme'
-  }
-
-  private getCurrentTide(): number {
-    // Implementation would interpolate between tide points
-    return 2.5
-  }
-
-  private getNextHighTide(): Date {
-    // Find next high tide from predictions
-    return new Date(Date.now() + 6 * 60 * 60 * 1000)
-  }
-
-  private getNextLowTide(): Date {
-    // Find next low tide from predictions
-    return new Date(Date.now() + 3 * 60 * 60 * 1000)
-  }
-
-  private getFromCache(key: string, maxAge: number) {
+  /**
+   * Cache helpers
+   */
+  private getFromCache(key: string, maxAge: number): Record<string, unknown> | null {
     const cached = this.cache.get(key)
     if (cached && Date.now() - cached.timestamp < maxAge) {
       return cached.data
@@ -506,10 +511,10 @@ export class DataAggregatorService {
     return null
   }
 
-  private setCache(key: string, data: Record<string, unknown>) {
+  private setCache(key: string, data: Record<string, unknown>): void {
     this.cache.set(key, { data, timestamp: Date.now() })
   }
 }
 
-// Singleton instance
-export const dataAggregator = new DataAggregatorService()
+// Export singleton instance
+export const dataAggregatorService = new DataAggregatorService()

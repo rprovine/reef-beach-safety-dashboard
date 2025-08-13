@@ -1,0 +1,35 @@
+/* Fix for Leaflet z-index issues */
+.leaflet-container {
+  z-index: 1 !important;
+}
+
+.leaflet-pane {
+  z-index: 1 !important;
+}
+
+.leaflet-top,
+.leaflet-bottom {
+  z-index: 10 !important;
+}
+
+.leaflet-control {
+  z-index: 10 !important;
+}
+
+.leaflet-popup-pane {
+  z-index: 700 !important;
+}
+
+.leaflet-tooltip-pane {
+  z-index: 650 !important;
+}
+
+/* Ensure map container doesn't overflow */
+.leaflet-container {
+  position: relative !important;
+}
+
+/* Fix for custom markers */
+.custom-beach-marker {
+  z-index: 600 !important;
+}

@@ -152,17 +152,30 @@ export const templates = {
 export async function sendEmail(template: EmailTemplate) {
   if (!resend) {
     console.warn('Email service not configured - RESEND_API_KEY is missing')
+    
+    // In development, log the email content
+    if (process.env.NODE_ENV === 'development') {
+      console.log('📧 Email would be sent:')
+      console.log('To:', template.to)
+      console.log('Subject:', template.subject)
+      console.log('From:', template.from || 'Beach Hui <alerts@beachhui.com>')
+      if (template.text) {
+        console.log('Content:', template.text)
+      }
+      console.log('---')
+    }
+    
     return { success: false, error: 'Email service not configured' }
   }
   
   try {
     const { data, error } = await resend.emails.send({
-      from: template.from || 'Beach Hui <alerts@beachhui.com>',
+      from: template.from || 'onboarding@resend.dev',
       to: template.to,
       subject: template.subject,
       html: template.html,
       text: template.text,
-      replyTo: template.replyTo || 'support@beachhui.com',
+      replyTo: template.replyTo || 'support@lenilani.com',
     })
 
     if (error) {

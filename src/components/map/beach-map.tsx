@@ -8,6 +8,7 @@ import { Beach } from '@/types'
 import { cn, getStatusColor, getStatusLabel } from '@/lib/utils'
 import { Waves, Wind, Thermometer, AlertTriangle, MapPin } from 'lucide-react'
 import 'leaflet/dist/leaflet.css'
+import '@/styles/map-fixes.css'
 
 // Fix for default markers in React Leaflet
 // @ts-expect-error Leaflet icon URL fix

@@ -1,20 +1,20 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/auth-context'
 import { TierFeature } from '@/components/tier-features'
 import { InlineUpgradePrompt } from '@/components/upgrade-prompt'
 import { 
   Bell, BellOff, AlertTriangle, Waves, Wind, 
   Fish, Shield, Mail, Phone, Plus, X,
-  Check, Clock, Settings, Trash2
+  Check, Clock, Settings, Trash2, Thermometer, Cloud
 } from 'lucide-react'
 import Link from 'next/link'
 
 interface Alert {
   id: string
   beach: string
-  type: 'wave' | 'wind' | 'tide' | 'wildlife' | 'weather' | 'safety'
+  type: 'wave' | 'wind' | 'tide' | 'wildlife' | 'weather' | 'safety' | 'temperature' | 'uv'
   condition: string
   threshold: string
   deliveryMethod: 'email' | 'sms' | 'push'
@@ -23,69 +23,164 @@ interface Alert {
   triggeredCount: number
 }
 
-// Mock data
-const mockAlerts: Alert[] = [
-  {
-    id: '1',
-    beach: 'Waikiki Beach',
-    type: 'wave',
-    condition: 'Wave height above',
-    threshold: '6 ft',
-    deliveryMethod: 'email',
-    enabled: true,
-    lastTriggered: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-    triggeredCount: 3
-  },
-  {
-    id: '2',
-    beach: 'Pipeline',
-    type: 'safety',
-    condition: 'High risk advisory',
-    threshold: 'Any',
-    deliveryMethod: 'sms',
-    enabled: true,
-    triggeredCount: 1
-  },
-  {
-    id: '3',
-    beach: 'Hanauma Bay',
-    type: 'wildlife',
-    condition: 'Monk seal sighting',
-    threshold: 'Any',
-    deliveryMethod: 'email',
-    enabled: false,
-    triggeredCount: 0
-  }
-]
-
 const alertTypes = {
   wave: { icon: Waves, color: 'text-blue-600 bg-blue-100' },
   wind: { icon: Wind, color: 'text-gray-600 bg-gray-100' },
   tide: { icon: Waves, color: 'text-cyan-600 bg-cyan-100' },
   wildlife: { icon: Fish, color: 'text-green-600 bg-green-100' },
-  weather: { icon: AlertTriangle, color: 'text-yellow-600 bg-yellow-100' },
-  safety: { icon: Shield, color: 'text-red-600 bg-red-100' }
+  weather: { icon: Cloud, color: 'text-yellow-600 bg-yellow-100' },
+  safety: { icon: Shield, color: 'text-red-600 bg-red-100' },
+  temperature: { icon: Thermometer, color: 'text-orange-600 bg-orange-100' },
+  uv: { icon: AlertTriangle, color: 'text-purple-600 bg-purple-100' }
 }
 
 export default function AlertsPage() {
   const { user, isPro } = useAuth()
-  const [alerts, setAlerts] = useState(mockAlerts)
+  const [alerts, setAlerts] = useState<Alert[]>([])
+  const [beaches, setBeaches] = useState<any[]>([])
   const [showCreateForm, setShowCreateForm] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [currentConditions, setCurrentConditions] = useState<any>({})
   
   const freeAlertsLimit = 3
   const proAlertsLimit = 'unlimited'
   
+  // Fetch beaches and current conditions
+  useEffect(() => {
+    // Fetch beaches list
+    fetch('/api/beaches')
+      .then(res => res.json())
+      .then(data => {
+        setBeaches(data)
+        // Fetch current conditions for each beach
+        Promise.all(
+          data.slice(0, 5).map((beach: any) => 
+            fetch(`/api/beaches/${beach.slug}/comprehensive`)
+              .then(res => res.json())
+              .catch(() => null)
+          )
+        ).then(conditions => {
+          const conditionsMap: any = {}
+          conditions.forEach((cond, idx) => {
+            if (cond && data[idx]) {
+              conditionsMap[data[idx].slug] = cond
+            }
+          })
+          setCurrentConditions(conditionsMap)
+        })
+      })
+      .catch(err => console.error('Error fetching beaches:', err))
+      .finally(() => setLoading(false))
+      
+    // Load saved alerts from localStorage (in production, this would be from database)
+    if (user) {
+      const savedAlerts = localStorage.getItem(`alerts_${user.id}`)
+      if (savedAlerts) {
+        setAlerts(JSON.parse(savedAlerts))
+      }
+    }
+  }, [user])
+  
+  // Check alerts against current conditions
+  useEffect(() => {
+    if (!alerts.length || !Object.keys(currentConditions).length) return
+    
+    const updatedAlerts = alerts.map(alert => {
+      const beachData = currentConditions[alert.beach]
+      if (!beachData) return alert
+      
+      let shouldTrigger = false
+      const threshold = parseFloat(alert.threshold)
+      
+      switch (alert.type) {
+        case 'wave':
+          const waveHeight = beachData.currentConditions?.waveHeightFt || 0
+          shouldTrigger = alert.condition.includes('above') ? waveHeight > threshold : waveHeight < threshold
+          break
+        case 'wind':
+          const windSpeed = beachData.currentConditions?.windMph || 0
+          shouldTrigger = alert.condition.includes('above') ? windSpeed > threshold : windSpeed < threshold
+          break
+        case 'temperature':
+          const waterTemp = beachData.currentConditions?.waterTempF || 0
+          shouldTrigger = alert.condition.includes('above') ? waterTemp > threshold : waterTemp < threshold
+          break
+        case 'uv':
+          const uvIndex = beachData.weatherData?.uvIndex || 0
+          shouldTrigger = uvIndex >= threshold
+          break
+        case 'safety':
+          shouldTrigger = beachData.safetyScore < 70
+          break
+      }
+      
+      if (shouldTrigger && alert.enabled) {
+        // In production, send actual notification
+        console.log(`Alert triggered for ${alert.beach}: ${alert.condition} ${alert.threshold}`)
+        return {
+          ...alert,
+          lastTriggered: new Date(),
+          triggeredCount: alert.triggeredCount + 1
+        }
+      }
+      
+      return alert
+    })
+    
+    if (JSON.stringify(updatedAlerts) !== JSON.stringify(alerts)) {
+      setAlerts(updatedAlerts)
+      // Save to localStorage
+      if (user) {
+        localStorage.setItem(`alerts_${user.id}`, JSON.stringify(updatedAlerts))
+      }
+    }
+  }, [alerts, currentConditions, user])
+  
   const toggleAlert = (alertId: string) => {
-    setAlerts(alerts.map(alert => 
+    const updatedAlerts = alerts.map(alert => 
       alert.id === alertId ? { ...alert, enabled: !alert.enabled } : alert
-    ))
+    )
+    setAlerts(updatedAlerts)
+    if (user) {
+      localStorage.setItem(`alerts_${user.id}`, JSON.stringify(updatedAlerts))
+    }
   }
   
   const deleteAlert = (alertId: string) => {
-    setAlerts(alerts.filter(alert => alert.id !== alertId))
+    const updatedAlerts = alerts.filter(alert => alert.id !== alertId)
+    setAlerts(updatedAlerts)
+    if (user) {
+      localStorage.setItem(`alerts_${user.id}`, JSON.stringify(updatedAlerts))
+    }
+  }
+  
+  const createAlert = (formData: any) => {
+    const newAlert: Alert = {
+      id: Date.now().toString(),
+      beach: formData.beach,
+      type: formData.type,
+      condition: formData.condition,
+      threshold: formData.threshold,
+      deliveryMethod: formData.deliveryMethod || 'email',
+      enabled: true,
+      triggeredCount: 0
+    }
+    
+    const updatedAlerts = [...alerts, newAlert]
+    setAlerts(updatedAlerts)
+    if (user) {
+      localStorage.setItem(`alerts_${user.id}`, JSON.stringify(updatedAlerts))
+    }
+    setShowCreateForm(false)
   }
   
   const canCreateMoreAlerts = isPro || alerts.length < freeAlertsLimit
+  
+  // Get active alerts (recently triggered)
+  const activeAlerts = alerts.filter(alert => 
+    alert.lastTriggered && 
+    (Date.now() - alert.lastTriggered.getTime()) < 24 * 60 * 60 * 1000
+  )
   
   return (
     <div className="min-h-screen bg-gray-50 pt-20">
@@ -132,13 +227,25 @@ export default function AlertsPage() {
             </div>
             {!isPro && user && (
               <Link
-                href="/auth/signin"
+                href="/pricing"
                 className="text-sm text-ocean-600 hover:text-ocean-700 font-medium"
               >
                 Upgrade to Pro for unlimited alerts →
               </Link>
             )}
           </div>
+          
+          {/* Active Alerts Banner */}
+          {activeAlerts.length > 0 && (
+            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-red-600" />
+                <span className="text-sm font-medium text-red-900">
+                  {activeAlerts.length} alert{activeAlerts.length !== 1 ? 's' : ''} triggered in the last 24 hours
+                </span>
+              </div>
+            </div>
+          )}
         </div>
       </div>
       
@@ -159,6 +266,10 @@ export default function AlertsPage() {
             >
               Sign In
             </Link>
+          </div>
+        ) : loading ? (
+          <div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-ocean-500"></div>
           </div>
         ) : (
           <div className="grid lg:grid-cols-3 gap-8">
@@ -183,7 +294,6 @@ export default function AlertsPage() {
                   <button
                     onClick={() => {
                       if (user?.tier === 'free' && alerts.length >= 3) {
-                        // Will show upgrade prompt
                         alert('Upgrade to Pro for unlimited alerts!')
                         return
                       }
@@ -200,6 +310,7 @@ export default function AlertsPage() {
                   {alerts.map((alert) => {
                     const typeConfig = alertTypes[alert.type]
                     const Icon = typeConfig.icon
+                    const beachData = currentConditions[alert.beach]
                     
                     return (
                       <div key={alert.id} className="bg-white rounded-xl shadow-sm p-6">
@@ -210,11 +321,27 @@ export default function AlertsPage() {
                             </div>
                             <div className="flex-1">
                               <h3 className="font-semibold text-gray-900">
-                                {alert.beach}
+                                {alert.beach.replace('-', ' ').split(' ').map((w: string) => 
+                                  w.charAt(0).toUpperCase() + w.slice(1)
+                                ).join(' ')}
                               </h3>
                               <p className="text-sm text-gray-600 mt-1">
                                 {alert.condition} {alert.threshold}
                               </p>
+                              
+                              {/* Show current value if available */}
+                              {beachData && (
+                                <div className="mt-2 text-xs text-gray-500">
+                                  Current: {
+                                    alert.type === 'wave' ? `${beachData.currentConditions?.waveHeightFt || 'N/A'} ft waves` :
+                                    alert.type === 'wind' ? `${beachData.currentConditions?.windMph || 'N/A'} mph wind` :
+                                    alert.type === 'temperature' ? `${beachData.currentConditions?.waterTempF || 'N/A'}°F water` :
+                                    alert.type === 'uv' ? `UV Index ${beachData.weatherData?.uvIndex || 'N/A'}` :
+                                    'No data'
+                                  }
+                                </div>
+                              )}
+                              
                               <div className="flex items-center gap-4 mt-3 text-xs">
                                 <span className={`inline-flex items-center px-2 py-1 rounded-full ${
                                   alert.deliveryMethod === 'email' ? 'bg-blue-100 text-blue-700' :
@@ -286,9 +413,12 @@ export default function AlertsPage() {
                       </div>
                     </div>
                   </div>
-                  <button className="w-full mt-4 px-4 py-2 bg-gradient-to-r from-yellow-400 to-yellow-500 text-white font-medium rounded-lg hover:from-yellow-500 hover:to-yellow-600">
+                  <Link 
+                    href="/pricing"
+                    className="block w-full mt-4 px-4 py-2 bg-gradient-to-r from-yellow-400 to-yellow-500 text-white font-medium rounded-lg hover:from-yellow-500 hover:to-yellow-600 text-center"
+                  >
                     Upgrade to Pro
-                  </button>
+                  </Link>
                 </div>
               </TierFeature>
               
@@ -347,17 +477,35 @@ export default function AlertsPage() {
               </button>
             </div>
             
-            <form className="space-y-4">
+            <form 
+              className="space-y-4"
+              onSubmit={(e) => {
+                e.preventDefault()
+                const formData = new FormData(e.currentTarget)
+                createAlert({
+                  beach: formData.get('beach'),
+                  type: formData.get('type'),
+                  condition: formData.get('condition'),
+                  threshold: formData.get('threshold'),
+                  deliveryMethod: formData.get('delivery')
+                })
+              }}
+            >
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Beach
                 </label>
-                <select className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ocean-500 focus:border-ocean-500">
-                  <option>Select a beach...</option>
-                  <option>Waikiki Beach</option>
-                  <option>Pipeline</option>
-                  <option>Hanauma Bay</option>
-                  <option>Sunset Beach</option>
+                <select 
+                  name="beach"
+                  required
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ocean-500 focus:border-ocean-500"
+                >
+                  <option value="">Select a beach...</option>
+                  {beaches.map(beach => (
+                    <option key={beach.slug} value={beach.slug}>
+                      {beach.name}
+                    </option>
+                  ))}
                 </select>
               </div>
               
@@ -365,12 +513,32 @@ export default function AlertsPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Alert Type
                 </label>
-                <select className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ocean-500 focus:border-ocean-500">
-                  <option>Wave height above</option>
-                  <option>Wind speed above</option>
-                  <option>High tide warning</option>
-                  <option>Wildlife sighting</option>
-                  <option>Safety advisory</option>
+                <select 
+                  name="type"
+                  required
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ocean-500 focus:border-ocean-500"
+                >
+                  <option value="wave">Wave Height</option>
+                  <option value="wind">Wind Speed</option>
+                  <option value="temperature">Water Temperature</option>
+                  <option value="uv">UV Index</option>
+                  <option value="tide">Tide Level</option>
+                  <option value="safety">Safety Score</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Condition
+                </label>
+                <select 
+                  name="condition"
+                  required
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ocean-500 focus:border-ocean-500"
+                >
+                  <option value="above">Above</option>
+                  <option value="below">Below</option>
+                  <option value="equals">Equals</option>
                 </select>
               </div>
               
@@ -379,8 +547,10 @@ export default function AlertsPage() {
                   Threshold
                 </label>
                 <input
+                  name="threshold"
                   type="text"
-                  placeholder="e.g., 6 ft"
+                  required
+                  placeholder="e.g., 6 for wave height in feet"
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ocean-500 focus:border-ocean-500"
                 />
               </div>

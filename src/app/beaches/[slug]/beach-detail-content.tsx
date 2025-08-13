@@ -11,7 +11,7 @@ import {
   MapPin, ArrowLeft, Bell, Calendar, TrendingUp,
   TrendingDown, Minus, ChevronRight, Activity,
   Car, Users, Star, Shield, Download, History,
-  FileText, Edit
+  FileText, Edit, Camera
 } from 'lucide-react'
 import { BeachMap } from '@/components/map'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -19,6 +19,7 @@ import { ReefDashboard } from '@/components/reef/reef-dashboard'
 import { generateReefData } from '@/lib/reef-data'
 import { useAuth } from '@/contexts/auth-context'
 import { TierFeature } from '@/components/tier-features'
+import { BeachWebcams } from '@/components/beach-webcams'
 
 export default function BeachDetailContent() {
   const params = useParams()
@@ -66,26 +67,33 @@ export default function BeachDetailContent() {
       .then(data => {
         console.log('[BeachDetailContent] Got data:', data)
         
-        // Transform data
+        // Transform data to include all real API data
         const transformedData = {
           beach: data.beach,
           currentConditions: {
-            waveHeightFt: data.conditions?.waveHeight || 2,
-            windMph: data.conditions?.windSpeed || 10,
-            windDirection: 45,
-            waterTempF: data.conditions?.waterTemp || 75,
-            tideFt: data.conditions?.currentTide || 2,
+            waveHeightFt: data.currentConditions?.waveHeightFt || data.waveData?.significantWaveHeight || 2,
+            windMph: data.currentConditions?.windMph || data.weatherData?.windSpeed || 10,
+            windDirection: data.currentConditions?.windDirection || data.weatherData?.windDeg || 45,
+            waterTempF: data.currentConditions?.waterTempF || data.marineData?.waterTemperature || 75,
+            tideFt: data.currentConditions?.tideFt || data.tideData?.currentTide || 2,
+            uvIndex: data.weatherData?.uvIndex || 5,
+            visibility: data.weatherData?.visibility || 10,
+            humidity: data.weatherData?.humidity || 65,
             timestamp: new Date()
           },
-          forecast7Day: [],
+          forecast7Day: data.forecast || [],
           advisories: data.advisories || [],
-          tides: [],
-          safetyScore: data.conditions?.safetyScore,
-          activities: data.conditions?.activities,
-          bacteriaLevel: data.conditions?.bacteriaLevel,
+          tides: data.tideData?.predictions || [],
+          safetyScore: data.safetyScore || data.conditions?.safetyScore,
+          activities: data.activities || data.conditions?.activities,
+          bacteriaLevel: data.bacteriaLevel || data.conditions?.bacteriaLevel,
           warnings: data.warnings,
           recommendations: data.recommendations,
-          trends: data.trends
+          trends: data.trends,
+          webcams: data.webcams || [],
+          crowdEstimate: data.crowdEstimate || 'moderate',
+          nearestBuoy: data.nearestBuoy,
+          marineWeather: data.marineWeather
         }
         
         setBeach(transformedData)
@@ -418,6 +426,15 @@ export default function BeachDetailContent() {
                   ))}
                 </div>
               </div>
+            )}
+
+            {/* Live Beach Cameras */}
+            {beach?.beach && (
+              <BeachWebcams 
+                beachSlug={slug}
+                coordinates={beach.beach.coordinates}
+                className="mb-6"
+              />
             )}
 
             {/* Beach Information */}

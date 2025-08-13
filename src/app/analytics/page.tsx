@@ -1,19 +1,53 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/auth-context'
 import { TierFeature } from '@/components/tier-features'
 import { 
   BarChart3, TrendingUp, TrendingDown, Activity, 
   Users, MapPin, Calendar, Download, Filter,
-  ArrowUp, ArrowDown, Minus, Info
+  ArrowUp, ArrowDown, Minus, Info, RefreshCw
 } from 'lucide-react'
 import Link from 'next/link'
 
 export default function AnalyticsPage() {
   const { user, isPro, isAdmin } = useAuth()
+  const [loading, setLoading] = useState(true)
+  const [analyticsData, setAnalyticsData] = useState<any>(null)
+  const [period, setPeriod] = useState('7d')
   
-  // Mock analytics data
-  const stats = {
+  // Fetch real analytics data
+  useEffect(() => {
+    fetchAnalytics()
+  }, [period])
+  
+  const fetchAnalytics = async () => {
+    setLoading(true)
+    try {
+      const response = await fetch(`/api/analytics?period=${period}`)
+      const data = await response.json()
+      setAnalyticsData(data)
+    } catch (error) {
+      console.error('Error fetching analytics:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+  
+  // Use real data or fallback to mock
+  const stats = analyticsData ? {
+    totalBeaches: analyticsData.overview.totalBeaches,
+    safeToday: analyticsData.overview.statusCounts.safe,
+    cautionToday: analyticsData.overview.statusCounts.caution,
+    dangerousToday: analyticsData.overview.statusCounts.dangerous,
+    totalVisitors: analyticsData.overview.totalUsers,
+    visitorChange: '+18%', // Would calculate from historical data
+    avgSafetyScore: analyticsData.overview.avgSafetyScore,
+    safetyChange: '+5%', // Would calculate from historical data
+    topBeaches: analyticsData.topBeaches || [],
+    recentIncidents: analyticsData.recentIncidents || [],
+    weeklyTrends: analyticsData.dailyTrends || []
+  } : {
     totalBeaches: 47,
     safeToday: 41,
     cautionToday: 5,

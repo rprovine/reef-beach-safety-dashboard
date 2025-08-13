@@ -80,8 +80,17 @@ export async function POST(request: NextRequest) {
       })
       
       console.log(`Password reset email sent to: ${user.email}`)
+      
+      // In development, also log the reset link for easy access
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🔗 Password Reset Link:', resetLink)
+      }
     } catch (emailError) {
       console.error('Failed to send password reset email:', emailError)
+      // In development, still show the reset link even if email fails
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🔗 Password Reset Link (email failed):', resetLink)
+      }
       // Still return success to prevent enumeration
     }
     

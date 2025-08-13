@@ -113,7 +113,7 @@ export default function BeachesContent() {
   return (
     <div className="min-h-screen bg-gray-50 overflow-x-hidden">
       {/* Header */}
-      <div className="bg-white border-b sticky top-16 z-40">
+      <div className="bg-white border-b sticky top-16 z-[1000]">
         <div className="w-full px-3 sm:px-6 lg:px-8">
           <div className="py-3 sm:py-4 space-y-3 sm:space-y-4">
             {/* Title and View Toggle */}
@@ -280,7 +280,7 @@ export default function BeachesContent() {
             </div>
           </div>
         ) : viewMode === 'map' ? (
-          <div className="h-[calc(100vh-12rem)]">
+          <div className="h-[calc(100vh-12rem)] relative" style={{ zIndex: 1 }}>
             <BeachMap
               beaches={filteredBeaches}
               selectedBeachId={selectedBeachId}
