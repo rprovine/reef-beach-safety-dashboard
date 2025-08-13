@@ -338,7 +338,7 @@ export async function GET(req: NextRequest) {
       
       const windSpeed = weatherData?.windSpeed || beach.readings[0]?.windSpeed || 10
       const waterTemp = marineData?.waterTemperature 
-        ? (marineData.waterTemperature * 9/5) + 32 // Convert C to F
+        ? (marineData.waterTemperature * 1.8) + 32 // Convert C to F properly
         : weatherData?.temperature || 78
       
       const tideLevel = tideData?.tideLevel || beach.readings[0]?.tideLevel || 2.5
