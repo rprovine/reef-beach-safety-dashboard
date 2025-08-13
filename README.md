@@ -487,7 +487,7 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 ### **Priority Areas**
 - Additional beach data sources
 - Mobile app development
-- Beach webcam integration
+- Community photo uploads
 - Machine learning predictions
 - Localization (Hawaiian, Japanese, Chinese)
 

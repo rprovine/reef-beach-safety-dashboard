@@ -23,7 +23,6 @@ export interface Beach {
   currentStatus: string
   lastUpdated: string
   imageUrl?: string | null
-  webcamUrl?: string | null
   currentConditions?: Record<string, unknown> | null
   activeAdvisories: number
   safetyScore?: number

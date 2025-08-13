@@ -6,7 +6,7 @@ import {
   Shield, AlertTriangle, Activity, Sun, Fish, Waves,
   Users, Map, Bell, TrendingUp, Award, Heart,
   ChevronRight, Check, Star, ArrowRight, Zap,
-  Droplets, Wind, Thermometer, Eye, Clock, Phone, Camera
+  Droplets, Wind, Thermometer, Eye, Clock, Phone, Users
 } from 'lucide-react'
 
 export default function HomePage() {
@@ -237,24 +237,24 @@ export default function HomePage() {
               </ul>
             </div>
 
-            {/* Beach Webcams */}
+            {/* Community Reports */}
             <div className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow">
               <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
-                <Camera className="h-6 w-6 text-purple-600" />
+                <Users className="h-6 w-6 text-purple-600" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-3">Live Beach Cameras</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">Community Reports</h3>
               <ul className="space-y-2 text-gray-600">
                 <li className="flex items-start">
                   <Check className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
-                  <span>20+ Hawaii beach webcams</span>
+                  <span>Real-time user reports</span>
                 </li>
                 <li className="flex items-start">
                   <Check className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
-                  <span>HD streaming views</span>
+                  <span>Photo uploads from locals</span>
                 </li>
                 <li className="flex items-start">
                   <Check className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
-                  <span>Crowd level monitoring</span>
+                  <span>Crowd level updates</span>
                 </li>
                 <li className="flex items-start">
                   <Check className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />

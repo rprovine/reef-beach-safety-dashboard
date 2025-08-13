@@ -85,16 +85,16 @@ export function useBeachDetail(slug: string) {
         const forecast = data.forecast || {}
         const currentConditions = conditions.lastReading || {}
         
-        // Build complete response - simplified
+        // Build complete response - use actual API values
         const transformedResponse = {
           beach: data.beach,
           currentConditions: {
-            waveHeightFt: conditions.waveHeight || 2,
-            windMph: conditions.windSpeed || 10,
-            windDirection: 45,
-            waterTempF: conditions.waterTemp || 75,
-            tideFt: conditions.currentTide || 2,
-            timestamp: new Date()
+            waveHeightFt: conditions.waveHeight || conditions.waveHeightFt || 2,
+            windMph: conditions.windSpeed || conditions.windMph || 10,
+            windDirection: conditions.windDirection || 45,
+            waterTempF: conditions.waterTemp || conditions.waterTempF || 75,
+            tideFt: conditions.currentTide || conditions.tideFt || 2,
+            timestamp: conditions.timestamp || new Date()
           },
           forecast7Day: [],
           history30Day: [],
