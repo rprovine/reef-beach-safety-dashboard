@@ -8,7 +8,7 @@ import { BeachList } from '@/components/beaches/beach-list'
 import { useBeaches } from '@/hooks/use-beaches'
 import { useAuth } from '@/contexts/auth-context'
 import { Island } from '@/types'
-import { Search, Map, List, Filter, User } from 'lucide-react'
+import { Search, Map, List, Filter, User, RefreshCw } from 'lucide-react'
 
 const islands: { value: Island | 'all'; label: string }[] = [
   { value: 'all', label: 'All Islands' },
@@ -30,10 +30,11 @@ export default function BeachesContent() {
     searchParams.get('beach')
   )
 
-  const { data: beaches, isLoading, error } = useBeaches(
+  const { data: beaches, isLoading, error, refetch } = useBeaches(
     selectedIsland === 'all' ? undefined : selectedIsland,
     searchQuery
   )
+  const [isRefreshing, setIsRefreshing] = useState(false)
   
   // Debug logging
   console.log('Beaches data:', { beaches, isLoading, error, count: beaches?.length })
@@ -114,6 +115,31 @@ export default function BeachesContent() {
     window.history.pushState({}, '', url)
   }
 
+  const handleForceRefresh = async () => {
+    setIsRefreshing(true)
+    try {
+      // Clear any cached data
+      localStorage.removeItem('beaches-cache')
+      
+      // Force refetch with cache bypass
+      await refetch()
+      
+      // Also clear browser cache for API calls
+      if ('caches' in window) {
+        const cacheNames = await caches.keys()
+        await Promise.all(
+          cacheNames.map(cacheName => caches.delete(cacheName))
+        )
+      }
+      
+      console.log('Data refreshed successfully')
+    } catch (error) {
+      console.error('Error refreshing data:', error)
+    } finally {
+      setIsRefreshing(false)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 overflow-x-hidden">
       {/* Header */}
@@ -127,6 +153,15 @@ export default function BeachesContent() {
                 <span className="sm:hidden">Beach Hui</span>
               </h1>
               <div className="flex items-center gap-2 sm:gap-4">
+                <button
+                  onClick={handleForceRefresh}
+                  disabled={isRefreshing}
+                  className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors disabled:opacity-50"
+                  title="Force refresh data"
+                >
+                  <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                </button>
+                
                 {user ? (
                   <div className="flex items-center gap-2">
                     <div className="flex items-center gap-2 text-sm text-gray-600">

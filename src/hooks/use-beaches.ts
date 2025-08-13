@@ -12,12 +12,20 @@ export function useBeaches(island?: Island, searchQuery?: string) {
         const params = new URLSearchParams()
         if (island) params.append('island', island)
         if (searchQuery) params.append('search', searchQuery)
+        // Add cache-busting parameter
+        params.append('t', Date.now().toString())
         
         const url = `/api/beaches?${params.toString()}`
         console.log('[useBeaches] Fetching:', url)
         
-        // Use fetch instead of axios
-        const response = await fetch(url)
+        // Use fetch with no-cache to ensure fresh data
+        const response = await fetch(url, {
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
+          }
+        })
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`)
         }

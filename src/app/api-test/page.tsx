@@ -35,20 +35,19 @@ export default function APITestPage() {
       <div className="mb-4 flex flex-wrap items-center gap-4">
         <button
           onClick={() => {
-            // Set trial user
-            localStorage.removeItem('beach-hui-token')
-            localStorage.removeItem('beach-hui-user')
-            localStorage.removeItem('auth-token')
-            localStorage.removeItem('user-email')
-            localStorage.removeItem('user-tier')
-
+            // Set trial user - rprovine@gmail.com
+            localStorage.clear() // Clear everything first
+            
+            const trialEndDate = new Date()
+            trialEndDate.setDate(trialEndDate.getDate() + 14) // 14 days from now
+            
             const trialUser = {
               id: 'cmeaf4ghj0000s3n4amknioq',
               email: 'rprovine@gmail.com',
               tier: 'free',
               subscriptionStatus: 'trial',
-              trialEndDate: '2025-08-27T20:23:46.805Z',
-              createdAt: '2025-08-13T20:23:46.807Z'
+              trialEndDate: trialEndDate.toISOString(),
+              createdAt: new Date().toISOString()
             }
             
             localStorage.setItem('beach-hui-token', 'demo-token')
@@ -57,12 +56,12 @@ export default function APITestPage() {
             localStorage.setItem('user-email', trialUser.email)
             localStorage.setItem('user-tier', trialUser.tier)
             
-            alert('Trial user set! Click OK to reload page.')
+            alert('rprovine@gmail.com trial user set with 14 days trial! Click OK to reload.')
             window.location.reload()
           }}
           className="px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 font-bold"
         >
-          🚀 SET TRIAL USER
+          🚀 SET rprovine@gmail.com TRIAL
         </button>
         
         <button
