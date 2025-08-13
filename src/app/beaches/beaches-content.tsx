@@ -6,8 +6,9 @@ import Link from 'next/link'
 import { BeachMap } from '@/components/map'
 import { BeachList } from '@/components/beaches/beach-list'
 import { useBeaches } from '@/hooks/use-beaches'
+import { useAuth } from '@/contexts/auth-context'
 import { Island } from '@/types'
-import { Search, Map, List, Filter } from 'lucide-react'
+import { Search, Map, List, Filter, User } from 'lucide-react'
 
 const islands: { value: Island | 'all'; label: string }[] = [
   { value: 'all', label: 'All Islands' },
@@ -19,6 +20,7 @@ const islands: { value: Island | 'all'; label: string }[] = [
 
 export default function BeachesContent() {
   const searchParams = useSearchParams()
+  const { user, signOut } = useAuth()
   const [viewMode, setViewMode] = useState<'map' | 'list'>('map')
   const [selectedIsland, setSelectedIsland] = useState<Island | 'all'>('all')
   const [searchQuery, setSearchQuery] = useState('')
@@ -35,6 +37,7 @@ export default function BeachesContent() {
   
   // Debug logging
   console.log('Beaches data:', { beaches, isLoading, error, count: beaches?.length })
+  console.log('Auth state:', { user: !!user, email: user?.email, tier: user?.tier })
 
   // Filter beaches based on activity and safety selections
   const filteredBeaches = useMemo(() => {
@@ -123,13 +126,29 @@ export default function BeachesContent() {
                 <span className="sm:hidden">Beach Hui</span>
               </h1>
               <div className="flex items-center gap-2 sm:gap-4">
-                <Link 
-                  href="/auth/signin" 
-                  className="px-3 py-1.5 sm:px-4 sm:py-2 bg-ocean-500 text-white rounded-lg hover:bg-ocean-600 transition-colors text-sm font-medium whitespace-nowrap"
-                >
-                  <span className="hidden sm:inline">Sign In</span>
-                  <span className="sm:hidden">Login</span>
-                </Link>
+                {user ? (
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <User className="h-4 w-4" />
+                      <span className="hidden sm:inline">{user.email}</span>
+                      <span className="sm:hidden">User</span>
+                    </div>
+                    <Link
+                      href="/dashboard"
+                      className="px-3 py-1.5 sm:px-4 sm:py-2 bg-ocean-500 text-white rounded-lg hover:bg-ocean-600 transition-colors text-sm font-medium whitespace-nowrap"
+                    >
+                      Dashboard
+                    </Link>
+                  </div>
+                ) : (
+                  <Link 
+                    href="/auth/signin" 
+                    className="px-3 py-1.5 sm:px-4 sm:py-2 bg-ocean-500 text-white rounded-lg hover:bg-ocean-600 transition-colors text-sm font-medium whitespace-nowrap"
+                  >
+                    <span className="hidden sm:inline">Sign In</span>
+                    <span className="sm:hidden">Login</span>
+                  </Link>
+                )}
                 <div className="flex items-center gap-1 bg-gray-100 p-0.5 rounded-lg">
                   <button
                   onClick={() => setViewMode('map')}
