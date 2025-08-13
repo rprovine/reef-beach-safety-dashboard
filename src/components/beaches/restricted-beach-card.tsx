@@ -100,6 +100,7 @@ export function RestrictedBeachCard({ beach, onClick }: RestrictedBeachCardProps
   
   // For free tier users - show current conditions but not forecasts
   if (user.tier === 'free' && !access.beaches.viewForecast) {
+    console.log('Showing RestrictedBeachCard for free user:', beach.name, beach.currentConditions)
     return (
       <div 
         className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden cursor-pointer hover:shadow-md transition-all"

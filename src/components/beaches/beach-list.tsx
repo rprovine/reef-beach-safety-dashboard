@@ -128,23 +128,25 @@ export function BeachList({
           })
         }
         
-        // Show restricted card only for anonymous users
-        if (!user) {
+        // Always show full card for ANY logged-in user (simplified for debugging)
+        if (user) {
+          console.log('Showing FULL BeachCard for logged-in user:', beach.name, 'Wave:', beach.currentConditions?.waveHeightFt)
           return (
-            <RestrictedBeachCard
+            <BeachCard
               key={beach.id}
               beach={beach}
+              selected={selectedBeachId === beach.slug}
               onClick={() => handleBeachClick(beach)}
             />
           )
         }
         
-        // Show full card for authenticated users with access
+        // Show restricted card only for anonymous users
+        console.log('Showing RestrictedBeachCard for anonymous user:', beach.name)
         return (
-          <BeachCard
+          <RestrictedBeachCard
             key={beach.id}
             beach={beach}
-            selected={selectedBeachId === beach.slug}
             onClick={() => handleBeachClick(beach)}
           />
         )
