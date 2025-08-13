@@ -117,8 +117,17 @@ export function BeachList({
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-4 md:p-6">
       {beaches.map((beach) => {
-        // Show restricted card for anonymous users or free users without full access
-        if (!user || (!isPro && !access.beaches.viewCurrentConditions)) {
+        // Debug logging
+        console.log('Beach card decision:', {
+          hasUser: !!user,
+          userTier: user?.tier,
+          isPro,
+          canViewConditions: access.beaches.viewCurrentConditions,
+          willShowRestricted: !user
+        })
+        
+        // Show restricted card only for anonymous users
+        if (!user) {
           return (
             <RestrictedBeachCard
               key={beach.id}

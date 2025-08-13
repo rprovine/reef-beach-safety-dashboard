@@ -338,15 +338,15 @@ export default function DashboardPage() {
                             <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
                               <span className="flex items-center gap-1">
                                 <Waves className="h-3 w-3" />
-                                {conditions.currentConditions?.waveHeightFt || '--'} ft
+                                {conditions.conditions?.waveHeightFt || conditions.currentConditions?.waveHeightFt || '--'} ft
                               </span>
                               <span className="flex items-center gap-1">
                                 <Wind className="h-3 w-3" />
-                                {conditions.currentConditions?.windMph || '--'} mph
+                                {conditions.conditions?.windMph || conditions.currentConditions?.windMph || '--'} mph
                               </span>
                               <span className="flex items-center gap-1">
                                 <Thermometer className="h-3 w-3" />
-                                {conditions.currentConditions?.waterTempF || '--'}°F
+                                {conditions.conditions?.waterTempF || conditions.currentConditions?.waterTempF || '--'}°F
                               </span>
                             </div>
                           )}
