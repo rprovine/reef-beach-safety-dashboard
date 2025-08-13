@@ -37,7 +37,8 @@ export default function BeachesContent() {
   
   // Debug logging
   console.log('Beaches data:', { beaches, isLoading, error, count: beaches?.length })
-  console.log('Auth state:', { user: !!user, email: user?.email, tier: user?.tier })
+  console.log('Auth state:', { user: !!user, email: user?.email, tier: user?.tier, isTrialing: user?.isTrialing, trialEndDate: user?.trialEndDate })
+  console.log('Full user object:', user)
 
   // Filter beaches based on activity and safety selections
   const filteredBeaches = useMemo(() => {
