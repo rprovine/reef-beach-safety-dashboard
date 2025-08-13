@@ -117,14 +117,16 @@ export function BeachList({
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-4 md:p-6">
       {beaches.map((beach) => {
-        // Debug logging
-        console.log('Beach card decision:', {
-          hasUser: !!user,
-          userTier: user?.tier,
-          isPro,
-          canViewConditions: access.beaches.viewCurrentConditions,
-          willShowRestricted: !user
-        })
+        // Debug logging (only log once)
+        if (beach === beaches[0]) {
+          console.log('Beach card decision:', {
+            hasUser: !!user,
+            userTier: user?.tier,
+            isPro,
+            canViewConditions: access.beaches.viewCurrentConditions,
+            willShowRestricted: !user
+          })
+        }
         
         // Show restricted card only for anonymous users
         if (!user) {
