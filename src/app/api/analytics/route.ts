@@ -156,21 +156,44 @@ export async function GET(req: NextRequest) {
       .slice(0, 10)
     
     // Generate recent incidents based on beaches with lower safety scores
-    const recentIncidents = beaches
-      .filter(beach => {
-        const score = beach.safetyScore || 70
-        return score < 70 || beach.advisories.length > 0
-      })
-      .slice(0, 5)
-      .map(beach => {
-        const types = ['High Surf', 'Strong Current', 'Jellyfish', 'Bacteria Warning', 'Rip Current']
-        const severities = beach.safetyScore && beach.safetyScore < 50 ? ['high', 'medium'] : ['medium', 'low']
+    const incidentBeaches: any[] = []
+    
+    // First, add beaches that would have lower safety scores based on their characteristics
+    beaches.forEach(beach => {
+      const seed = beach.name.charCodeAt(0) + beach.name.charCodeAt(1) || 0
+      const hash = (seed * 397) % 100
+      
+      // Calculate same safety score as before to be consistent
+      let safetyScore = 70 + (hash % 30)
+      if (hash < 10) {
+        safetyScore = 35 + (hash % 15)
+      } else if (hash < 35) {
+        safetyScore = 50 + (hash % 20)
+      }
+      
+      // Include beaches with low scores or active advisories
+      if (safetyScore < 70 || beach.advisories.length > 0) {
+        incidentBeaches.push({ ...beach, calculatedScore: safetyScore })
+      }
+    })
+    
+    // Generate incidents for beaches with issues
+    const recentIncidents = incidentBeaches
+      .slice(0, 8)
+      .map((beach, idx) => {
+        const types = ['High Surf', 'Strong Current', 'Jellyfish', 'Bacteria Warning', 'Rip Current', 'Shore Break', 'Marine Life']
+        const severities = beach.calculatedScore < 50 ? ['high', 'medium'] : ['medium', 'low']
+        
+        // Generate time based on index (more recent = lower index)
+        const hoursAgo = idx * 3 + Math.floor(Math.random() * 3)
+        const timestamp = new Date(Date.now() - hoursAgo * 60 * 60 * 1000)
         
         return {
           beach: beach.name,
           type: beach.advisories[0]?.title || types[Math.floor(Math.random() * types.length)],
           severity: beach.advisories[0]?.severity || severities[Math.floor(Math.random() * severities.length)],
-          timestamp: beach.advisories[0]?.startedAt || new Date(Date.now() - Math.random() * 86400000)
+          time: hoursAgo < 24 ? `${hoursAgo} hours ago` : `${Math.floor(hoursAgo / 24)} days ago`,
+          timestamp
         }
       })
     
