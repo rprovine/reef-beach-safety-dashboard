@@ -24,6 +24,15 @@ export function useBeaches(island?: Island, searchQuery?: string) {
         const data = await response.json() as Beach[]
         
         console.log('[useBeaches] Response:', data?.length, 'beaches')
+        if (data && data[0]) {
+          console.log('[useBeaches] First beach data:', {
+            name: data[0].name,
+            hasConditions: !!data[0].currentConditions,
+            waveHeight: data[0].currentConditions?.waveHeightFt,
+            windSpeed: data[0].currentConditions?.windMph,
+            waterTemp: data[0].currentConditions?.waterTempF
+          })
+        }
         
         return data
       } catch (error) {

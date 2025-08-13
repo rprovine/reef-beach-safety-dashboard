@@ -130,7 +130,16 @@ export function BeachList({
         
         // Always show full card for ANY logged-in user (simplified for debugging)
         if (user) {
-          console.log('Showing FULL BeachCard for logged-in user:', beach.name, 'Wave:', beach.currentConditions?.waveHeightFt)
+          if (beach === beaches[0]) {
+            console.log('Beach data for first beach:', {
+              name: beach.name,
+              hasConditions: !!beach.currentConditions,
+              waveHeight: beach.currentConditions?.waveHeightFt,
+              windSpeed: beach.currentConditions?.windMph,
+              waterTemp: beach.currentConditions?.waterTempF,
+              fullConditions: beach.currentConditions
+            })
+          }
           return (
             <BeachCard
               key={beach.id}
