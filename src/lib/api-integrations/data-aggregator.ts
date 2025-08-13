@@ -6,7 +6,6 @@
 import { noaaService } from './noaa-service'
 import { weatherService } from './weather-service'
 import { prisma } from '@/lib/prisma'
-import { getBeachWebcams } from '@/lib/hawaii-webcams'
 import type { ComprehensiveBeachData } from '@/lib/data-sources'
 
 // Beach coordinate mapping
@@ -42,8 +41,7 @@ export class DataAggregator {
         waterTemp,
         weatherData,
         marineData,
-        dbData,
-        webcams
+        dbData
       ] = await Promise.all([
         noaaService.getTideData(coords.stationId).catch(err => {
           console.error('Tide data error:', err)
@@ -80,8 +78,7 @@ export class DataAggregator {
         this.getBeachFromDatabase(beachSlug).catch(err => {
           console.error('Database error:', err)
           return null
-        }),
-        getBeachWebcams(beachSlug)
+        })
       ])
       
       // Determine rip current risk based on conditions
@@ -186,9 +183,6 @@ export class DataAggregator {
         crowdLevel,
         estimatedPeople: this.estimatePeopleCount(crowdLevel),
         
-        // Webcams
-        webcamUrls: webcams.map(cam => cam.url),
-        lastWebcamUpdate: new Date(),
         
         // Forecasts
         forecast3Hour: weatherData?.hourlyForecast?.slice(0, 1) || [],

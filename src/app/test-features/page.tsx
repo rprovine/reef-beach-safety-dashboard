@@ -1,8 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { BeachWebcams } from '@/components/beach-webcams'
-import { Camera, Activity, BarChart, Waves, Cloud, Wind } from 'lucide-react'
+import { Activity, BarChart, Waves, Cloud, Wind } from 'lucide-react'
 
 export default function TestFeaturesPage() {
   const [analyticsData, setAnalyticsData] = useState<any>(null)
@@ -34,14 +33,6 @@ export default function TestFeaturesPage() {
       <div className="max-w-7xl mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-8">All Active Features Demo</h1>
         
-        {/* 1. Live Webcams */}
-        <section className="mb-12">
-          <h2 className="text-2xl font-semibold mb-4 flex items-center gap-2">
-            <Camera className="text-ocean-600" />
-            Live Beach Webcams (Active)
-          </h2>
-          <BeachWebcams beachSlug="waikiki-beach" />
-        </section>
         
         {/* 2. Real Analytics Data */}
         <section className="mb-12">

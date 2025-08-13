@@ -517,3 +517,4 @@ export class DataAggregatorService {
 
 // Export singleton instance
 export const dataAggregatorService = new DataAggregatorService()
+export const dataAggregator = dataAggregatorService
