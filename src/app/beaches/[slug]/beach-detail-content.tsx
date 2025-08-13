@@ -26,6 +26,59 @@ export default function BeachDetailContent() {
   const slug = params.slug as string
   const { user, isPro, isAdmin } = useAuth()
   
+  // Function to download beach report
+  const downloadReport = () => {
+    if (!beach) return
+    
+    // Create report content
+    const reportContent = `
+Beach Safety Report
+===================
+${beach.beach?.name || slug}
+${new Date().toLocaleDateString()}
+
+Current Conditions
+------------------
+Wave Height: ${beach.currentConditions?.waveHeightFt || '--'} ft
+Wind Speed: ${beach.currentConditions?.windMph || '--'} mph
+Water Temperature: ${beach.currentConditions?.waterTempF || '--'}°F
+UV Index: ${beach.currentConditions?.uvIndex || '--'}
+Tide Level: ${beach.currentConditions?.tideFt || '--'} ft
+
+Safety Score: ${beach.safetyScore || '--'}%
+
+Activity Ratings
+----------------
+Swimming: ${beach.activities?.swimming || '--'}
+Surfing: ${beach.activities?.surfing || '--'}
+Snorkeling: ${beach.activities?.snorkeling || '--'}
+Diving: ${beach.activities?.diving || '--'}
+Fishing: ${beach.activities?.fishing || '--'}
+
+Warnings
+--------
+${beach.warnings?.join('\n') || 'No current warnings'}
+
+Recommendations
+---------------
+${beach.recommendations?.join('\n') || 'No specific recommendations'}
+
+Note: This report was generated on ${new Date().toLocaleString()}
+For real-time updates, visit https://beachhui.lenilani.com
+    `.trim()
+    
+    // Create blob and download
+    const blob = new Blob([reportContent], { type: 'text/plain' })
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${slug}-beach-report-${new Date().toISOString().split('T')[0]}.txt`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    window.URL.revokeObjectURL(url)
+  }
+  
   // Redirect to signup if not logged in
   React.useEffect(() => {
     if (!user) {
@@ -757,7 +810,10 @@ export default function BeachDetailContent() {
                   </div>
                 </div>
                 {isPro && (
-                  <button className="w-full mt-4 px-4 py-2 bg-ocean-50 text-ocean-600 text-sm font-medium rounded-lg hover:bg-ocean-100 transition-colors">
+                  <button 
+                    onClick={downloadReport}
+                    className="w-full mt-4 px-4 py-2 bg-ocean-50 text-ocean-600 text-sm font-medium rounded-lg hover:bg-ocean-100 transition-colors"
+                  >
                     <FileText className="h-4 w-4 inline mr-2" />
                     Download Full Report
                   </button>

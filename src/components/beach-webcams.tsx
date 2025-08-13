@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import { Camera, CameraOff, Maximize2, RefreshCw, ExternalLink, MapPin } from 'lucide-react'
 import { getBeachWebcams, getNearbyWebcams, type Webcam } from '@/lib/hawaii-webcams'
-import Image from 'next/image'
 
 interface BeachWebcamsProps {
   beachSlug?: string
@@ -17,6 +16,7 @@ export function BeachWebcams({ beachSlug, coordinates, className = '' }: BeachWe
   const [loading, setLoading] = useState(true)
   const [imageError, setImageError] = useState<{ [key: string]: boolean }>({})
   const [refreshKey, setRefreshKey] = useState(0)
+  const [showAll, setShowAll] = useState(false)
 
   useEffect(() => {
     setLoading(true)
@@ -37,21 +37,15 @@ export function BeachWebcams({ beachSlug, coordinates, className = '' }: BeachWe
     setLoading(false)
   }, [beachSlug, coordinates])
 
-  // Auto-refresh images based on their refresh interval
+  // Auto-refresh images every 30 seconds
   useEffect(() => {
-    const intervals: NodeJS.Timeout[] = []
+    const interval = setInterval(() => {
+      setRefreshKey(prev => prev + 1)
+      setImageError({}) // Reset errors on refresh
+    }, 30000)
     
-    webcams.forEach(cam => {
-      if (cam.type === 'image' && cam.refreshInterval) {
-        const interval = setInterval(() => {
-          setRefreshKey(prev => prev + 1)
-        }, cam.refreshInterval * 1000)
-        intervals.push(interval)
-      }
-    })
-    
-    return () => intervals.forEach(clearInterval)
-  }, [webcams])
+    return () => clearInterval(interval)
+  }, [])
 
   const handleImageError = (webcamId: string) => {
     setImageError(prev => ({ ...prev, [webcamId]: true }))
@@ -60,6 +54,10 @@ export function BeachWebcams({ beachSlug, coordinates, className = '' }: BeachWe
   const handleRefresh = () => {
     setRefreshKey(prev => prev + 1)
     setImageError({})
+  }
+
+  const openWebcamInNewTab = (webcam: Webcam) => {
+    window.open(webcam.url, '_blank', 'noopener,noreferrer')
   }
 
   if (loading) {
@@ -83,6 +81,8 @@ export function BeachWebcams({ beachSlug, coordinates, className = '' }: BeachWe
     )
   }
 
+  const displayedWebcams = showAll ? webcams : webcams.slice(0, 4)
+
   return (
     <>
       <div className={`bg-white rounded-xl shadow-sm p-6 ${className}`}>
@@ -101,43 +101,50 @@ export function BeachWebcams({ beachSlug, coordinates, className = '' }: BeachWe
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {webcams.map((webcam) => (
+          {displayedWebcams.map((webcam) => (
             <div
-              key={`${webcam.id}-${refreshKey}`}
+              key={webcam.id}
               className="relative group cursor-pointer overflow-hidden rounded-lg bg-gray-100"
-              onClick={() => setSelectedWebcam(webcam)}
             >
-              {webcam.type === 'image' ? (
-                <div className="relative aspect-video">
-                  {imageError[webcam.id] ? (
-                    <div className="absolute inset-0 flex items-center justify-center bg-gray-200">
-                      <div className="text-center">
-                        <CameraOff className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                        <p className="text-sm text-gray-500">Camera offline</p>
-                      </div>
+              {/* Display webcam thumbnail or placeholder */}
+              <div className="relative aspect-video">
+                {imageError[webcam.id] ? (
+                  <div 
+                    className="absolute inset-0 flex items-center justify-center bg-gray-200 hover:bg-gray-300 transition-colors"
+                    onClick={() => openWebcamInNewTab(webcam)}
+                  >
+                    <div className="text-center">
+                      <Camera className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                      <p className="text-sm text-gray-600 font-medium">{webcam.name}</p>
+                      <p className="text-xs text-gray-500">Click to open camera</p>
                     </div>
-                  ) : (
+                  </div>
+                ) : webcam.type === 'image' ? (
+                  <div onClick={() => setSelectedWebcam(webcam)}>
                     <img
-                      src={`${webcam.url}?t=${refreshKey}`}
+                      src={webcam.url.includes('?') ? `${webcam.url}&t=${refreshKey}` : `${webcam.url}?t=${refreshKey}`}
                       alt={webcam.name}
                       className="w-full h-full object-cover"
                       onError={() => handleImageError(webcam.id)}
+                      loading="lazy"
                     />
-                  )}
-                </div>
-              ) : (
-                <div className="relative aspect-video bg-gray-900">
-                  <iframe
-                    src={webcam.url}
-                    className="w-full h-full"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                  />
-                </div>
-              )}
+                  </div>
+                ) : (
+                  <div 
+                    className="w-full h-full bg-gray-900 flex items-center justify-center hover:bg-gray-800 transition-colors"
+                    onClick={() => openWebcamInNewTab(webcam)}
+                  >
+                    <div className="text-center text-white">
+                      <Camera className="h-8 w-8 mx-auto mb-2" />
+                      <p className="text-sm font-medium">{webcam.name}</p>
+                      <p className="text-xs opacity-75">Click to view stream</p>
+                    </div>
+                  </div>
+                )}
+              </div>
               
-              {/* Overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+              {/* Overlay with information */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                 <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
                   <h4 className="font-semibold">{webcam.name}</h4>
                   <div className="flex items-center gap-2 text-sm">
@@ -149,7 +156,7 @@ export function BeachWebcams({ beachSlug, coordinates, className = '' }: BeachWe
                   )}
                 </div>
                 <div className="absolute top-2 right-2">
-                  <Maximize2 className="h-5 w-5 text-white" />
+                  <ExternalLink className="h-5 w-5 text-white" />
                 </div>
               </div>
               
@@ -160,7 +167,7 @@ export function BeachWebcams({ beachSlug, coordinates, className = '' }: BeachWe
                 </span>
               </div>
               
-              {/* Live indicator */}
+              {/* Live indicator for streams */}
               {webcam.type === 'stream' && (
                 <div className="absolute top-2 right-2">
                   <span className="flex items-center gap-1 px-2 py-1 bg-red-600 text-white text-xs rounded-full">
@@ -173,17 +180,29 @@ export function BeachWebcams({ beachSlug, coordinates, className = '' }: BeachWe
           ))}
         </div>
 
+        {/* View all/less button */}
         {webcams.length > 4 && (
           <div className="mt-4 text-center">
-            <button className="text-sm text-ocean-600 hover:text-ocean-700 font-medium">
-              View all {webcams.length} cameras →
+            <button 
+              onClick={() => setShowAll(!showAll)}
+              className="text-sm text-ocean-600 hover:text-ocean-700 font-medium transition-colors"
+            >
+              {showAll ? '← Show less' : `View all ${webcams.length} cameras →`}
             </button>
           </div>
         )}
+        
+        {/* Note about external cameras */}
+        <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+          <p className="text-xs text-blue-800">
+            Note: Some cameras may require opening in a new window due to provider restrictions. 
+            Click on any camera to view the live feed.
+          </p>
+        </div>
       </div>
 
-      {/* Fullscreen Modal */}
-      {selectedWebcam && (
+      {/* Fullscreen Modal for image webcams only */}
+      {selectedWebcam && selectedWebcam.type === 'image' && (
         <div 
           className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
           onClick={() => setSelectedWebcam(null)}
@@ -200,15 +219,12 @@ export function BeachWebcams({ beachSlug, coordinates, className = '' }: BeachWe
                   <p className="text-sm opacity-90">{selectedWebcam.location} • {selectedWebcam.provider}</p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <a
-                    href={selectedWebcam.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <button
+                    onClick={() => openWebcamInNewTab(selectedWebcam)}
                     className="p-2 hover:bg-white/20 rounded-lg transition-colors"
-                    onClick={(e) => e.stopPropagation()}
                   >
                     <ExternalLink className="h-5 w-5" />
-                  </a>
+                  </button>
                   <button
                     onClick={() => setSelectedWebcam(null)}
                     className="p-2 hover:bg-white/20 rounded-lg transition-colors"
@@ -220,21 +236,16 @@ export function BeachWebcams({ beachSlug, coordinates, className = '' }: BeachWe
             </div>
 
             {/* Content */}
-            <div className="aspect-video">
-              {selectedWebcam.type === 'image' ? (
-                <img
-                  src={`${selectedWebcam.url}?t=${Date.now()}`}
-                  alt={selectedWebcam.name}
-                  className="w-full h-full object-contain"
-                />
-              ) : (
-                <iframe
-                  src={selectedWebcam.url}
-                  className="w-full h-full"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
-                  allowFullScreen
-                />
-              )}
+            <div className="aspect-video flex items-center justify-center">
+              <img
+                src={selectedWebcam.url.includes('?') ? `${selectedWebcam.url}&t=${Date.now()}` : `${selectedWebcam.url}?t=${Date.now()}`}
+                alt={selectedWebcam.name}
+                className="max-w-full max-h-full object-contain"
+                onError={() => {
+                  setSelectedWebcam(null)
+                  openWebcamInNewTab(selectedWebcam)
+                }}
+              />
             </div>
           </div>
         </div>
