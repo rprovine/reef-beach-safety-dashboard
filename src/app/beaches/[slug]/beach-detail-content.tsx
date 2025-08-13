@@ -63,9 +63,19 @@ export default function BeachDetailContent() {
     setIsLoading(true)
     
     fetch(`/api/beaches/${slug}/comprehensive`)
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`)
+        }
+        return res.json()
+      })
       .then(data => {
         console.log('[BeachDetailContent] Got data:', data)
+        
+        // Check if we got an error response
+        if (data.error) {
+          throw new Error(data.error)
+        }
         
         // Transform data to include all real API data
         const transformedData = {
@@ -143,8 +153,10 @@ export default function BeachDetailContent() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Beach Not Found</h1>
-          <p className="text-gray-600 mb-4">Sorry, we couldn&apos;t find that beach.</p>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Beach Data Unavailable</h1>
+          <p className="text-gray-600 mb-4">
+            {error ? `Unable to load beach information.` : 'Beach not found.'}
+          </p>
           <Link
             href="/beaches"
             className="inline-flex items-center text-ocean-600 hover:text-ocean-700"
