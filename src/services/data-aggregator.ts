@@ -7,7 +7,6 @@ import { DATA_SOURCES, HAWAII_STATIONS, ComprehensiveBeachData } from '@/lib/dat
 import { noaaService } from '@/lib/api-integrations/noaa-service'
 import { weatherService } from '@/lib/api-integrations/weather-service'
 import { dataAggregator } from '@/lib/api-integrations/data-aggregator'
-import { getBeachWebcams } from '@/lib/hawaii-webcams'
 import { prisma } from '@/lib/prisma'
 
 export class DataAggregatorService {

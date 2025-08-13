@@ -19,7 +19,6 @@ import { ReefDashboard } from '@/components/reef/reef-dashboard'
 import { generateReefData } from '@/lib/reef-data'
 import { useAuth } from '@/contexts/auth-context'
 import { TierFeature } from '@/components/tier-features'
-import { BeachWebcams } from '@/components/beach-webcams'
 
 export default function BeachDetailContent() {
   const params = useParams()
@@ -493,14 +492,6 @@ For real-time updates, visit https://beachhui.lenilani.com
               </div>
             )}
 
-            {/* Live Beach Cameras */}
-            {beach?.beach && (
-              <BeachWebcams 
-                beachSlug={slug}
-                coordinates={beach.beach.coordinates}
-                className="mb-6"
-              />
-            )}
 
             {/* Beach Information */}
             {beachDetails && (
