@@ -11,12 +11,15 @@ import {
 } from 'lucide-react'
 import { ReferralSystem } from '@/components/referral-system'
 import { SocialShare } from '@/components/social-share'
+import { getUserAccessLevel } from '@/lib/access-control'
 
 interface User {
   email: string
   tier: string
   name: string
   features: string[]
+  trialEndDate?: string
+  subscriptionStatus?: string
 }
 
 const tierFeatures = {
@@ -94,7 +97,9 @@ export default function DashboardPage() {
         email: userData.email,
         tier: userData.tier || 'free',
         name: userData.name || userData.email.split('@')[0],
-        features: tierFeatures[userData.tier as keyof typeof tierFeatures]?.features.filter(f => f.available).map(f => f.name) || []
+        features: tierFeatures[userData.tier as keyof typeof tierFeatures]?.features.filter(f => f.available).map(f => f.name) || [],
+        trialEndDate: userData.trialEndDate,
+        subscriptionStatus: userData.subscriptionStatus
       })
     } else {
       // Check old demo auth format
@@ -119,11 +124,25 @@ export default function DashboardPage() {
   // Fetch real data
   useEffect(() => {
     if (!user) return
+    
+    // Check access level for debugging
+    const access = getUserAccessLevel(user)
+    console.log('[Dashboard] User access level:', {
+      hasUser: !!user,
+      userTier: user.tier,
+      isTrialing: user.trialEndDate && new Date() < new Date(user.trialEndDate) && user.tier === 'free',
+      trialEndDate: user.trialEndDate,
+      canViewConditions: access.beaches.viewCurrentConditions,
+      canViewForecast: access.beaches.viewForecast
+    })
 
     // Fetch analytics data
     fetch('/api/analytics?period=7d')
       .then(res => res.json())
-      .then(data => setAnalyticsData(data))
+      .then(data => {
+        console.log('[Dashboard] Analytics data:', data)
+        setAnalyticsData(data)
+      })
       .catch(err => console.error('Error fetching analytics:', err))
 
     // Fetch beaches and set favorites
@@ -151,6 +170,7 @@ export default function DashboardPage() {
           const conditionsMap: any = {}
           conditions.forEach((cond, idx) => {
             if (cond && beaches[idx]) {
+              console.log(`[Dashboard] Beach ${beaches[idx].name} conditions:`, cond)
               conditionsMap[beaches[idx].slug] = cond
             }
           })
@@ -334,19 +354,19 @@ export default function DashboardPage() {
                         <div className="flex-1">
                           <p className="font-medium text-gray-900">{beach.name}</p>
                           <p className="text-sm text-gray-600">{beach.island.charAt(0).toUpperCase() + beach.island.slice(1)}</p>
-                          {conditions && (
+                          {conditions && conditions.conditions && (
                             <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
                               <span className="flex items-center gap-1">
                                 <Waves className="h-3 w-3" />
-                                {conditions.conditions?.waveHeightFt || conditions.currentConditions?.waveHeightFt || '--'} ft
+                                {conditions.conditions.waveHeight ? Number(conditions.conditions.waveHeight).toFixed(1) : '--'} ft
                               </span>
                               <span className="flex items-center gap-1">
                                 <Wind className="h-3 w-3" />
-                                {conditions.conditions?.windMph || conditions.currentConditions?.windMph || '--'} mph
+                                {conditions.conditions.windSpeed ? Number(conditions.conditions.windSpeed).toFixed(1) : '--'} mph
                               </span>
                               <span className="flex items-center gap-1">
                                 <Thermometer className="h-3 w-3" />
-                                {conditions.conditions?.waterTempF || conditions.currentConditions?.waterTempF || '--'}°F
+                                {conditions.conditions.waterTemp ? Number(conditions.conditions.waterTemp).toFixed(0) : '--'}°F
                               </span>
                             </div>
                           )}
