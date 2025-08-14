@@ -62,7 +62,8 @@ export function useBeachDetail(slug: string) {
         console.log('[useBeachDetail] Fetching beach:', slug)
         
         // Use comprehensive-fast endpoint for consistent data with list page
-        const response = await fetch(`/api/beaches/${slug}/comprehensive-fast?_t=${Date.now()}&_r=${Math.random()}`, {
+        const cacheBuster = `_cb=${Date.now()}_${Math.random().toString(36)}`
+        const response = await fetch(`/api/beaches/${slug}/comprehensive-fast?${cacheBuster}`, {
           cache: 'no-store',
           headers: {
             'Cache-Control': 'no-cache, no-store, must-revalidate',
@@ -120,8 +121,9 @@ export function useBeachDetail(slug: string) {
       }
     },
     enabled: !!slug,
-    staleTime: 30 * 1000, // 30 seconds
-    refetchInterval: 2 * 60 * 1000, // 2 minutes
+    staleTime: 0, // Always fetch fresh data
+    refetchInterval: false, // Disable auto-refetch
+    refetchOnWindowFocus: false // Disable refetch on focus
   })
   
   console.log('[useBeachDetail] Query result:', {
