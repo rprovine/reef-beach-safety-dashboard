@@ -42,10 +42,13 @@
   }
 
   .beach-card {
-    @apply bg-white rounded-lg shadow-sm border border-gray-200 p-4 cursor-pointer transition-all duration-200;
+    @apply bg-white rounded-lg shadow-md border-2 border-gray-200 p-4 cursor-pointer transition-all duration-200;
   }
   .beach-card:hover {
-    @apply shadow-xl transform scale-105 ring-2 ring-ocean-400 border-ocean-300;
+    @apply shadow-xl border-ocean-400 bg-gray-50 transform scale-105 ring-1 ring-ocean-300;
+  }
+  .beach-card:active {
+    @apply transform scale-95;
   }
 
   .metric-card {

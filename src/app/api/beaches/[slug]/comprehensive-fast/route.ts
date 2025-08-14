@@ -144,23 +144,18 @@ export async function GET(
         diving: waveHeight < 2 && visibility > 30 ? 'excellent' : waveHeight < 3 ? 'good' : 'fair',
         fishing: windSpeed < 12 ? 'good' : windSpeed < 18 ? 'fair' : 'poor'
       },
-      forecast: realData.forecast24Hour ? {
+      forecast: realWeatherData?.dailyForecast ? {
         today: {
-          high: Math.round(realData.forecast24Hour[0]?.temperature || waterTemp + 5),
+          high: Math.round(realWeatherData.dailyForecast[0]?.high || waterTemp + 5),
           low: Math.round(waterTemp - 3),
-          conditions: realData.forecast24Hour[0]?.description || 'Partly Cloudy',
-          windSpeed: realData.forecast24Hour[0]?.windSpeed || windSpeed,
-          waveHeight: realData.forecast24Hour[0]?.waveHeight || waveHeight
+          conditions: realWeatherData.dailyForecast[0]?.description || 'Partly Cloudy',
+          windSpeed: windSpeed,
+          waveHeight: waveHeight
         },
-        tomorrow: realData.forecast24Hour[8] || null,
-        dayAfter: realData.forecast24Hour[16] || null
+        tomorrow: realWeatherData.dailyForecast[1] || null,
+        dayAfter: realWeatherData.dailyForecast[2] || null
       } : null,
-      tideData: realData.currentTide ? {
-        current: realData.currentTide,
-        nextHigh: realData.nextHighTide,
-        nextLow: realData.nextLowTide,
-        predictions: realData.predictions || []
-      } : null,
+      tideData: null,
       advisories: beach.advisories.map(adv => ({
         id: adv.id,
         title: adv.title,
@@ -168,12 +163,8 @@ export async function GET(
         description: adv.description,
         startedAt: adv.startedAt
       })),
-      bacteriaLevel: realData.bacteriaLevel || null,
-      waterQuality: realData.enterococcus ? {
-        enterococcus: realData.enterococcus,
-        turbidity: realData.turbidity,
-        lastTested: new Date()
-      } : null,
+      bacteriaLevel: null,
+      waterQuality: null,
       familyRating: {
         overall: safetyScore >= 75 ? 4 : safetyScore >= 50 ? 3 : 2,
         safety: safetyScore >= 80 ? 5 : safetyScore >= 60 ? 4 : 3,
@@ -188,7 +179,7 @@ export async function GET(
       ],
       nearbyBeaches: [],
       lastUpdated: new Date(),
-      dataComplete: !!(realData.waveHeight && realData.windSpeed && realData.waterTemp)
+      dataComplete: !!(waveHeight && windSpeed && waterTemp)
     }
     
     return NextResponse.json(response)
