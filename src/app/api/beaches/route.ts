@@ -137,7 +137,8 @@ async function fetchStormGlassData(lat: number, lng: number) {
     if (!currentHour) return null
 
     // Debug water temperature - check if it's reasonable
-    const rawTemp = currentHour.waterTemperature?.noaa || currentHour.waterTemperature?.sg
+    // Prefer sg or meto over noaa (noaa seems to return Fahrenheit values)
+    const rawTemp = currentHour.waterTemperature?.sg || currentHour.waterTemperature?.meto || currentHour.waterTemperature?.noaa
     // Ocean water temp should be between 15-30°C (59-86°F) typically
     const isReasonableTemp = rawTemp && rawTemp >= 15 && rawTemp <= 30
     
@@ -462,9 +463,38 @@ export async function GET(req: NextRequest) {
     
   } catch (error) {
     console.error('Failed to fetch beaches:', error)
-    return NextResponse.json(
-      { error: 'Failed to fetch beaches' },
-      { status: 500 }
-    )
+    
+    // Try to return at least basic beach data without conditions
+    try {
+      const beaches = await prisma.beach.findMany({
+        include: {
+          advisories: {
+            where: { status: 'active' }
+          }
+        },
+        orderBy: [
+          { island: 'asc' },
+          { name: 'asc' }
+        ]
+      })
+      
+      // Return beaches with no conditions data
+      const basicBeaches = beaches.map(beach => ({
+        ...beach,
+        currentConditions: null,
+        dataUnavailable: true,
+        dataUnavailableReason: 'API error - unable to fetch real-time data',
+        currentStatus: 'unknown',
+        activeAdvisories: beach.advisories.length
+      }))
+      
+      return NextResponse.json(basicBeaches)
+    } catch (dbError) {
+      console.error('Database error:', dbError)
+      return NextResponse.json(
+        { error: 'Service temporarily unavailable', details: process.env.NODE_ENV === 'development' ? String(error) : undefined },
+        { status: 500 }
+      )
+    }
   }
 }
