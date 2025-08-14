@@ -119,26 +119,26 @@ export function BeachList({
       {beaches.map((beach) => {
         // Debug logging (only log once)
         if (beach === beaches[0]) {
-          console.log('Beach card decision:', {
+          console.log('Beach card decision:', JSON.stringify({
             hasUser: !!user,
             userTier: user?.tier,
             isPro,
             canViewConditions: access.beaches.viewCurrentConditions,
             willShowRestricted: !user
-          })
+          }, null, 2))
         }
         
         // Determine what to show based on access level
         const showFullData = access.beaches.viewCurrentConditions
         
         if (beach === beaches[0]) {
-          console.log('Beach card access check:', {
+          console.log('Beach card access check:', JSON.stringify({
             user: user?.email,
             tier: user?.tier,
             hasTrialDate: !!user?.trialEndDate,
             showFullData,
             accessLevel: showFullData ? 'FULL' : 'RESTRICTED'
-          })
+          }, null, 2))
         }
         
         // Show full data for: Pro users, Trial users, Admin

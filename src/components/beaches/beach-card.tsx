@@ -15,6 +15,16 @@ interface BeachCardProps {
 }
 
 export function BeachCard({ beach, selected, onClick, compact }: BeachCardProps) {
+  // Debug logging for beach data
+  if (beach.name === 'Ala Moana Beach' || beach.name.includes('Ala Moana')) {
+    console.log(`[BeachCard] ${beach.name} data:`, {
+      waveHeight: beach.currentConditions?.waveHeightFt,
+      windSpeed: beach.currentConditions?.windMph,
+      waterTemp: beach.currentConditions?.waterTempF,
+      hasConditions: !!beach.currentConditions
+    })
+  }
+
   const statusIcon = {
     good: CheckCircle,
     caution: AlertTriangle,
