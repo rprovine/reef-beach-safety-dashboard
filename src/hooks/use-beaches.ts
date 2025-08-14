@@ -40,6 +40,14 @@ export function useBeaches(island?: Island, searchQuery?: string) {
             windSpeed: data[0].currentConditions?.windMph,
             waterTemp: data[0].currentConditions?.waterTempF
           })
+          
+          // Log first 3 beaches to check for variation
+          const first3 = data.slice(0, 3).map(beach => ({
+            name: beach.name,
+            waves: beach.currentConditions?.waveHeightFt,
+            wind: beach.currentConditions?.windMph
+          }))
+          console.log('[useBeaches] First 3 beaches variation check:', first3)
         }
         
         return data
