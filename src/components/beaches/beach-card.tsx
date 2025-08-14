@@ -133,7 +133,7 @@ export function BeachCard({ beach, selected, onClick, compact }: BeachCardProps)
             <div className="text-gray-600 text-sm mb-2">Real-time data temporarily unavailable</div>
             <div className="text-xs text-gray-500">API quota limit reached - try again later</div>
           </div>
-        ) : beach.currentConditions && beach.currentConditions.waveHeightFt ? (
+        ) : beach.currentConditions && (beach.currentConditions.waveHeightFt || beach.currentConditions.windMph || beach.currentConditions.waterTempF) ? (
           <div className="grid grid-cols-2 gap-4">
             <div>
               <div className="flex items-center gap-2 text-gray-600 mb-1">
@@ -141,7 +141,7 @@ export function BeachCard({ beach, selected, onClick, compact }: BeachCardProps)
                 <span className="text-sm">Waves</span>
               </div>
               <div className="font-semibold text-gray-900">
-                {Number(beach.currentConditions.waveHeightFt).toFixed(1)} ft
+                {beach.currentConditions.waveHeightFt ? `${Number(beach.currentConditions.waveHeightFt).toFixed(1)} ft` : '--'}
               </div>
             </div>
             <div>
@@ -150,7 +150,7 @@ export function BeachCard({ beach, selected, onClick, compact }: BeachCardProps)
                 <span className="text-sm">Wind</span>
               </div>
               <div className="font-semibold text-gray-900">
-                {Number(beach.currentConditions.windMph).toFixed(1)} mph
+                {beach.currentConditions.windMph ? `${Number(beach.currentConditions.windMph).toFixed(1)} mph` : '--'}
               </div>
             </div>
             <div>
@@ -159,7 +159,7 @@ export function BeachCard({ beach, selected, onClick, compact }: BeachCardProps)
                 <span className="text-sm">Water Temp</span>
               </div>
               <div className="font-semibold text-gray-900">
-                {Number(beach.currentConditions.waterTempF).toFixed(1)}°F
+                {beach.currentConditions.waterTempF ? `${Number(beach.currentConditions.waterTempF).toFixed(1)}°F` : '--'}
               </div>
             </div>
             <div>
