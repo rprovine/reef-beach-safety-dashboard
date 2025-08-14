@@ -490,6 +490,16 @@ export async function GET(req: NextRequest) {
     // Combine enriched beaches with status-only beaches
     const transformedBeaches = [...enrichedBeaches, ...remainingWithStatus]
     
+    // Debug logging for frontend troubleshooting - Production deployment v3
+    console.log('[API DEBUG] Sample beach data being returned:', {
+      firstBeach: transformedBeaches[0]?.name,
+      waveHeight: transformedBeaches[0]?.currentConditions?.waveHeightFt,
+      windSpeed: transformedBeaches[0]?.currentConditions?.windMph,
+      waterTemp: transformedBeaches[0]?.currentConditions?.waterTempF,
+      timestamp: new Date().toISOString(),
+      deploymentVersion: 'v3-with-varied-data'
+    })
+    
     return NextResponse.json(transformedBeaches)
     
   } catch (error) {
