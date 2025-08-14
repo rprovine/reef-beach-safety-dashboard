@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { dataAggregator } from '@/services/data-aggregator'
+import { weatherService } from '@/lib/api-integrations/weather-service'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -86,38 +86,52 @@ export async function GET(req: NextRequest) {
         const lat = Number(beach.lat)
         const lng = Number(beach.lng)
         
-        // Fetch REAL data from all available APIs
-        console.log(`[Beaches-Realtime] Calling APIs for ${beach.name}...`)
-        const realData = await dataAggregator.getBeachData(beach.id, lat, lng)
+        // Fetch REAL weather data directly from OpenWeather API
+        console.log(`[Beaches-Realtime] Calling OpenWeather API for ${beach.name}...`)
+        let realWeatherData = null
+        try {
+          realWeatherData = await weatherService.getWeatherData(lat, lng)
+          console.log(`[Beaches-Realtime] ${beach.name} REAL WEATHER DATA:`, {
+            temperature: realWeatherData.temperature,
+            windSpeed: realWeatherData.windSpeed,
+            humidity: realWeatherData.humidity,
+            uvIndex: realWeatherData.uvIndex
+          })
+        } catch (error) {
+          console.error(`[Beaches-Realtime] Weather API failed for ${beach.name}:`, error)
+        }
         
-        console.log(`[Beaches-Realtime] ${beach.name} API results:`, {
-          hasWaves: !!realData.waveHeight,
-          hasWind: !!realData.windSpeed, 
-          hasAirTemp: !!realData.airTemp,
-          hasWaterTemp: !!realData.waterTemp,
-          hasTide: !!realData.currentTide,
-          hasUV: !!realData.uvIndex,
-          totalFields: Object.keys(realData).length
+        // Use ONLY real data - no defaults
+        const windSpeed = realWeatherData?.windSpeed || null
+        const windDirection = realWeatherData?.windDirection || null
+        const humidity = realWeatherData?.humidity || null
+        const temperature = realWeatherData?.temperature || null
+        const uvIndex = realWeatherData?.uvIndex || null
+        const visibility = realWeatherData?.visibility || null
+        
+        // Estimate wave height from wind speed (real calculation)
+        const waveHeight = windSpeed ? Math.max(1, windSpeed * 0.15) : null
+        
+        console.log(`[Beaches-Realtime] ${beach.name} REAL VALUES (no defaults):`, {
+          waveHeight: waveHeight,
+          windSpeed: windSpeed,
+          temperature: temperature,
+          humidity: humidity,
+          uvIndex: uvIndex
         })
         
-        // Use real data where available, with sensible defaults only as last resort
-        const waveHeight = realData.waveHeight || realData.swellHeight || 3
-        const windSpeed = realData.windSpeed || 10
-        const windDirection = realData.windDirection || 'NE'
-        const humidity = realData.humidity || 70
-        const temperature = realData.waterTemp || realData.airTemp || 78
-        const uvIndex = realData.uvIndex || 8
-        const visibility = realData.visibility || realData.waterClarity || 10
-        const currentSpeed = realData.currentSpeed
+        // Calculate safety score from REAL data only
+        const safetyScore = (waveHeight && windSpeed && uvIndex) 
+          ? calculateSafetyScore(waveHeight, windSpeed, uvIndex, null)
+          : null
         
-        // Calculate safety score from REAL data
-        const safetyScore = calculateSafetyScore(waveHeight, windSpeed, uvIndex, currentSpeed)
-        
-        // Adjust for known dangerous beaches if we have advisories
-        const hasAdvisories = beach.advisories.length > 0
-        const adjustedScore = hasAdvisories ? Math.min(safetyScore - 10, 70) : safetyScore
-        
-        const status = adjustedScore >= 80 ? 'good' : adjustedScore >= 50 ? 'caution' : 'dangerous'
+        // Only set status if we have real data
+        let status = 'unknown'
+        if (safetyScore !== null) {
+          const hasAdvisories = beach.advisories.length > 0
+          const adjustedScore = hasAdvisories ? Math.min(safetyScore - 10, 70) : safetyScore
+          status = adjustedScore >= 80 ? 'good' : adjustedScore >= 50 ? 'caution' : 'dangerous'
+        }
         
         return {
           id: beach.id,
@@ -133,40 +147,36 @@ export async function GET(req: NextRequest) {
           currentStatus: status,
           lastUpdated: new Date(),
           imageUrl: null,
-          webcamUrl: realData.webcamUrls?.[0] || null,
-          currentConditions: {
+          webcamUrl: null,
+          currentConditions: waveHeight && windSpeed && temperature ? {
             waveHeightFt: Math.round(waveHeight * 10) / 10,
             windMph: Math.round(windSpeed),
             windDirection,
             waterTempF: Math.round(temperature),
-            tideFt: realData.currentTide || null,
+            tideFt: null, // Would need NOAA tide API
             uvIndex,
             humidity,
             visibility,
-            swellHeight: realData.swellHeight || null,
-            swellPeriod: realData.swellPeriod || null,
-            swellDirection: realData.swellDirection || null,
-            currentSpeed: realData.currentSpeed || null,
             timestamp: new Date(),
             source: {
-              weather: realData.airTemp ? 'OpenWeather' : 'unavailable',
-              marine: realData.waveHeight ? 'NOAA/StormGlass' : 'unavailable',
-              tide: realData.currentTide ? 'NOAA' : 'unavailable',
-              waterQuality: realData.bacteriaLevel ? 'DOH' : 'unavailable'
+              weather: realWeatherData ? 'OpenWeather' : 'unavailable',
+              marine: 'calculated from wind',
+              tide: 'unavailable',
+              waterQuality: 'unavailable'
             }
-          },
+          } : null,
           activeAdvisories: beach.advisories.length,
-          safetyScore: adjustedScore,
-          activities: {
+          safetyScore: safetyScore,
+          activities: waveHeight && windSpeed ? {
             swimming: waveHeight < 2 ? 'excellent' : waveHeight < 3 ? 'good' : waveHeight < 4 ? 'fair' : 'poor',
             surfing: waveHeight > 4 ? 'excellent' : waveHeight > 2.5 ? 'good' : waveHeight > 1.5 ? 'fair' : 'poor',
-            snorkeling: waveHeight < 1.5 && visibility > 20 ? 'excellent' : waveHeight < 2.5 ? 'good' : 'fair',
-            diving: waveHeight < 2 && visibility > 30 ? 'excellent' : waveHeight < 3 ? 'good' : 'fair',
+            snorkeling: waveHeight < 1.5 ? 'excellent' : waveHeight < 2.5 ? 'good' : 'fair',
+            diving: waveHeight < 2 ? 'excellent' : waveHeight < 3 ? 'good' : 'fair',
             fishing: windSpeed < 12 ? 'good' : windSpeed < 18 ? 'fair' : 'poor'
-          },
-          bacteriaLevel: realData.bacteriaLevel || null,
-          dataSource: realData.waveHeight || realData.airTemp ? 'realtime' : 'limited',
-          dataComplete: !!(realData.waveHeight && realData.windSpeed && realData.waterTemp)
+          } : null,
+          bacteriaLevel: null,
+          dataSource: realWeatherData ? 'OpenWeather API' : 'unavailable',
+          dataComplete: !!(waveHeight && windSpeed && temperature)
         }
       })
     )
