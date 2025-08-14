@@ -16,16 +16,8 @@ export function useBeaches(island?: Island, searchQuery?: string) {
         const url = `/api/beaches-fast?${params.toString()}`
         console.log('[useBeaches] Fetching:', url)
         
-        // Use fetch with aggressive cache-busting to ensure fresh data
-        const response = await fetch(url + '&_t=' + Date.now() + '&_r=' + Math.random(), {
-          cache: 'no-store',
-          headers: {
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'Pragma': 'no-cache',
-            'Expires': '0',
-            'X-Requested-With': 'XMLHttpRequest'
-          }
-        })
+        // Simple fetch without aggressive headers
+        const response = await fetch(url)
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`)
         }
