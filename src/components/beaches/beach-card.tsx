@@ -107,7 +107,12 @@ export function BeachCard({ beach, selected, onClick, compact }: BeachCardProps)
 
       {/* Conditions */}
       <div className="p-4">
-        {beach.currentConditions && beach.currentConditions.waveHeightFt ? (
+        {(beach as any).dataUnavailable ? (
+          <div className="text-center py-4">
+            <div className="text-gray-600 text-sm mb-2">Real-time data temporarily unavailable</div>
+            <div className="text-xs text-gray-500">API quota limit reached - try again later</div>
+          </div>
+        ) : beach.currentConditions && beach.currentConditions.waveHeightFt ? (
           <div className="grid grid-cols-2 gap-4">
             <div>
               <div className="flex items-center gap-2 text-gray-600 mb-1">

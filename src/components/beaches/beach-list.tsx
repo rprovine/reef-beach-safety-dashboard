@@ -128,18 +128,21 @@ export function BeachList({
           })
         }
         
-        // Always show full card for ANY logged-in user (simplified for debugging)
-        if (user) {
-          if (beach === beaches[0]) {
-            console.log('Beach data for first beach:', {
-              name: beach.name,
-              hasConditions: !!beach.currentConditions,
-              waveHeight: beach.currentConditions?.waveHeightFt,
-              windSpeed: beach.currentConditions?.windMph,
-              waterTemp: beach.currentConditions?.waterTempF,
-              fullConditions: beach.currentConditions
-            })
-          }
+        // Determine what to show based on access level
+        const showFullData = access.beaches.viewCurrentConditions
+        
+        if (beach === beaches[0]) {
+          console.log('Beach card access check:', {
+            user: user?.email,
+            tier: user?.tier,
+            hasTrialDate: !!user?.trialEndDate,
+            showFullData,
+            accessLevel: showFullData ? 'FULL' : 'RESTRICTED'
+          })
+        }
+        
+        // Show full data for: Pro users, Trial users, Admin
+        if (showFullData) {
           return (
             <BeachCard
               key={beach.id}
@@ -150,8 +153,7 @@ export function BeachList({
           )
         }
         
-        // Show restricted card only for anonymous users
-        console.log('Showing RestrictedBeachCard for anonymous user:', beach.name)
+        // Show restricted card for: Free users (no trial), Anonymous
         return (
           <RestrictedBeachCard
             key={beach.id}

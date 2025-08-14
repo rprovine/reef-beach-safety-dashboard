@@ -126,16 +126,21 @@ export function getUserAccessLevel(user: any) {
   
   if (user.tier === 'admin') return ACCESS_LEVELS.admin
   
-  // Check if user is in trial period (using same logic as auth context)
-  const isInTrial = user.trialEndDate && 
-    new Date() < new Date(user.trialEndDate) && 
-    user.tier === 'free'
-  
-  // Check if user is in trial or has pro subscription
-  if (user.tier === 'pro' || isInTrial) {
+  // PAID SUBSCRIBERS - Full access
+  if (user.tier === 'pro') {
+    console.log('[Access] User is PRO subscriber - FULL ACCESS')
     return ACCESS_LEVELS.pro
   }
   
+  // TRIAL USERS - Full access during trial
+  const hasValidTrial = user.trialEndDate && new Date() < new Date(user.trialEndDate)
+  if (user.tier === 'free' && hasValidTrial) {
+    console.log('[Access] User is in TRIAL period - FULL ACCESS')
+    return ACCESS_LEVELS.pro
+  }
+  
+  // FREE USERS (no trial or expired trial) - Limited access
+  console.log('[Access] User is FREE (no active trial) - LIMITED ACCESS')
   return ACCESS_LEVELS.free
 }
 

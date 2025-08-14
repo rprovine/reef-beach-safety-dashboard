@@ -434,34 +434,22 @@ export async function GET(req: NextRequest) {
       }
     }))
     
-    // Add remaining beaches with simulated data
-    const remainingWithSimulated = remainingBeaches.map(beach => {
-      const seed = beach.name.charCodeAt(0) + beach.name.charCodeAt(1)
-      const hash = (seed * 397) % 100
-      
+    // For remaining beaches, indicate data unavailable (no mock data)
+    const remainingWithStatus = remainingBeaches.map(beach => {
       return {
         ...beach,
-        currentConditions: {
-          waveHeightFt: 2 + (hash % 4),
-          windMph: 8 + (hash % 15),
-          windDirection: (hash * 3) % 360,
-          waterTempF: 74 + (hash % 8),
-          tideFt: 1 + (hash % 3),
-          uvIndex: 6 + (hash % 6),
-          humidity: 60 + (hash % 30),
-          visibility: 8 + (hash % 4),
-          currentSpeed: 0.1 + (hash % 5) / 10,
-          timestamp: new Date(),
-          source: { note: 'Simulated - API limit reached' }
-        },
-        safetyScore: 70 + (hash % 30),
-        currentStatus: hash < 20 ? 'dangerous' : hash < 40 ? 'caution' : 'good',
-        activeAdvisories: hash < 30 ? 1 : 0
+        currentConditions: null, // No fake data
+        dataUnavailable: true,
+        dataUnavailableReason: 'API quota limit - real-time data temporarily unavailable',
+        safetyScore: null,
+        currentStatus: 'unknown',
+        activeAdvisories: 0,
+        message: 'Real-time conditions unavailable due to API limits. Please try again later or upgrade for priority access.'
       }
     })
     
-    // Combine enriched and simulated beaches
-    const transformedBeaches = [...enrichedBeaches, ...remainingWithSimulated]
+    // Combine enriched beaches with status-only beaches
+    const transformedBeaches = [...enrichedBeaches, ...remainingWithStatus]
     
     return NextResponse.json(transformedBeaches)
     

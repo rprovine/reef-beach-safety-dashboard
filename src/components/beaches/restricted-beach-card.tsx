@@ -6,7 +6,8 @@ import { getUserAccessLevel } from '@/lib/access-control'
 import Link from 'next/link'
 import { 
   MapPin, Lock, Zap, TrendingUp, AlertCircle,
-  Waves, Wind, Thermometer, Sun, Eye
+  Waves, Wind, Thermometer, Sun, Eye,
+  Crown, Activity
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -48,25 +49,28 @@ export function RestrictedBeachCard({ beach, onClick }: RestrictedBeachCardProps
           )}
         </div>
         
-        {/* Blurred/locked content */}
+        {/* Show what they're missing - no fake data */}
         <div className="relative">
-          <div className="filter blur-sm pointer-events-none select-none opacity-50">
-            <div className="grid grid-cols-2 gap-3 mb-4">
-              <div className="bg-gray-50 rounded-lg p-3">
-                <div className="flex items-center gap-2 text-gray-500 text-sm mb-1">
-                  <Waves className="h-4 w-4" />
-                  <span>Waves</span>
-                </div>
-                <div className="font-semibold text-gray-700">-- ft</div>
-              </div>
-              <div className="bg-gray-50 rounded-lg p-3">
-                <div className="flex items-center gap-2 text-gray-500 text-sm mb-1">
-                  <Wind className="h-4 w-4" />
-                  <span>Wind</span>
-                </div>
-                <div className="font-semibold text-gray-700">-- mph</div>
-              </div>
-            </div>
+          <div className="bg-gray-50 rounded-lg p-4 mb-4">
+            <h4 className="font-medium text-gray-900 mb-3">With a free account, you'll get:</h4>
+            <ul className="space-y-2 text-sm text-gray-600">
+              <li className="flex items-start gap-2">
+                <Waves className="h-4 w-4 text-ocean-500 mt-0.5" />
+                <span>Real-time wave heights & conditions</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <Wind className="h-4 w-4 text-ocean-500 mt-0.5" />
+                <span>Current wind speed & direction</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <Thermometer className="h-4 w-4 text-ocean-500 mt-0.5" />
+                <span>Water temperature updates</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <AlertCircle className="h-4 w-4 text-ocean-500 mt-0.5" />
+                <span>Safety alerts & advisories</span>
+              </li>
+            </ul>
           </div>
           
           {/* Overlay prompt */}
@@ -98,22 +102,15 @@ export function RestrictedBeachCard({ beach, onClick }: RestrictedBeachCardProps
     )
   }
   
-  // For free tier users - show current conditions but not forecasts
+  // For free tier users - show what Pro offers, not limited data
   if (user.tier === 'free' && !access.beaches.viewForecast) {
-    console.log('Showing RestrictedBeachCard for free user:', beach.name, beach.currentConditions)
     return (
       <div 
         className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden cursor-pointer hover:shadow-md transition-all"
         onClick={handleClick}
       >
-        {/* Header with status */}
-        <div className={cn(
-          'p-4',
-          beach.currentStatus === 'good' ? 'bg-green-50' :
-          beach.currentStatus === 'caution' ? 'bg-yellow-50' :
-          beach.currentStatus === 'dangerous' ? 'bg-red-50' :
-          'bg-gray-50'
-        )}>
+        {/* Header with beach info */}
+        <div className="p-4 bg-gradient-to-r from-gray-50 to-gray-100">
           <div className="flex items-start justify-between">
             <div>
               <h3 className="font-semibold text-lg text-gray-900">{beach.name}</h3>
@@ -121,83 +118,47 @@ export function RestrictedBeachCard({ beach, onClick }: RestrictedBeachCardProps
                 <MapPin className="h-3 w-3" />
                 <span>{beach.island.charAt(0).toUpperCase() + beach.island.slice(1)}</span>
               </div>
-            </div>
-            <div className={cn(
-              'px-3 py-1 rounded-full text-sm font-medium',
-              beach.currentStatus === 'good' ? 'bg-green-100 text-green-800' :
-              beach.currentStatus === 'caution' ? 'bg-yellow-100 text-yellow-800' :
-              beach.currentStatus === 'dangerous' ? 'bg-red-100 text-red-800' :
-              'bg-gray-100 text-gray-800'
-            )}>
-              {beach.currentStatus === 'good' ? 'Safe' : 
-               beach.currentStatus === 'caution' ? 'Caution' :
-               beach.currentStatus === 'dangerous' ? 'Dangerous' : 'Unknown'}
+              {beach.description && (
+                <p className="text-sm text-gray-600 mt-2 line-clamp-2">{beach.description}</p>
+              )}
             </div>
           </div>
         </div>
         
-        {/* Current conditions */}
+        {/* Show Pro features they're missing */}
         <div className="p-4">
-          {beach.currentConditions ? (
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <div className="flex items-center gap-2 text-gray-600 text-sm mb-1">
-                  <Waves className="h-4 w-4" />
-                  <span>Waves</span>
-                </div>
-                <div className="font-semibold text-gray-900">
-                  {beach.currentConditions.waveHeightFt ? 
-                    `${Number(beach.currentConditions.waveHeightFt).toFixed(1)} ft` : '--'}
-                </div>
+          <div className="bg-gradient-to-r from-ocean-50 to-blue-50 rounded-lg p-4">
+            <h4 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
+              <Crown className="h-5 w-5 text-yellow-500" />
+              Upgrade to Pro for:
+            </h4>
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <div className="flex items-start gap-2">
+                <TrendingUp className="h-4 w-4 text-ocean-600 mt-0.5" />
+                <span className="text-gray-700">7-day forecasts</span>
               </div>
-              <div>
-                <div className="flex items-center gap-2 text-gray-600 text-sm mb-1">
-                  <Wind className="h-4 w-4" />
-                  <span>Wind</span>
-                </div>
-                <div className="font-semibold text-gray-900">
-                  {beach.currentConditions.windMph ? 
-                    `${Number(beach.currentConditions.windMph).toFixed(1)} mph` : '--'}
-                </div>
+              <div className="flex items-start gap-2">
+                <Activity className="h-4 w-4 text-ocean-600 mt-0.5" />
+                <span className="text-gray-700">Historical trends</span>
               </div>
-              <div>
-                <div className="flex items-center gap-2 text-gray-600 text-sm mb-1">
-                  <Thermometer className="h-4 w-4" />
-                  <span>Water</span>
-                </div>
-                <div className="font-semibold text-gray-900">
-                  {beach.currentConditions.waterTempF ? 
-                    `${Number(beach.currentConditions.waterTempF).toFixed(0)}°F` : '--'}
-                </div>
+              <div className="flex items-start gap-2">
+                <AlertCircle className="h-4 w-4 text-ocean-600 mt-0.5" />
+                <span className="text-gray-700">Unlimited alerts</span>
               </div>
-              <div>
-                <div className="flex items-center gap-2 text-gray-600 text-sm mb-1">
-                  <Sun className="h-4 w-4" />
-                  <span>UV Index</span>
-                </div>
-                <div className="font-semibold text-gray-900">
-                  {beach.currentConditions.uvIndex ?? '--'}
-                </div>
+              <div className="flex items-start gap-2">
+                <Eye className="h-4 w-4 text-ocean-600 mt-0.5" />
+                <span className="text-gray-700">Detailed analytics</span>
               </div>
             </div>
-          ) : (
-            <div className="text-center py-4 text-gray-500">
-              Loading conditions...
-            </div>
-          )}
           
-          {/* Pro features teaser */}
-          <div className="mt-4 pt-4 border-t border-gray-200">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-sm text-gray-500">
-                <TrendingUp className="h-4 w-4" />
-                <span>7-day forecast • Historical trends</span>
-              </div>
+            
+            {/* CTA Button */}
+            <div className="mt-4">
               <Link
                 href="/pricing"
-                className="text-sm font-medium text-ocean-600 hover:text-ocean-700"
+                className="block w-full text-center px-4 py-2 bg-gradient-to-r from-ocean-500 to-ocean-600 text-white rounded-lg font-medium hover:shadow-md transition-all"
               >
-                Go Pro →
+                Upgrade to Pro →
               </Link>
             </div>
           </div>
