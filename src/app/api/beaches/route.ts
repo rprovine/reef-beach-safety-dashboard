@@ -338,7 +338,10 @@ export async function GET(req: NextRequest) {
       ]
     }
     
-    // Fetch beaches from database
+    // Fetch beaches from database - LIMIT to avoid API overload
+    // When no filters, only fetch top beaches with real-time data
+    const fetchLimit = island || search ? 100 : 15 // Only 15 beaches by default
+    
     const beaches = await prisma.beach.findMany({
       where,
       include: {
@@ -356,7 +359,8 @@ export async function GET(req: NextRequest) {
       },
       orderBy: {
         name: 'asc'
-      }
+      },
+      take: fetchLimit // LIMIT BEACHES TO PREVENT API OVERLOAD
     })
     
     // Limit API calls to first 15 beaches to prevent timeout
