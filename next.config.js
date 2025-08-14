@@ -4,6 +4,31 @@ const withPWA = require('next-pwa')({
   skipWaiting: true,
   disable: process.env.NODE_ENV === 'development',
   buildExcludes: [/middleware-manifest.json$/],
+  // Exclude API routes from service worker caching to prevent stale data
+  runtimeCaching: [
+    {
+      urlPattern: /^https?.*\/(api|_next\/static|static).*$/,
+      handler: 'NetworkOnly', // Always fetch from network, never cache
+    },
+    {
+      urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp|ico)$/,
+      handler: 'CacheFirst',
+      options: {
+        cacheName: 'images',
+        expiration: {
+          maxEntries: 60,
+          maxAgeSeconds: 30 * 24 * 60 * 60, // 30 Days
+        },
+      },
+    },
+    {
+      urlPattern: /\.(?:css|js)$/,
+      handler: 'StaleWhileRevalidate',
+      options: {
+        cacheName: 'static-resources',
+      },
+    },
+  ],
 })
 
 /** @type {import('next').NextConfig} */
