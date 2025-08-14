@@ -81,7 +81,7 @@ export function BeachCard({ beach, selected, onClick, compact }: BeachCardProps)
   return (
     <div
       className={cn(
-        'beach-card cursor-pointer transition-all transform hover:scale-105 hover:shadow-xl hover:ring-2 hover:ring-ocean-400',
+        'beach-card',
         selected && 'ring-2 ring-ocean-500 scale-105 shadow-xl'
       )}
       onClick={onClick}
