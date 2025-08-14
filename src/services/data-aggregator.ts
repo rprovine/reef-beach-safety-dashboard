@@ -362,13 +362,8 @@ export class DataAggregatorService {
     if (cached) return cached
 
     try {
-      // This would connect to NASA MODIS or other satellite APIs
-      // For now, return mock data
-      const result = {
-        algaeBloom: Math.random() > 0.9,
-        chlorophyll: Math.random() * 10,
-        turbidity: Math.random() * 5
-      }
+      // Return null - satellite data requires real API integration
+      return null
 
       this.setCache(cacheKey, result)
       return result
@@ -401,9 +396,9 @@ export class DataAggregatorService {
       const latestReading = beach?.readings[0]
       
       const result = {
-        bacteriaLevel: latestReading?.bacteriaLevel || 'safe',
-        enterococcus: 10, // Mock value - would come from DOH
-        turbidity: 1 // Mock value
+        bacteriaLevel: latestReading?.bacteriaLevel || null,
+        enterococcus: null, // Requires real DOH data
+        turbidity: null // Requires real sensor data
       }
 
       this.setCache(cacheKey, result)

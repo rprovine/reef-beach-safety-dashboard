@@ -106,28 +106,11 @@ export async function GET(
       comprehensiveData = basicBeachData
     }
     
-    // Add real-time calculated data if not available from external sources
-    if (!comprehensiveData.waveHeight) {
-      comprehensiveData.waveHeight = Math.abs(2 + Math.sin(Date.now() / 3600000 + Number(beach.lat)) * 3)
-    }
-    if (!comprehensiveData.windSpeed) {
-      comprehensiveData.windSpeed = Math.abs(8 + Math.sin(Date.now() / 7200000 + Number(beach.lng)) * 12)
-    }
-    if (!comprehensiveData.waterTemp) {
-      comprehensiveData.waterTemp = 76 + Math.sin(Date.now() / 86400000) * 4
-    }
-    if (!comprehensiveData.currentTide) {
-      comprehensiveData.currentTide = Math.abs(2 + Math.sin(Date.now() / 43200000) * 2.5)
-    }
+    // NO MOCK DATA - Leave values as null if not available from APIs
+    // Users should see "data unavailable" not fake values
 
-    // Get activity ratings with fallback
-    let activities = {
-      swimming: 'good',
-      surfing: 'fair',
-      snorkeling: 'good',
-      diving: 'fair',
-      fishing: 'good'
-    }
+    // Get activity ratings from aggregator or null
+    let activities = null
     
     try {
       if (dataAggregator.getActivityRatings) {
@@ -137,8 +120,8 @@ export async function GET(
       console.log('[API] Using fallback activity ratings')
     }
 
-    // Get family rating with fallback
-    let familyRating = { score: 75, rating: 'good' }
+    // Get family rating from data or null
+    let familyRating = null
     let familyFeatures = {}
     
     try {
@@ -173,14 +156,14 @@ export async function GET(
         // From database
         lastReading: beach.readings[0] || null,
         
-        // Calculate safety score with fallback
-        safetyScore: comprehensiveData.safetyScore || beach.safetyScore || 75,
+        // Use real safety score or null
+        safetyScore: comprehensiveData.safetyScore || beach.safetyScore || null,
         
         // Activity recommendations
         activities,
         
-        // Best time to visit today
-        bestTimeToday: 'Morning hours (7-10 AM)',
+        // Best time calculation requires real data
+        bestTimeToday: null,
       },
 
       // Family information
@@ -204,23 +187,11 @@ export async function GET(
         startedAt: a.startedAt
       })),
       
-      // Historical data for trends
-      trends: comprehensiveData.trends || {
-        waveHeight: 'stable',
-        crowdLevel: 'moderate',
-        waterQuality: 'stable',
-      },
+      // Historical data for trends - only if available
+      trends: comprehensiveData.trends || null,
       
-      // Forecast with simple fallback
-      forecast: {
-        next3Hours: 'Conditions expected to remain stable',
-        next24Hours: 'No significant changes expected',
-        tomorrow: {
-          waveHeight: comprehensiveData.waveHeight || 2,
-          conditions: 'Similar to today',
-          bestTime: '7:00 AM - 10:00 AM'
-        }
-      },
+      // Forecast requires real data
+      forecast: null,
       
       // Data sources
       sources: {
@@ -231,12 +202,8 @@ export async function GET(
         lastUpdated: new Date().toISOString()
       },
       
-      // Recommendations with fallback
-      recommendations: [
-        'Check current conditions before entering water',
-        'Apply reef-safe sunscreen',
-        'Stay hydrated'
-      ],
+      // Recommendations based on real conditions
+      recommendations: comprehensiveData.warnings ? generateRecommendations(comprehensiveData, beach) : [],
     }
 
     // Note: Access control will be handled on the frontend

@@ -142,18 +142,18 @@ For real-time updates, visit https://beachhui.lenilani.com
           throw new Error(data.error)
         }
         
-        // Transform data to include all real API data
+        // Transform data - API returns 'conditions' not 'currentConditions'
         const transformedData = {
           beach: data.beach,
           currentConditions: {
-            waveHeightFt: data.currentConditions?.waveHeightFt || data.waveData?.significantWaveHeight || 2,
-            windMph: data.currentConditions?.windMph || data.weatherData?.windSpeed || 10,
-            windDirection: data.currentConditions?.windDirection || data.weatherData?.windDeg || 45,
-            waterTempF: data.currentConditions?.waterTempF || data.marineData?.waterTemperature || 75,
-            tideFt: data.currentConditions?.tideFt || data.tideData?.currentTide || 2,
-            uvIndex: data.weatherData?.uvIndex || 5,
-            visibility: data.weatherData?.visibility || 10,
-            humidity: data.weatherData?.humidity || 65,
+            waveHeightFt: data.conditions?.waveHeight || data.currentConditions?.waveHeightFt || null,
+            windMph: data.conditions?.windSpeed || data.currentConditions?.windMph || null,
+            windDirection: data.conditions?.windDirection || data.currentConditions?.windDirection || null,
+            waterTempF: data.conditions?.waterTemp || data.currentConditions?.waterTempF || null,
+            tideFt: data.conditions?.currentTide || data.currentConditions?.tideFt || null,
+            uvIndex: data.conditions?.uvIndex || data.weatherData?.uvIndex || null,
+            visibility: data.conditions?.visibility || data.weatherData?.visibility || null,
+            humidity: data.conditions?.humidity || data.weatherData?.humidity || null,
             timestamp: new Date()
           },
           forecast7Day: data.forecast || [],

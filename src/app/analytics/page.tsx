@@ -40,7 +40,8 @@ export default function AnalyticsPage() {
   }
   
   // Use real data when available, with better error handling
-  const hasData = analyticsData && analyticsData.overview && !loading
+  // Don't hide data just because some fields are empty
+  const hasData = analyticsData && !loading
   const stats = hasData ? {
     totalBeaches: analyticsData.overview?.totalBeaches || 0,
     safeToday: analyticsData.overview?.statusCounts?.safe || 0,
@@ -56,35 +57,18 @@ export default function AnalyticsPage() {
     recentIncidents: analyticsData.recentIncidents || [],
     weeklyTrends: analyticsData.dailyTrends || []
   } : {
-    totalBeaches: 47,
-    safeToday: 41,
-    cautionToday: 5,
-    dangerousToday: 1,
-    totalVisitors: '12.4K',
-    visitorChange: '+18%',
-    avgSafetyScore: 78,
-    safetyChange: '+5%',
-    topBeaches: [
-      { name: 'Waikiki Beach', visitors: 3421, safety: 92, trend: 'up' },
-      { name: 'Hanauma Bay', visitors: 2856, safety: 88, trend: 'up' },
-      { name: 'Pipeline', visitors: 1923, safety: 45, trend: 'down' },
-      { name: 'Sunset Beach', visitors: 1654, safety: 72, trend: 'stable' },
-      { name: 'Lanikai Beach', visitors: 1432, safety: 95, trend: 'up' }
-    ],
-    recentIncidents: [
-      { beach: 'Pipeline', type: 'High Surf', severity: 'high', time: '2 hours ago' },
-      { beach: 'Sandy Beach', type: 'Strong Current', severity: 'medium', time: '5 hours ago' },
-      { beach: 'Makaha Beach', type: 'Jellyfish', severity: 'low', time: '1 day ago' }
-    ],
-    weeklyTrends: [
-      { day: 'Mon', safety: 72, visitors: 8234 },
-      { day: 'Tue', safety: 75, visitors: 7856 },
-      { day: 'Wed', safety: 71, visitors: 8123 },
-      { day: 'Thu', safety: 78, visitors: 9234 },
-      { day: 'Fri', safety: 82, visitors: 11234 },
-      { day: 'Sat', safety: 79, visitors: 14532 },
-      { day: 'Sun', safety: 78, visitors: 15234 }
-    ]
+    // NO MOCK DATA - Show zeros/empty when no real data
+    totalBeaches: 0,
+    safeToday: 0,
+    cautionToday: 0,
+    dangerousToday: 0,
+    totalVisitors: '0',
+    visitorChange: '0%',
+    avgSafetyScore: 0,
+    safetyChange: '0%',
+    topBeaches: [],
+    recentIncidents: [],
+    weeklyTrends: []
   }
   
   return (
