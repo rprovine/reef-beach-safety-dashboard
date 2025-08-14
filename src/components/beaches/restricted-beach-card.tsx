@@ -129,7 +129,7 @@ export function RestrictedBeachCard({ beach, onClick }: RestrictedBeachCardProps
         <div className="p-4">
           <div className="bg-gradient-to-r from-ocean-50 to-blue-50 rounded-lg p-4">
             <h4 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
-              <Crown className="h-5 w-5 text-yellow-500" />
+              <Zap className="h-5 w-5 text-yellow-500" />
               Upgrade to Pro for:
             </h4>
             <div className="grid grid-cols-2 gap-3 text-sm">
@@ -138,7 +138,7 @@ export function RestrictedBeachCard({ beach, onClick }: RestrictedBeachCardProps
                 <span className="text-gray-700">7-day forecasts</span>
               </div>
               <div className="flex items-start gap-2">
-                <Activity className="h-4 w-4 text-ocean-600 mt-0.5" />
+                <TrendingUp className="h-4 w-4 text-ocean-600 mt-0.5" />
                 <span className="text-gray-700">Historical trends</span>
               </div>
               <div className="flex items-start gap-2">

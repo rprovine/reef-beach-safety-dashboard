@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import { sendEmail } from '@/lib/email'
 import { emailTemplates } from '@/lib/email-templates'
+import { validateEmailForSending } from '@/lib/email-validation'
 import crypto from 'crypto'
 
 const forgotPasswordSchema = z.object({
@@ -13,6 +14,22 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     const { email } = forgotPasswordSchema.parse(body)
+    
+    // Validate email to prevent bounces
+    const emailValidation = validateEmailForSending(email)
+    if (!emailValidation.canSend) {
+      console.warn(`Blocked password reset for invalid email: ${email} - ${emailValidation.error}`)
+      // Still return success to prevent enumeration
+      return NextResponse.json({
+        success: true,
+        message: 'If an account exists with this email, a password reset link has been sent.',
+        // In dev mode, show the validation error
+        ...(process.env.NODE_ENV === 'development' && {
+          devWarning: emailValidation.error,
+          suggestion: emailValidation.suggestion
+        })
+      })
+    }
     
     // Find user
     const user = await prisma.user.findUnique({

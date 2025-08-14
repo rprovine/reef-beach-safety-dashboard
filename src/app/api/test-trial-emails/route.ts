@@ -14,6 +14,20 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // IMPORTANT: Only allow sending test emails to verified address
+    // This prevents bounce backs and protects email sending privileges
+    const ALLOWED_TEST_EMAIL = 'rprovine@gmail.com'
+    if (recipientEmail !== ALLOWED_TEST_EMAIL) {
+      return NextResponse.json(
+        { 
+          error: 'Test emails can only be sent to verified address',
+          details: `For testing, please use: ${ALLOWED_TEST_EMAIL}`,
+          reason: 'This restriction prevents email bounces and protects our sending privileges'
+        },
+        { status: 403 }
+      )
+    }
+
     const name = recipientName || recipientEmail.split('@')[0]
     let emailTemplate
 
@@ -45,13 +59,25 @@ export async function POST(request: NextRequest) {
         )
     }
 
-    // Send the email
-    await sendEmail({
-      to: recipientEmail,
-      subject: emailTemplate.subject,
-      html: emailTemplate.html,
-      text: emailTemplate.text
-    })
+    // Send the email with additional validation
+    try {
+      await sendEmail({
+        to: recipientEmail,
+        subject: emailTemplate.subject,
+        html: emailTemplate.html,
+        text: emailTemplate.text
+      })
+    } catch (emailError) {
+      console.error('Email send failed:', emailError)
+      return NextResponse.json(
+        {
+          error: 'Failed to send email',
+          details: 'Email could not be delivered. Please verify the address is valid.',
+          suggestion: 'Use rprovine@gmail.com for testing'
+        },
+        { status: 500 }
+      )
+    }
 
     return NextResponse.json({
       success: true,

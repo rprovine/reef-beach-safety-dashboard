@@ -6,6 +6,7 @@ import { prisma } from '@/lib/prisma'
 import { hubspot } from '@/lib/hubspot'
 import { sendEmail } from '@/lib/email'
 import { emailTemplates } from '@/lib/email-templates'
+import { validateEmail, sanitizeEmail } from '@/lib/email-validation'
 
 const registerSchema = z.object({
   email: z.string().email(),
@@ -22,11 +23,25 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const validatedData = registerSchema.parse(body)
     
-    console.log('Registration attempt for:', validatedData.email)
+    // Sanitize and validate email
+    const sanitizedEmail = sanitizeEmail(validatedData.email)
+    const emailValidation = validateEmail(sanitizedEmail)
+    
+    if (!emailValidation.isValid) {
+      return NextResponse.json(
+        { 
+          error: emailValidation.reason || 'Invalid email address',
+          suggestion: emailValidation.suggestion
+        },
+        { status: 400 }
+      )
+    }
+    
+    console.log('Registration attempt for:', sanitizedEmail)
     
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
-      where: { email: validatedData.email }
+      where: { email: sanitizedEmail }
     })
     
     if (existingUser) {
@@ -42,7 +57,7 @@ export async function POST(request: NextRequest) {
     // Create user with free tier and trial period
     const user = await prisma.user.create({
       data: {
-        email: validatedData.email,
+        email: sanitizedEmail,
         password: hashedPassword,
         name: validatedData.name,
         phone: validatedData.phone,
