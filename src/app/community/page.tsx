@@ -117,7 +117,7 @@ export default function CommunityPage() {
   useEffect(() => {
     const fetchBeaches = async () => {
       try {
-        const response = await fetch('/api/beaches')
+        const response = await fetch('/api/beaches-limited')
         if (response.ok) {
           const data = await response.json()
           setBeaches(data)

@@ -13,7 +13,7 @@ export function useBeaches(island?: Island, searchQuery?: string) {
         if (island) params.append('island', island)
         if (searchQuery) params.append('search', searchQuery)
         
-        const url = `/api/beaches?${params.toString()}`
+        const url = `/api/beaches-fast?${params.toString()}`
         console.log('[useBeaches] Fetching:', url)
         
         // Use fetch with aggressive cache-busting to ensure fresh data

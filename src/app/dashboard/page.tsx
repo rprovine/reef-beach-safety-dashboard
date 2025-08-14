@@ -146,7 +146,7 @@ export default function DashboardPage() {
       .catch(err => console.error('Error fetching analytics:', err))
 
     // Fetch beaches and set favorites
-    fetch('/api/beaches')
+    fetch('/api/beaches-limited')
       .then(res => res.json())
       .then(beaches => {
         // Get user's favorite beaches from localStorage or use top 3

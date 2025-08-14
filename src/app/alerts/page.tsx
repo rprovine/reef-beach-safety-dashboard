@@ -48,7 +48,7 @@ export default function AlertsPage() {
   // Fetch beaches and current conditions
   useEffect(() => {
     // Fetch beaches list
-    fetch('/api/beaches')
+    fetch('/api/beaches-limited')
       .then(res => res.json())
       .then(data => {
         setBeaches(data)
