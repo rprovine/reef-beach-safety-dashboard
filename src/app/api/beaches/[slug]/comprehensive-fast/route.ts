@@ -1,60 +1,43 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { dataAggregator } from '@/services/data-aggregator'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
+export const maxDuration = 30
 
-// Use the SAME calculation as beaches-realtime for consistency
-function calculateBeachData(beach: any) {
-  const lat = Number(beach.lat)
-  const lng = Number(beach.lng)
-  const seed = beach.name.split('').reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0)
+// Calculate safety score based on REAL conditions
+function calculateSafetyScore(
+  waveHeight: number,
+  windSpeed: number,
+  uvIndex: number,
+  currentSpeed?: number
+): number {
+  let score = 100
   
-  // Use the same calculations as beaches-realtime
-  const windSpeed = 5 + (seed % 20)
-  const windDirection = 45 + (seed % 315)
-  const humidity = 60 + (seed % 25)
-  const temperature = 74 + (seed % 8)
-  const uvIndex = 6 + (seed % 6)
-  const visibility = 8 + (seed % 7)
+  // Wave height penalties
+  if (waveHeight > 8) score -= 40
+  else if (waveHeight > 6) score -= 30
+  else if (waveHeight > 4) score -= 20
+  else if (waveHeight > 3) score -= 10
+  else if (waveHeight > 2) score -= 5
   
-  // Calculate wave height based on wind (same logic)
-  const waveHeight = windSpeed < 10 ? 2 + (seed % 10) / 10 : 
-                     windSpeed < 15 ? 3 + (seed % 15) / 10 :
-                     windSpeed < 20 ? 4 + (seed % 20) / 10 : 
-                     5 + (seed % 25) / 10
+  // Wind speed penalties
+  if (windSpeed > 25) score -= 25
+  else if (windSpeed > 20) score -= 15
+  else if (windSpeed > 15) score -= 10
+  else if (windSpeed > 10) score -= 5
   
-  // Calculate safety score (same logic)
-  let safetyScore = 100
-  if (waveHeight > 5) safetyScore -= 30
-  else if (waveHeight > 3.5) safetyScore -= 15
-  else if (waveHeight > 2.5) safetyScore -= 5
+  // UV index penalties
+  if (uvIndex > 11) score -= 15
+  else if (uvIndex > 8) score -= 10
+  else if (uvIndex > 6) score -= 5
   
-  if (windSpeed > 20) safetyScore -= 20
-  else if (windSpeed > 15) safetyScore -= 10
-  else if (windSpeed > 10) safetyScore -= 5
+  // Current speed penalties
+  if (currentSpeed && currentSpeed > 2) score -= 15
+  else if (currentSpeed && currentSpeed > 1) score -= 10
   
-  if (uvIndex > 10) safetyScore -= 10
-  else if (uvIndex > 8) safetyScore -= 5
-  
-  safetyScore = Math.max(0, Math.min(100, safetyScore))
-  
-  // Special adjustments for known beaches (same logic)
-  if (beach.name.includes('Pipeline')) safetyScore = Math.min(safetyScore, 65)
-  if (beach.name.includes('Baby')) safetyScore = Math.max(safetyScore, 85)
-  if (beach.name.includes('Waikiki')) safetyScore = Math.max(safetyScore, 80)
-  
-  return {
-    waveHeight,
-    windSpeed,
-    windDirection,
-    humidity,
-    temperature,
-    uvIndex,
-    visibility,
-    safetyScore,
-    status: safetyScore >= 80 ? 'good' : safetyScore >= 50 ? 'caution' : 'dangerous'
-  }
+  return Math.max(0, Math.min(100, score))
 }
 
 export async function GET(
@@ -63,6 +46,8 @@ export async function GET(
 ) {
   try {
     const { slug } = params
+    
+    console.log('[Comprehensive-Fast] Fetching beach:', slug)
     
     // Get beach from database
     const beach = await prisma.beach.findUnique({
@@ -78,10 +63,36 @@ export async function GET(
       return NextResponse.json({ error: 'Beach not found' }, { status: 404 })
     }
     
-    // Calculate the SAME data as the list page
-    const data = calculateBeachData(beach)
+    const lat = Number(beach.lat)
+    const lng = Number(beach.lng)
     
-    // Build comprehensive response
+    console.log('[Comprehensive-Fast] Fetching REAL data from APIs...')
+    
+    // Fetch REAL data from all available APIs
+    const realData = await dataAggregator.getBeachData(beach.id, lat, lng)
+    
+    console.log('[Comprehensive-Fast] Got real data:', {
+      hasWaveData: !!realData.waveHeight,
+      hasWindData: !!realData.windSpeed,
+      hasWaterTemp: !!realData.waterTemp,
+      hasTideData: !!realData.currentTide,
+      hasUVData: !!realData.uvIndex
+    })
+    
+    // Use real data where available
+    const waveHeight = realData.waveHeight || realData.swellHeight || 3
+    const windSpeed = realData.windSpeed || 10
+    const waterTemp = realData.waterTemp || realData.airTemp || 78
+    const uvIndex = realData.uvIndex || 8
+    const currentSpeed = realData.currentSpeed
+    const humidity = realData.humidity || 70
+    const visibility = realData.visibility || realData.waterClarity || 10
+    
+    // Calculate safety score from REAL data
+    const safetyScore = calculateSafetyScore(waveHeight, windSpeed, uvIndex, currentSpeed)
+    const status = safetyScore >= 80 ? 'good' : safetyScore >= 50 ? 'caution' : 'dangerous'
+    
+    // Build response with REAL data
     const response = {
       beach: {
         id: beach.id,
@@ -90,65 +101,59 @@ export async function GET(
         island: beach.island,
         description: beach.description,
         coordinates: {
-          lat: Number(beach.lat),
-          lng: Number(beach.lng)
+          lat,
+          lng
         }
       },
       currentConditions: {
-        waveHeightFt: Math.round(data.waveHeight * 10) / 10,
-        windMph: Math.round(data.windSpeed),
-        windDirection: data.windDirection,
-        waterTempF: Math.round(data.temperature),
-        tideFt: 2.5,
-        uvIndex: data.uvIndex,
-        humidity: data.humidity,
-        visibility: data.visibility,
-        swellHeight: Math.round(data.waveHeight * 0.8 * 10) / 10,
-        swellPeriod: 8 + (data.waveHeight > 3 ? 2 : 0),
-        timestamp: new Date()
-      },
-      safetyScore: data.safetyScore,
-      status: data.status,
-      currentStatus: data.status,
-      activities: {
-        swimming: data.waveHeight < 2 ? 'excellent' : data.waveHeight < 3 ? 'good' : data.waveHeight < 4 ? 'fair' : 'poor',
-        surfing: data.waveHeight > 4 ? 'excellent' : data.waveHeight > 2.5 ? 'good' : data.waveHeight > 1.5 ? 'fair' : 'poor',
-        snorkeling: data.waveHeight < 1.5 ? 'excellent' : data.waveHeight < 2.5 ? 'good' : 'fair',
-        diving: data.waveHeight < 2 ? 'excellent' : data.waveHeight < 3 ? 'good' : 'fair',
-        fishing: data.windSpeed < 12 ? 'good' : data.windSpeed < 18 ? 'fair' : 'poor'
-      },
-      forecast: {
-        today: {
-          high: Math.round(data.temperature + 5),
-          low: Math.round(data.temperature - 3),
-          conditions: data.windSpeed > 15 ? 'Windy' : 'Partly Cloudy',
-          windSpeed: data.windSpeed,
-          waveHeight: data.waveHeight
-        },
-        tomorrow: {
-          high: Math.round(data.temperature + 4),
-          low: Math.round(data.temperature - 2),
-          conditions: 'Sunny',
-          windSpeed: Math.round(data.windSpeed * 0.9),
-          waveHeight: Math.round(data.waveHeight * 0.9 * 10) / 10
-        },
-        dayAfter: {
-          high: Math.round(data.temperature + 6),
-          low: Math.round(data.temperature - 1),
-          conditions: 'Partly Cloudy',
-          windSpeed: Math.round(data.windSpeed * 1.1),
-          waveHeight: Math.round(data.waveHeight * 1.1 * 10) / 10
+        waveHeightFt: Math.round(waveHeight * 10) / 10,
+        windMph: Math.round(windSpeed),
+        windDirection: realData.windDirection || 'NE',
+        waterTempF: Math.round(waterTemp),
+        tideFt: realData.currentTide || null,
+        uvIndex,
+        humidity,
+        visibility,
+        swellHeight: realData.swellHeight || Math.round(waveHeight * 0.8 * 10) / 10,
+        swellPeriod: realData.swellPeriod || 10,
+        swellDirection: realData.swellDirection || 'N',
+        currentSpeed: realData.currentSpeed || null,
+        currentDirection: realData.currentDirection || null,
+        timestamp: new Date(),
+        dataSource: {
+          waves: realData.waveHeight ? 'NOAA/StormGlass' : 'unavailable',
+          weather: realData.airTemp ? 'OpenWeather' : 'unavailable',
+          tide: realData.currentTide ? 'NOAA' : 'unavailable',
+          waterQuality: realData.bacteriaLevel ? 'DOH' : 'unavailable'
         }
       },
-      tideData: {
-        current: 2.5,
-        predictions: [
-          { time: '06:00', height: 0.8, type: 'low' },
-          { time: '12:00', height: 2.4, type: 'high' },
-          { time: '18:00', height: 0.5, type: 'low' },
-          { time: '00:00', height: 2.2, type: 'high' }
-        ]
+      safetyScore,
+      status,
+      currentStatus: status,
+      activities: {
+        swimming: waveHeight < 2 ? 'excellent' : waveHeight < 3 ? 'good' : waveHeight < 4 ? 'fair' : 'poor',
+        surfing: waveHeight > 4 ? 'excellent' : waveHeight > 2.5 ? 'good' : waveHeight > 1.5 ? 'fair' : 'poor',
+        snorkeling: waveHeight < 1.5 && visibility > 20 ? 'excellent' : waveHeight < 2.5 ? 'good' : 'fair',
+        diving: waveHeight < 2 && visibility > 30 ? 'excellent' : waveHeight < 3 ? 'good' : 'fair',
+        fishing: windSpeed < 12 ? 'good' : windSpeed < 18 ? 'fair' : 'poor'
       },
+      forecast: realData.forecast24Hour ? {
+        today: {
+          high: Math.round(realData.forecast24Hour[0]?.temperature || waterTemp + 5),
+          low: Math.round(waterTemp - 3),
+          conditions: realData.forecast24Hour[0]?.description || 'Partly Cloudy',
+          windSpeed: realData.forecast24Hour[0]?.windSpeed || windSpeed,
+          waveHeight: realData.forecast24Hour[0]?.waveHeight || waveHeight
+        },
+        tomorrow: realData.forecast24Hour[8] || null,
+        dayAfter: realData.forecast24Hour[16] || null
+      } : null,
+      tideData: realData.currentTide ? {
+        current: realData.currentTide,
+        nextHigh: realData.nextHighTide,
+        nextLow: realData.nextLowTide,
+        predictions: realData.predictions || []
+      } : null,
       advisories: beach.advisories.map(adv => ({
         id: adv.id,
         title: adv.title,
@@ -156,9 +161,15 @@ export async function GET(
         description: adv.description,
         startedAt: adv.startedAt
       })),
+      bacteriaLevel: realData.bacteriaLevel || null,
+      waterQuality: realData.enterococcus ? {
+        enterococcus: realData.enterococcus,
+        turbidity: realData.turbidity,
+        lastTested: new Date()
+      } : null,
       familyRating: {
-        overall: data.safetyScore >= 75 ? 4 : data.safetyScore >= 50 ? 3 : 2,
-        safety: data.safetyScore >= 80 ? 5 : data.safetyScore >= 60 ? 4 : 3,
+        overall: safetyScore >= 75 ? 4 : safetyScore >= 50 ? 3 : 2,
+        safety: safetyScore >= 80 ? 5 : safetyScore >= 60 ? 4 : 3,
         amenities: 4,
         activities: 3
       },
@@ -169,7 +180,8 @@ export async function GET(
         'Shallow areas for children'
       ],
       nearbyBeaches: [],
-      lastUpdated: new Date()
+      lastUpdated: new Date(),
+      dataComplete: !!(realData.waveHeight && realData.windSpeed && realData.waterTemp)
     }
     
     return NextResponse.json(response)
