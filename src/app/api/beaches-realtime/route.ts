@@ -57,7 +57,8 @@ export async function GET(req: NextRequest) {
       ]
     }
     
-    // Get beaches from database
+    // Get beaches from database - LIMIT to prevent timeout with API calls
+    const fetchLimit = island || search ? 50 : 15 // Only fetch 15 beaches by default
     const beaches = await prisma.beach.findMany({
       where,
       select: {
@@ -73,6 +74,7 @@ export async function GET(req: NextRequest) {
           select: { id: true }
         }
       },
+      take: fetchLimit,
       orderBy: { name: 'asc' }
     })
     
@@ -85,13 +87,17 @@ export async function GET(req: NextRequest) {
         const lng = Number(beach.lng)
         
         // Fetch REAL data from all available APIs
+        console.log(`[Beaches-Realtime] Calling APIs for ${beach.name}...`)
         const realData = await dataAggregator.getBeachData(beach.id, lat, lng)
         
-        console.log(`[Beaches-Realtime] ${beach.name} data sources:`, {
+        console.log(`[Beaches-Realtime] ${beach.name} API results:`, {
           hasWaves: !!realData.waveHeight,
-          hasWind: !!realData.windSpeed,
-          hasTemp: !!realData.waterTemp,
-          hasTide: !!realData.currentTide
+          hasWind: !!realData.windSpeed, 
+          hasAirTemp: !!realData.airTemp,
+          hasWaterTemp: !!realData.waterTemp,
+          hasTide: !!realData.currentTide,
+          hasUV: !!realData.uvIndex,
+          totalFields: Object.keys(realData).length
         })
         
         // Use real data where available, with sensible defaults only as last resort
