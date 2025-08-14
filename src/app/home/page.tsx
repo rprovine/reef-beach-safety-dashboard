@@ -6,7 +6,7 @@ import {
   Shield, AlertTriangle, Activity, Sun, Fish, Waves,
   Users, Map, Bell, TrendingUp, Award, Heart,
   ChevronRight, Check, Star, ArrowRight, Zap,
-  Droplets, Wind, Thermometer, Eye, Clock, Phone, Users
+  Droplets, Wind, Thermometer, Eye, Clock, Phone
 } from 'lucide-react'
 
 export default function HomePage() {
