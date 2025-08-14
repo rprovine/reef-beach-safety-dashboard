@@ -110,13 +110,15 @@ export async function GET(req: NextRequest) {
         // Estimate wave height from wind speed (real calculation)
         const waveHeight = windSpeed ? Math.max(1, windSpeed * 0.15) : null
         
-        console.log(`[Beaches-Realtime] ${beach.name} REAL VALUES (no defaults):`, {
-          waveHeight: waveHeight,
-          windSpeed: windSpeed,
-          temperature: temperature,
-          humidity: humidity,
-          uvIndex: uvIndex
-        })
+        if (beach.name === 'Ala Moana Beach') {
+          console.log(`[Beaches-Realtime] ${beach.name} DETAILED VALUES:`, {
+            rawWindSpeed: realWeatherData?.windSpeed,
+            calculatedWaveHeight: windSpeed ? Math.max(1, windSpeed * 0.15) : null,
+            finalWaveHeight: waveHeight,
+            finalWindSpeed: windSpeed,
+            finalTemperature: temperature
+          })
+        }
         
         // Calculate safety score from REAL data only
         const safetyScore = (waveHeight && windSpeed && uvIndex) 

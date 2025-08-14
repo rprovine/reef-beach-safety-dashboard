@@ -13,11 +13,17 @@ export function useBeaches(island?: Island, searchQuery?: string) {
         if (island) params.append('island', island)
         if (searchQuery) params.append('search', searchQuery)
         
-        const url = `/api/beaches-realtime?${params.toString()}`
+        const cacheBuster = `_cache=${Date.now()}_${Math.random()}`
+        const url = `/api/beaches-realtime?${params.toString()}&${cacheBuster}`
         console.log('[useBeaches] Fetching:', url)
         
-        // Simple fetch without aggressive headers
-        const response = await fetch(url)
+        // Force fresh data with no cache
+        const response = await fetch(url, {
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate'
+          }
+        })
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`)
         }
@@ -43,7 +49,8 @@ export function useBeaches(island?: Island, searchQuery?: string) {
         throw error
       }
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 0, // Always fetch fresh data
+    cacheTime: 0, // Don't cache data
     refetchInterval: false, // Disable auto-refetch
     refetchOnWindowFocus: false, // Disable refetch on focus
     retry: 1 // Limit retries
