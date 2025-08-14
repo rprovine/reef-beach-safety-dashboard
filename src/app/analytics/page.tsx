@@ -24,12 +24,16 @@ export default function AnalyticsPage() {
   const fetchAnalytics = async () => {
     setLoading(true)
     try {
-      const response = await fetch(`/api/analytics-static?period=${period}`)
+      const response = await fetch(`/api/analytics-hybrid?period=${period}`)
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
       }
       const data = await response.json()
       console.log('Analytics data:', data)
+      console.log(`[Analytics] Data source: ${data.dataSource || 'UNKNOWN'}`)
+      if (data.dataSource === 'STATIC_FALLBACK') {
+        console.warn('[Analytics] Using static fallback data. Real analytics will appear once visitor tracking accumulates.')
+      }
       setAnalyticsData(data)
     } catch (error) {
       console.error('Error fetching analytics:', error)
