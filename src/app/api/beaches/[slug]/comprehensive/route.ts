@@ -302,22 +302,6 @@ export async function GET(
 }
 
 // Helper functions
-function calculateSafetyScore(data: Record<string, unknown>): number {
-  let score = 100
-  
-  // Deduct points for hazards
-  if (data.ripCurrentRisk === 'high') score -= 30
-  if (data.ripCurrentRisk === 'moderate') score -= 15
-  if (data.waveHeight && typeof data.waveHeight === 'number' && data.waveHeight > 6) score -= 20
-  if (data.waveHeight && typeof data.waveHeight === 'number' && data.waveHeight > 4) score -= 10
-  if (data.bacteriaLevel === 'unsafe') score -= 25
-  if (data.bacteriaLevel === 'caution') score -= 10
-  if (data.jellyfish) score -= 15
-  if (data.uvIndex && typeof data.uvIndex === 'number' && data.uvIndex > 10) score -= 10
-  if (data.strongCurrent) score -= 20
-  
-  return Math.max(0, score)
-}
 
 function calculateBestTime(data: Record<string, unknown>): string {
   // Simple logic - would be more sophisticated
