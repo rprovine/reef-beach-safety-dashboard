@@ -31,23 +31,18 @@ export function useBeaches(island?: Island, searchQuery?: string) {
         }
         const data = await response.json() as Beach[]
         
-        console.log('[useBeaches] Response:', data?.length, 'beaches')
+        console.log('DEPLOYMENT-V4 useBeaches Response:', data?.length, 'beaches')
         if (data && data[0]) {
-          console.log('[useBeaches] First beach data:', {
-            name: data[0].name,
-            hasConditions: !!data[0].currentConditions,
-            waveHeight: data[0].currentConditions?.waveHeightFt,
-            windSpeed: data[0].currentConditions?.windMph,
-            waterTemp: data[0].currentConditions?.waterTempF
-          })
+          console.log('DEPLOYMENT-V4 First beach name:', data[0].name)
+          console.log('DEPLOYMENT-V4 First beach waveHeight:', data[0].currentConditions?.waveHeightFt)
+          console.log('DEPLOYMENT-V4 First beach windSpeed:', data[0].currentConditions?.windMph)
           
           // Log first 3 beaches to check for variation
-          const first3 = data.slice(0, 3).map(beach => ({
-            name: beach.name,
-            waves: beach.currentConditions?.waveHeightFt,
-            wind: beach.currentConditions?.windMph
-          }))
-          console.log('[useBeaches] First 3 beaches variation check:', first3)
+          if (data.length >= 3) {
+            console.log('DEPLOYMENT-V4 Beach 1 waves:', data[0].currentConditions?.waveHeightFt)
+            console.log('DEPLOYMENT-V4 Beach 2 waves:', data[1].currentConditions?.waveHeightFt)  
+            console.log('DEPLOYMENT-V4 Beach 3 waves:', data[2].currentConditions?.waveHeightFt)
+          }
         }
         
         return data

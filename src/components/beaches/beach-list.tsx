@@ -117,28 +117,20 @@ export function BeachList({
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-4 md:p-6">
       {beaches.map((beach) => {
-        // Debug logging (only log once)
+        // Debug logging (only log once) - DEPLOYMENT VERSION 4
         if (beach === beaches[0]) {
-          console.log('Beach card decision:', JSON.stringify({
-            hasUser: !!user,
-            userTier: user?.tier,
-            isPro,
-            canViewConditions: access.beaches.viewCurrentConditions,
-            willShowRestricted: !user
-          }, null, 2))
+          console.log('DEPLOYMENT-V4 Beach card decision - User:', user?.email || 'anonymous')
+          console.log('DEPLOYMENT-V4 Beach card decision - Tier:', user?.tier || 'none')
+          console.log('DEPLOYMENT-V4 Beach card decision - isPro:', isPro)
+          console.log('DEPLOYMENT-V4 Beach card decision - canViewConditions:', access.beaches.viewCurrentConditions)
         }
         
         // Determine what to show based on access level
         const showFullData = access.beaches.viewCurrentConditions
         
         if (beach === beaches[0]) {
-          console.log('Beach card access check:', JSON.stringify({
-            user: user?.email,
-            tier: user?.tier,
-            hasTrialDate: !!user?.trialEndDate,
-            showFullData,
-            accessLevel: showFullData ? 'FULL' : 'RESTRICTED'
-          }, null, 2))
+          console.log('DEPLOYMENT-V4 Beach card access - showFullData:', showFullData)
+          console.log('DEPLOYMENT-V4 Beach card access - will show:', showFullData ? 'FULL BeachCard' : 'RESTRICTED BeachCard')
         }
         
         // Show full data for: Pro users, Trial users, Admin

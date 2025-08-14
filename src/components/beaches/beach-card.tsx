@@ -15,14 +15,12 @@ interface BeachCardProps {
 }
 
 export function BeachCard({ beach, selected, onClick, compact }: BeachCardProps) {
-  // Debug logging for beach data
+  // Debug logging for beach data - DEPLOYMENT VERSION 4
   if (beach.name === 'Ala Moana Beach' || beach.name.includes('Ala Moana')) {
-    console.log(`[BeachCard] ${beach.name} data:`, {
-      waveHeight: beach.currentConditions?.waveHeightFt,
-      windSpeed: beach.currentConditions?.windMph,
-      waterTemp: beach.currentConditions?.waterTempF,
-      hasConditions: !!beach.currentConditions
-    })
+    console.log(`DEPLOYMENT-V4 BeachCard ${beach.name} - waveHeight:`, beach.currentConditions?.waveHeightFt)
+    console.log(`DEPLOYMENT-V4 BeachCard ${beach.name} - windSpeed:`, beach.currentConditions?.windMph)
+    console.log(`DEPLOYMENT-V4 BeachCard ${beach.name} - waterTemp:`, beach.currentConditions?.waterTempF)
+    console.log(`DEPLOYMENT-V4 BeachCard ${beach.name} - hasConditions:`, !!beach.currentConditions)
   }
 
   const statusIcon = {
