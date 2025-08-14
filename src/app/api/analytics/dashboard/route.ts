@@ -2,14 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { endOfDay, startOfDay, subDays, subHours } from 'date-fns'
 
-export const runtime = 'nodejs'
-export const dynamic = 'force-dynamic'
-
-// Real analytics data from visitor tracking + beach safety data
-
-export async function GET(req: NextRequest) {
+// Real analytics dashboard data endpoint
+export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(req.url)
+    const { searchParams } = new URL(request.url)
     const period = searchParams.get('period') || '7d'
     
     // Calculate date range
@@ -30,10 +26,9 @@ export async function GET(req: NextRequest) {
         startDate = subDays(now, 7)
     }
     
-    // Get real visitor analytics data
+    // Get visitor metrics
     const [
-      totalBeaches,
-      uniqueVisitors,
+      totalVisitors,
       totalSessions, 
       totalPageViews,
       totalBeachVisits,
@@ -42,14 +37,8 @@ export async function GET(req: NextRequest) {
       deviceBreakdown,
       visitorTypes,
       islandVisits,
-      recentSessions,
-      activeAdvisories,
-      userCount
+      recentSessions
     ] = await Promise.all([
-      // Beach data
-      prisma.beach.count(),
-      
-      // Visitor metrics
       getUniqueVisitors(startDate, now),
       getTotalSessions(startDate, now),
       getTotalPageViews(startDate, now),
@@ -59,15 +48,7 @@ export async function GET(req: NextRequest) {
       getDeviceBreakdown(startDate, now),
       getVisitorTypes(startDate, now),
       getIslandVisits(startDate, now),
-      getRecentSessions(startDate, now, 10),
-      
-      // Advisory data
-      prisma.advisory.count({
-        where: { status: 'active' }
-      }),
-      
-      // User statistics
-      prisma.user.count()
+      getRecentSessions(startDate, now, 10)
     ])
     
     // Calculate trends (compare with previous period)
@@ -78,59 +59,20 @@ export async function GET(req: NextRequest) {
       getTotalPageViews(previousStartDate, startDate)
     ])
     
-    const visitorTrend = calculateTrend(uniqueVisitors, prevVisitors)
+    const visitorTrend = calculateTrend(totalVisitors, prevVisitors)
     const sessionTrend = calculateTrend(totalSessions, prevSessions)
     const pageViewTrend = calculateTrend(totalPageViews, prevPageViews)
     
     // Calculate average session duration
     const avgSessionDuration = await getAverageSessionDuration(startDate, now)
     
-    // Get real incidents from advisories 
-    const recentIncidents = await prisma.advisory.findMany({
-      where: {
-        status: 'active',
-        startedAt: {
-          gte: startDate,
-          lte: now
-        }
-      },
-      include: {
-        beach: {
-          select: {
-            name: true,
-            slug: true,
-            island: true
-          }
-        }
-      },
-      orderBy: {
-        startedAt: 'desc'
-      },
-      take: 10
-    }).then(advisories => 
-      advisories.map(advisory => ({
-        beach: advisory.beach.name,
-        type: advisory.title,
-        severity: advisory.severity,
-        time: advisory.startedAt ? new Date(advisory.startedAt).toLocaleDateString() : 'Active',
-        timestamp: advisory.startedAt ? new Date(advisory.startedAt) : new Date()
-      }))
-    )
-    
-    // Build daily trends from session data
-    const dailyTrends = await getDailyTrends(startDate, now)
-    
-    const response = {
+    return NextResponse.json({
       overview: {
-        totalBeaches,
-        totalVisitors: uniqueVisitors,
+        totalVisitors,
         totalSessions,
         totalPageViews,
         totalBeachVisits,
         avgSessionDuration,
-        activeAdvisories,
-        totalUsers: userCount,
-        period,
         trends: {
           visitors: visitorTrend,
           sessions: sessionTrend,
@@ -144,47 +86,15 @@ export async function GET(req: NextRequest) {
         visitorTypes,
         islandVisits
       },
-      recentActivity: recentSessions,
-      recentIncidents,
-      dailyTrends,
-      lastUpdated: new Date().toISOString()
-    }
-    
-    return NextResponse.json(response)
+      recentActivity: recentSessions
+    })
     
   } catch (error) {
-    console.error('Analytics error:', error)
-    
-    // Return minimal fallback data on error  
-    return NextResponse.json({
-      overview: {
-        totalBeaches: 0,
-        totalVisitors: 0,
-        totalSessions: 0,
-        totalPageViews: 0,
-        totalBeachVisits: 0,
-        avgSessionDuration: 0,
-        activeAdvisories: 0,
-        totalUsers: 0,
-        period,
-        trends: { visitors: 0, sessions: 0, pageViews: 0 }
-      },
-      topBeaches: [],
-      topSearches: [],
-      demographics: {
-        deviceBreakdown: {},
-        visitorTypes: {},
-        islandVisits: {}
-      },
-      recentActivity: [],
-      recentIncidents: [],
-      dailyTrends: [],
-      lastUpdated: new Date().toISOString()
-    })
+    console.error('Analytics dashboard error:', error)
+    return NextResponse.json({ error: 'Failed to fetch analytics data' }, { status: 500 })
   }
 }
 
-// Helper functions for analytics queries
 async function getUniqueVisitors(startDate: Date, endDate: Date): Promise<number> {
   const result = await prisma.visitorSession.groupBy({
     by: ['sessionId'],
@@ -254,8 +164,7 @@ async function getTopBeaches(startDate: Date, endDate: Date) {
   return result.map(item => ({
     beach: item.beachSlug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
     island: item.island,
-    visits: item._count.beachSlug,
-    trend: 'up' // TODO: Calculate actual trend
+    visits: item._count.beachSlug
   }))
 }
 
@@ -402,7 +311,7 @@ async function getRecentSessions(startDate: Date, endDate: Date, limit: number) 
       deviceType: true,
       userType: true,
       startedAt: true,
-      pageViewCount: true,
+      pageViews: true,
       beachesViewed: true,
       duration: true
     },
@@ -411,35 +320,6 @@ async function getRecentSessions(startDate: Date, endDate: Date, limit: number) 
     },
     take: limit
   })
-}
-
-async function getDailyTrends(startDate: Date, endDate: Date) {
-  // Get daily session counts
-  const sessions = await prisma.visitorSession.findMany({
-    where: {
-      startedAt: {
-        gte: startDate,
-        lte: endDate
-      }
-    },
-    select: {
-      startedAt: true
-    }
-  })
-  
-  // Group by date
-  const dailyCounts: Record<string, number> = {}
-  sessions.forEach(session => {
-    const date = session.startedAt.toISOString().split('T')[0]
-    dailyCounts[date] = (dailyCounts[date] || 0) + 1
-  })
-  
-  // Convert to array format
-  return Object.entries(dailyCounts).map(([date, count]) => ({
-    date,
-    visitors: count,
-    pageViews: count * 2.5 // Rough estimate
-  }))
 }
 
 function calculateTrend(current: number, previous: number): number {

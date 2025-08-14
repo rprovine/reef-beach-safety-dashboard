@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { useBeachDetail, useBeachHistory } from '@/hooks/use-beaches'
 import { beachDetailsService } from '@/lib/beach-details'
 import { cn, formatDateTime, getStatusColor, getStatusLabel } from '@/lib/utils'
+import { trackBeachVisit, trackFeatureUsage } from '@/lib/posthog'
 import { 
   Waves, Wind, Thermometer, AlertTriangle, Clock, 
   MapPin, ArrowLeft, Bell, Calendar, TrendingUp,
@@ -41,6 +42,9 @@ export default function BeachDetailContent() {
   // Function to download beach report
   const downloadReport = () => {
     if (!beach) return
+    
+    // Track report download feature usage
+    trackFeatureUsage('beach_report_download', user?.tier || 'free', true)
     
     // Create report content
     const reportContent = `
@@ -122,6 +126,27 @@ For real-time updates, visit https://beachhui.lenilani.com
   
   console.log('Beach slug:', slug)
   
+  // Track beach visit on page load
+  React.useEffect(() => {
+    if (slug && user) {
+      // Determine access method from referrer or URL parameters
+      const accessMethod = document.referrer.includes('/beaches') ? 'list' : 
+                          window.location.search.includes('search') ? 'search' : 'direct'
+      
+      // Detect device type
+      const deviceType = window.innerWidth < 768 ? 'mobile' : 
+                        window.innerWidth < 1024 ? 'tablet' : 'desktop'
+      
+      // Track beach visit immediately
+      trackBeachVisit(slug, {
+        island: 'unknown', // Will be updated when beach data loads
+        accessMethod: accessMethod as 'search' | 'browse' | 'direct' | 'share' | 'list',
+        userType: 'unknown', // PostHog provider will classify this
+        deviceType: deviceType as 'mobile' | 'desktop' | 'tablet'
+      })
+    }
+  }, [slug, user])
+
   // Use direct fetch instead of the hook for now
   React.useEffect(() => {
     console.log('[BeachDetailContent] Fetching beach data...')
@@ -173,6 +198,21 @@ For real-time updates, visit https://beachhui.lenilani.com
         
         setBeach(transformedData)
         setIsLoading(false)
+        
+        // Update beach visit tracking with actual island data
+        if (transformedData.beach && user) {
+          const deviceType = window.innerWidth < 768 ? 'mobile' : 
+                            window.innerWidth < 1024 ? 'tablet' : 'desktop'
+          
+          trackBeachVisit(slug, {
+            island: transformedData.beach.island || 'unknown',
+            accessMethod: document.referrer.includes('/beaches') ? 'list' : 
+                         window.location.search.includes('search') ? 'search' : 'direct',
+            userType: 'unknown', // PostHog provider will classify this
+            deviceType: deviceType as 'mobile' | 'desktop' | 'tablet',
+            safetyScore: transformedData.safetyScore
+          })
+        }
       })
       .catch(err => {
         console.error('[BeachDetailContent] Fetch error:', err)
@@ -305,7 +345,10 @@ For real-time updates, visit https://beachhui.lenilani.com
                   Edit Beach
                 </button>
               )}
-              <button className="inline-flex items-center px-4 py-2 bg-ocean-500 text-white rounded-lg hover:bg-ocean-600 transition-colors">
+              <button 
+                onClick={() => trackFeatureUsage('beach_alert_set', user?.tier || 'free', true)}
+                className="inline-flex items-center px-4 py-2 bg-ocean-500 text-white rounded-lg hover:bg-ocean-600 transition-colors"
+              >
                 <Bell className="h-4 w-4 mr-2" />
                 Set Alert
               </button>
@@ -690,7 +733,10 @@ For real-time updates, visit https://beachhui.lenilani.com
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="text-lg font-semibold text-gray-900">7-Day Forecast</h2>
                     {isPro && (
-                      <button className="flex items-center text-sm text-ocean-600 hover:text-ocean-700">
+                      <button 
+                        onClick={() => trackFeatureUsage('forecast_export', user?.tier || 'free', true)}
+                        className="flex items-center text-sm text-ocean-600 hover:text-ocean-700"
+                      >
                         <Download className="h-4 w-4 mr-1" />
                         Export Forecast
                       </button>
@@ -848,14 +894,21 @@ For real-time updates, visit https://beachhui.lenilani.com
             <div className="bg-white rounded-xl shadow-sm p-6">
               <h3 className="font-semibold text-gray-900 mb-4">Quick Actions</h3>
               <div className="space-y-3">
-                <button className="w-full text-left px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors flex items-center justify-between">
+                <button 
+                  onClick={() => trackFeatureUsage('beach_alert_set', user?.tier || 'free', true)}
+                  className="w-full text-left px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors flex items-center justify-between"
+                >
                   <div className="flex items-center">
                     <Bell className="h-5 w-5 text-gray-600 mr-3" />
                     <span className="text-gray-900">Set Alert</span>
                   </div>
                   <ChevronRight className="h-4 w-4 text-gray-400" />
                 </button>
-                <Link href="/community" className="w-full text-left px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors flex items-center justify-between">
+                <Link 
+                  href="/community" 
+                  onClick={() => trackFeatureUsage('community_reports', user?.tier || 'free', true)}
+                  className="w-full text-left px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors flex items-center justify-between"
+                >
                   <div className="flex items-center">
                     <Users className="h-5 w-5 text-gray-600 mr-3" />
                     <span className="text-gray-900">Community Reports</span>
@@ -863,7 +916,10 @@ For real-time updates, visit https://beachhui.lenilani.com
                   <ChevronRight className="h-4 w-4 text-gray-400" />
                 </Link>
                 {isPro && (
-                  <button className="w-full text-left px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors flex items-center justify-between">
+                  <button 
+                    onClick={() => trackFeatureUsage('beach_data_export', user?.tier || 'free', true)}
+                    className="w-full text-left px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors flex items-center justify-between"
+                  >
                     <div className="flex items-center">
                       <Download className="h-5 w-5 text-gray-600 mr-3" />
                       <span className="text-gray-900">Export Data</span>

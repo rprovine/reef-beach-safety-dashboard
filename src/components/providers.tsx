@@ -6,6 +6,7 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { Toaster } from 'react-hot-toast'
 import { AuthProvider } from '@/contexts/auth-context'
 import { AnalyticsProvider } from '@/components/analytics-provider'
+import { PostHogProvider } from '@/components/providers/posthog-provider'
 import { CookieConsent } from '@/components/cookie-consent'
 import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from '@vercel/speed-insights/next'
@@ -28,12 +29,14 @@ export function Providers({ children }: { children: ReactNode }) {
     <AuthProvider>
       <QueryClientProvider client={queryClient}>
         <AnalyticsProvider>
-          {children}
-          <Toaster position="top-right" />
-          <CookieConsent />
-          <Analytics />
-          <SpeedInsights />
-          {process.env.NODE_ENV === 'development' && <ReactQueryDevtools />}
+          <PostHogProvider>
+            {children}
+            <Toaster position="top-right" />
+            <CookieConsent />
+            <Analytics />
+            <SpeedInsights />
+            {process.env.NODE_ENV === 'development' && <ReactQueryDevtools />}
+          </PostHogProvider>
         </AnalyticsProvider>
       </QueryClientProvider>
     </AuthProvider>

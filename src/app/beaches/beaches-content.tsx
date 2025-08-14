@@ -9,6 +9,7 @@ import { useBeaches } from '@/hooks/use-beaches'
 import { useAuth } from '@/contexts/auth-context'
 import { Island } from '@/types'
 import { Search, Map, List, Filter, User, RefreshCw } from 'lucide-react'
+import { trackBeachSearch, trackFeatureUsage } from '@/lib/posthog'
 
 const islands: { value: Island | 'all'; label: string }[] = [
   { value: 'all', label: 'All Islands' },
@@ -53,6 +54,15 @@ export default function BeachesContent() {
     if (!beaches) return []
     
     let filtered = [...beaches]
+    
+    // Track search analytics when filters are applied
+    if (searchQuery || selectedIsland !== 'all' || selectedActivity !== 'all' || selectedSafety !== 'all') {
+      trackBeachSearch(searchQuery, {
+        island: selectedIsland,
+        activity: selectedActivity,
+        safety: selectedSafety
+      }, filtered.length)
+    }
     
     // Filter by activity
     if (selectedActivity !== 'all') {
@@ -124,6 +134,10 @@ export default function BeachesContent() {
 
   const handleForceRefresh = async () => {
     setIsRefreshing(true)
+    
+    // Track feature usage
+    trackFeatureUsage('force_refresh', user?.tier || 'free', true)
+    
     try {
       // Clear any cached data
       localStorage.removeItem('beaches-cache')
@@ -155,9 +169,16 @@ export default function BeachesContent() {
       console.log('Data refreshed successfully')
     } catch (error) {
       console.error('Error refreshing data:', error)
+      trackFeatureUsage('force_refresh', user?.tier || 'free', false)
     } finally {
       setIsRefreshing(false)
     }
+  }
+
+  // Track view mode changes
+  const handleViewModeChange = (newMode: 'map' | 'list') => {
+    setViewMode(newMode)
+    trackFeatureUsage(`view_mode_${newMode}`, user?.tier || 'free', true)
   }
 
   return (
@@ -207,7 +228,7 @@ export default function BeachesContent() {
                 )}
                 <div className="flex items-center gap-1 bg-gray-100 p-0.5 rounded-lg">
                   <button
-                  onClick={() => setViewMode('map')}
+                  onClick={() => handleViewModeChange('map')}
                   className={`flex items-center gap-1 px-2 py-1 sm:px-3 sm:py-1.5 rounded-md text-xs sm:text-sm font-medium transition-colors ${
                     viewMode === 'map'
                       ? 'bg-white text-ocean-600 shadow-sm'
@@ -218,7 +239,7 @@ export default function BeachesContent() {
                   <span className="hidden sm:inline">Map</span>
                 </button>
                 <button
-                  onClick={() => setViewMode('list')}
+                  onClick={() => handleViewModeChange('list')}
                   className={`flex items-center gap-1 px-2 py-1 sm:px-3 sm:py-1.5 rounded-md text-xs sm:text-sm font-medium transition-colors ${
                     viewMode === 'list'
                       ? 'bg-white text-ocean-600 shadow-sm'
@@ -380,7 +401,7 @@ export default function BeachesContent() {
       <div className="fixed bottom-4 left-1/2 -translate-x-1/2 lg:hidden z-50">
         <div className="flex items-center gap-2 bg-white shadow-lg p-1 rounded-full">
           <button
-            onClick={() => setViewMode('map')}
+            onClick={() => handleViewModeChange('map')}
             className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
               viewMode === 'map'
                 ? 'bg-ocean-500 text-white'
@@ -390,7 +411,7 @@ export default function BeachesContent() {
             Map
           </button>
           <button
-            onClick={() => setViewMode('list')}
+            onClick={() => handleViewModeChange('list')}
             className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
               viewMode === 'list'
                 ? 'bg-ocean-500 text-white'

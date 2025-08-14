@@ -33,6 +33,11 @@ model User {
   sessions          Session[]
   checkoutSessions  CheckoutSession[]
   apiLogs           ApiLog[]
+  visitorSessions   VisitorSession[]
+  pageViews         PageView[]
+  beachVisits       BeachVisit[]
+  featureUsage      FeatureUsage[]
+  searchQueries     SearchQuery[]
 }
 
 // Subscription management with HubSpot
@@ -124,6 +129,7 @@ model Beach {
   favorites         BeachFavorite[]
   alertRules        AlertRule[]
   statusHistory     StatusHistory[]
+  beachVisits       BeachVisit[]
   
   @@index([island])
   @@index([slug])
@@ -305,4 +311,153 @@ model ApiLog {
   
   @@index([userId])
   @@index([createdAt])
+}
+
+// Analytics for visitor tracking and beach usage
+model VisitorSession {
+  id                String    @id @default(cuid())
+  sessionId         String    @unique
+  userId            String?   // null for anonymous visitors
+  posthogId         String?   // Link to PostHog distinct_id
+  ipAddress         String?   // Hashed for privacy
+  userAgent         String?
+  referrer          String?
+  landingPage       String
+  country           String?
+  state             String?
+  city              String?
+  timezone          String?
+  deviceType        String?   // mobile, desktop, tablet
+  browserName       String?
+  osName            String?
+  isReturning       Boolean   @default(false)
+  userType          String?   // tourist, local, business, researcher
+  classification    Json?     // Additional classification data
+  startedAt         DateTime  @default(now())
+  endedAt           DateTime?
+  duration          Int?      // seconds
+  pageViewCount     Int       @default(1)
+  beachesViewed     String[]  @default([])
+  
+  user              User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pageViews         PageView[]
+  beachVisits       BeachVisit[]
+  
+  @@index([sessionId])
+  @@index([userId])
+  @@index([startedAt])
+  @@index([userType])
+  @@index([deviceType])
+}
+
+// Individual page views for detailed analytics
+model PageView {
+  id                String    @id @default(cuid())
+  sessionId         String
+  userId            String?
+  pagePath          String
+  pageTitle         String?
+  referrer          String?
+  timeOnPage        Int?      // seconds
+  scrollDepth       Float?    // percentage (0-100)
+  exitPage          Boolean   @default(false)
+  timestamp         DateTime  @default(now())
+  
+  session           VisitorSession @relation(fields: [sessionId], references: [sessionId], onDelete: Cascade)
+  user              User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([sessionId])
+  @@index([userId])
+  @@index([pagePath])
+  @@index([timestamp])
+}
+
+// Beach visit tracking for tourism analytics
+model BeachVisit {
+  id                String    @id @default(cuid())
+  sessionId         String
+  userId            String?
+  beachId           String
+  beachSlug         String
+  island            String
+  accessMethod      String    // search, browse, direct, share, list
+  timeOnPage        Int?      // seconds
+  safetyScore       Int?
+  weatherConditions Json?
+  interactions      String[]  @default([]) // alerts_set, reports_downloaded, etc
+  timestamp         DateTime  @default(now())
+  
+  session           VisitorSession @relation(fields: [sessionId], references: [sessionId], onDelete: Cascade)
+  user              User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  beach             Beach     @relation(fields: [beachId], references: [id], onDelete: Cascade)
+  
+  @@index([sessionId])
+  @@index([userId])
+  @@index([beachId])
+  @@index([island])
+  @@index([timestamp])
+}
+
+// Feature usage tracking
+model FeatureUsage {
+  id                String    @id @default(cuid())
+  sessionId         String?
+  userId            String?
+  featureName       String
+  featureCategory   String?   // beach, analytics, alerts, reports
+  userTier          String    // free, pro, admin
+  success           Boolean   @default(true)
+  errorMessage      String?
+  metadata          Json?
+  timestamp         DateTime  @default(now())
+  
+  user              User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([sessionId])
+  @@index([userId])
+  @@index([featureName])
+  @@index([userTier])
+  @@index([timestamp])
+}
+
+// Search queries for beach discovery analytics
+model SearchQuery {
+  id                String    @id @default(cuid())
+  sessionId         String?
+  userId            String?
+  query             String
+  filters           Json?     // island, activity, safety, etc
+  resultsCount      Int
+  clickedResults    String[]  @default([]) // beach slugs
+  noResults         Boolean   @default(false)
+  timestamp         DateTime  @default(now())
+  
+  user              User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([sessionId])
+  @@index([userId])
+  @@index([query])
+  @@index([timestamp])
+}
+
+// Daily aggregated analytics for performance
+model DailyAnalytics {
+  id                String    @id @default(cuid())
+  date              DateTime  @db.Date
+  uniqueVisitors    Int       @default(0)
+  totalPageViews    Int       @default(0)
+  totalSessions     Int       @default(0)
+  avgSessionDuration Float?   // seconds
+  topBeaches        Json      @default("[]") // Array of {beach, visits}
+  topSearches       Json      @default("[]") // Array of {query, count}
+  deviceBreakdown   Json      @default("{}") // {mobile: 60, desktop: 35, tablet: 5}
+  visitorTypes      Json      @default("{}") // {tourist: 80, local: 15, unknown: 5}
+  islandVisits      Json      @default("{}") // {oahu: 45, maui: 30, kauai: 15, hawaii: 10}
+  bounceRate        Float?    // percentage
+  avgPagesPerSession Float?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  @@unique([date])
+  @@index([date])
 }
