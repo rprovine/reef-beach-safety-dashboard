@@ -4,7 +4,7 @@ import { weatherService } from '@/lib/api-integrations/weather-service'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
-export const maxDuration = 30
+export const maxDuration = 60 // Increased timeout for API calls
 
 // Calculate safety score based on REAL conditions
 function calculateSafetyScore(
@@ -57,7 +57,8 @@ export async function GET(req: NextRequest) {
       ]
     }
     
-    // Get beaches from database - NO LIMIT to prevent data mismatches
+    // Get beaches from database - Reasonable limit to prevent API timeout
+    const fetchLimit = island || search ? 71 : 30 // Limit to 30 beaches to prevent timeout
     const beaches = await prisma.beach.findMany({
       where,
       select: {
@@ -73,6 +74,7 @@ export async function GET(req: NextRequest) {
           select: { id: true }
         }
       },
+      take: fetchLimit,
       orderBy: { name: 'asc' }
     })
     
@@ -97,6 +99,7 @@ export async function GET(req: NextRequest) {
           
         } catch (error) {
           console.error(`[Beaches-Realtime] API failed for ${beach.name}:`, error)
+          // Continue processing other beaches even if one fails
         }
         
         // Use ONLY real data from APIs - if not available, use null

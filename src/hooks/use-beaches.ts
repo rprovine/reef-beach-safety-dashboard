@@ -45,7 +45,11 @@ export function useBeaches(island?: Island, searchQuery?: string) {
         
         return data
       } catch (error) {
-        console.error('[useBeaches] Error:', error)
+        console.error('[useBeaches] Error details:', {
+          error: error,
+          message: error instanceof Error ? error.message : 'Unknown error',
+          url: url
+        })
         throw error
       }
     },
