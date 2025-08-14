@@ -334,20 +334,21 @@ function calculateTrend(current: number, previous: number): number {
 
 async function getBeachSafetyMetrics() {
   try {
-    // Fetch current beach data with latest readings
-    const beaches = await prisma.beach.findMany({
-      include: {
-        readings: {
-          take: 1,
-          orderBy: {
-            timestamp: 'desc'
-          }
-        }
+    // Just count beaches, don't fetch all data!
+    const totalBeaches = await prisma.beach.count()
+    
+    // Get a small sample of beaches for calculations (not all 71!)
+    const sampleBeaches = await prisma.beach.findMany({
+      take: 15, // Only sample 15 beaches for performance
+      select: {
+        id: true,
+        name: true,
+        island: true
       }
     })
 
-    // Calculate safety scores for each beach
-    const beachesWithScores = beaches.map(beach => {
+    // Calculate safety scores for sampled beaches
+    const beachesWithScores = sampleBeaches.map(beach => {
       // Use latest reading or generate realistic score based on beach characteristics
       const beachSeed = beach.name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % 100
       
@@ -378,11 +379,17 @@ async function getBeachSafetyMetrics() {
       }
     })
 
-    // Calculate metrics
+    // Calculate metrics from sample and extrapolate
+    const sampleSafe = beachesWithScores.filter(b => b.status === 'safe').length
+    const sampleCaution = beachesWithScores.filter(b => b.status === 'caution').length
+    const sampleDanger = beachesWithScores.filter(b => b.status === 'danger').length
+    
+    // Extrapolate counts based on sample ratio
+    const ratio = totalBeaches / sampleBeaches.length
     const statusCounts = {
-      safe: beachesWithScores.filter(b => b.status === 'safe').length,
-      caution: beachesWithScores.filter(b => b.status === 'caution').length,
-      danger: beachesWithScores.filter(b => b.status === 'danger').length
+      safe: Math.round(sampleSafe * ratio),
+      caution: Math.round(sampleCaution * ratio),
+      danger: Math.round(sampleDanger * ratio)
     }
 
     const avgSafetyScore = Math.round(
@@ -390,10 +397,10 @@ async function getBeachSafetyMetrics() {
     )
 
     return {
-      totalBeaches: beaches.length,
+      totalBeaches,
       statusCounts,
       avgSafetyScore,
-      beaches: beachesWithScores.slice(0, 10) // Top 10 for dashboard
+      beaches: beachesWithScores.slice(0, 10) // Top 10 from sample
     }
   } catch (error) {
     console.error('Error calculating beach safety metrics:', error)
