@@ -24,7 +24,7 @@ export default function AnalyticsPage() {
   const fetchAnalytics = async () => {
     setLoading(true)
     try {
-      const response = await fetch(`/api/analytics-optimized?period=${period}`)
+      const response = await fetch(`/api/analytics-static?period=${period}`)
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
       }

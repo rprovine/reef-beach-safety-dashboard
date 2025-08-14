@@ -137,7 +137,7 @@ export default function DashboardPage() {
     })
 
     // Fetch analytics data
-    fetch('/api/analytics-optimized?period=7d')
+    fetch('/api/analytics-static?period=7d')
       .then(res => res.json())
       .then(data => {
         console.log('[Dashboard] Analytics data:', data)
