@@ -4,6 +4,8 @@ import { prisma } from '@/lib/prisma'
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
+// NO MOCK DATA - Only real database values
+
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url)
@@ -177,57 +179,26 @@ export async function GET(req: NextRequest) {
       }
     })
     
-    // Generate incidents for beaches with issues
+    // Get REAL incidents from advisories - NO MOCK DATA
     const recentIncidents = incidentBeaches
+      .filter(beach => beach.advisories.length > 0)
       .slice(0, 8)
-      .map((beach, idx) => {
-        const types = ['High Surf', 'Strong Current', 'Jellyfish', 'Bacteria Warning', 'Rip Current', 'Shore Break', 'Marine Life']
-        const severities = beach.calculatedScore < 50 ? ['high', 'medium'] : ['medium', 'low']
-        
-        // Generate time based on index (more recent = lower index)
-        const hoursAgo = idx * 3 + Math.floor(Math.random() * 3)
-        const timestamp = new Date(Date.now() - hoursAgo * 60 * 60 * 1000)
-        
+      .map((beach) => {
+        const advisory = beach.advisories[0]
         return {
           beach: beach.name,
-          type: beach.advisories[0]?.title || types[Math.floor(Math.random() * types.length)],
-          severity: beach.advisories[0]?.severity || severities[Math.floor(Math.random() * severities.length)],
-          time: hoursAgo < 24 ? `${hoursAgo} hours ago` : `${Math.floor(hoursAgo / 24)} days ago`,
-          timestamp
+          type: advisory.title,
+          severity: advisory.severity,
+          time: advisory.startedAt ? new Date(advisory.startedAt).toLocaleDateString() : 'Active',
+          timestamp: advisory.startedAt ? new Date(advisory.startedAt) : new Date()
         }
       })
     
-    // Generate daily trends for the period
+    // Return empty trends - requires real visitor tracking data
     const dailyTrends = []
-    const daysToShow = period === '7d' ? 7 : period === '30d' ? 30 : 7
-    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
     
-    for (let i = daysToShow - 1; i >= 0; i--) {
-      const date = new Date()
-      date.setDate(date.getDate() - i)
-      const dayName = dayNames[date.getDay()]
-      
-      // Generate realistic trends
-      const isWeekend = date.getDay() === 0 || date.getDay() === 6
-      const baseVisitors = isWeekend ? 12000 : 8000
-      const visitors = baseVisitors + Math.floor(Math.random() * 4000)
-      const safety = 70 + Math.floor(Math.random() * 20)
-      
-      dailyTrends.push({
-        day: dayName,
-        date: date.toISOString().split('T')[0],
-        safety,
-        visitors
-      })
-    }
-    
-    // API usage stats
-    const apiEndpoints = [
-      { endpoint: '/api/beaches', _count: 245 },
-      { endpoint: '/api/analytics', _count: 89 },
-      { endpoint: '/api/auth/login', _count: 67 },
-      { endpoint: '/api/beaches/[slug]/comprehensive', _count: 156 }
-    ]
+    // API usage stats - empty until we implement real tracking
+    const apiEndpoints = []
     
     const response = {
       overview: {
