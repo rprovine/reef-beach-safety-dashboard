@@ -17,7 +17,7 @@ export default function HomePage() {
 
   useEffect(() => {
     // Fetch real analytics data
-    fetch('/api/analytics?period=24h')
+    fetch('/api/analytics-optimized?period=24h')
       .then(res => res.json())
       .then(data => {
         setAnalyticsData(data)
