@@ -106,12 +106,13 @@ export async function GET(req: NextRequest) {
         const windSpeed = realWeatherData?.windSpeed || null
         const windDirection = realWeatherData?.windDirection || null  
         const humidity = realWeatherData?.humidity || null
-        const temperature = realWeatherData?.temperature || null
+        const airTemp = realWeatherData?.temperature || null
         const uvIndex = realWeatherData?.uvIndex || null
         const visibility = realWeatherData?.visibility || null
         
-        // Use REAL wave height from marine API, not calculated
+        // Use REAL wave height and water temperature from StormGlass marine API
         const waveHeight = realMarineData?.waveHeight || null
+        const waterTemp = realMarineData?.waterTemperature || null
         
         // Calculate safety score from REAL data only
         const safetyScore = (waveHeight && windSpeed && uvIndex) 
@@ -141,11 +142,11 @@ export async function GET(req: NextRequest) {
           lastUpdated: new Date(),
           imageUrl: null,
           webcamUrl: null,
-          currentConditions: waveHeight && windSpeed && temperature ? {
+          currentConditions: waveHeight && windSpeed && waterTemp ? {
             waveHeightFt: Math.round(waveHeight * 10) / 10,
             windMph: Math.round(windSpeed),
             windDirection,
-            waterTempF: Math.round(temperature),
+            waterTempF: Math.round(waterTemp),
             tideFt: null, // Would need NOAA tide API
             uvIndex,
             humidity,
@@ -153,7 +154,7 @@ export async function GET(req: NextRequest) {
             timestamp: new Date(),
             source: {
               weather: realWeatherData ? 'OpenWeather' : 'unavailable',
-              marine: 'calculated from wind',
+              marine: realMarineData ? 'StormGlass API' : 'unavailable',
               tide: 'unavailable',
               waterQuality: 'unavailable'
             }
@@ -169,7 +170,7 @@ export async function GET(req: NextRequest) {
           } : null,
           bacteriaLevel: null,
           dataSource: realWeatherData ? 'OpenWeather API' : 'unavailable',
-          dataComplete: !!(waveHeight && windSpeed && temperature)
+          dataComplete: !!(waveHeight && windSpeed && waterTemp)
         }
       })
     )

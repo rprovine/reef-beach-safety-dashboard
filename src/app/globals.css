@@ -42,13 +42,13 @@
   }
 
   .beach-card {
-    @apply bg-white rounded-lg shadow-lg border-2 border-gray-300 p-4 cursor-pointer transition-all duration-200;
+    @apply bg-white rounded-lg shadow-lg border-2 border-gray-300 p-0 cursor-pointer transition-all duration-300 hover:shadow-2xl hover:border-blue-500 hover:bg-gradient-to-br hover:from-blue-50 hover:to-blue-100 hover:transform hover:scale-[1.02] hover:ring-4 hover:ring-blue-200 hover:ring-opacity-50;
   }
   .beach-card:hover {
-    @apply shadow-2xl border-blue-400 bg-blue-50 transform scale-105 ring-2 ring-blue-300;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(59, 130, 246, 0.5);
   }
   .beach-card:active {
-    @apply transform scale-95 bg-blue-100;
+    @apply transform scale-95 bg-blue-200;
   }
 
   .metric-card {

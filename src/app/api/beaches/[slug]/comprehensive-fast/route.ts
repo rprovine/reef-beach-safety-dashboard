@@ -87,12 +87,13 @@ export async function GET(
     const windSpeed = realWeatherData?.windSpeed || null
     const windDirection = realWeatherData?.windDirection || null
     const humidity = realWeatherData?.humidity || null
-    const waterTemp = realWeatherData?.temperature || null
+    const airTemp = realWeatherData?.temperature || null
     const uvIndex = realWeatherData?.uvIndex || null
     const visibility = realWeatherData?.visibility || null
     
-    // Use REAL wave height from marine API, not calculated
+    // Use REAL wave height and water temperature from StormGlass marine API
     const waveHeight = realMarineData?.waveHeight || null
+    const waterTemp = realMarineData?.waterTemperature || null
     
     // Calculate safety score from REAL data only (same as beaches-realtime)
     const safetyScore = (waveHeight && windSpeed && uvIndex) 
@@ -130,7 +131,7 @@ export async function GET(
         timestamp: new Date(),
         source: {
           weather: realWeatherData ? 'OpenWeather' : 'unavailable',
-          marine: 'calculated from wind',
+          marine: realMarineData ? 'StormGlass API' : 'unavailable',
           tide: 'unavailable',
           waterQuality: 'unavailable'
         }
@@ -147,8 +148,8 @@ export async function GET(
       },
       forecast: realWeatherData?.dailyForecast ? {
         today: {
-          high: Math.round(realWeatherData.dailyForecast[0]?.high || waterTemp + 5),
-          low: Math.round(waterTemp - 3),
+          high: Math.round(realWeatherData.dailyForecast[0]?.high || airTemp + 5),
+          low: Math.round(airTemp - 3),
           conditions: realWeatherData.dailyForecast[0]?.description || 'Partly Cloudy',
           windSpeed: windSpeed,
           waveHeight: waveHeight
