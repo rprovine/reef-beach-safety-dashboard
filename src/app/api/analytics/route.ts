@@ -130,7 +130,7 @@ export async function GET(req: NextRequest) {
         avgSessionDuration,
         activeAdvisories,
         totalUsers: userCount,
-        period,
+        period: period,
         trends: {
           visitors: visitorTrend,
           sessions: sessionTrend,
