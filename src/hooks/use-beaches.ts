@@ -16,13 +16,14 @@ export function useBeaches(island?: Island, searchQuery?: string) {
         const url = `/api/beaches?${params.toString()}`
         console.log('[useBeaches] Fetching:', url)
         
-        // Use fetch with no-cache to ensure fresh data
-        const response = await fetch(url + '&_t=' + Date.now(), {
+        // Use fetch with aggressive cache-busting to ensure fresh data
+        const response = await fetch(url + '&_t=' + Date.now() + '&_r=' + Math.random(), {
           cache: 'no-store',
           headers: {
             'Cache-Control': 'no-cache, no-store, must-revalidate',
             'Pragma': 'no-cache',
-            'Expires': '0'
+            'Expires': '0',
+            'X-Requested-With': 'XMLHttpRequest'
           }
         })
         if (!response.ok) {
@@ -65,8 +66,15 @@ export function useBeachDetail(slug: string) {
       try {
         console.log('[useBeachDetail] Fetching beach:', slug)
         
-        // Try the comprehensive endpoint first using fetch
-        const response = await fetch(`/api/beaches/${slug}/comprehensive`)
+        // Try the comprehensive endpoint first using fetch with cache-busting
+        const response = await fetch(`/api/beaches/${slug}/comprehensive?_t=${Date.now()}&_r=${Math.random()}`, {
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+          }
+        })
         
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`)

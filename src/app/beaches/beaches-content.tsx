@@ -128,16 +128,29 @@ export default function BeachesContent() {
       // Clear any cached data
       localStorage.removeItem('beaches-cache')
       
-      // Force refetch with cache bypass
-      await refetch()
-      
-      // Also clear browser cache for API calls
+      // Clear all browser caches including service worker caches
       if ('caches' in window) {
         const cacheNames = await caches.keys()
         await Promise.all(
           cacheNames.map(cacheName => caches.delete(cacheName))
         )
+        console.log('Cleared all caches:', cacheNames)
       }
+      
+      // Unregister and re-register service worker to force update
+      if ('serviceWorker' in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations()
+        for (const registration of registrations) {
+          await registration.unregister()
+          console.log('Unregistered service worker')
+        }
+        // Wait a bit then reload to re-register
+        setTimeout(() => window.location.reload(), 100)
+        return
+      }
+      
+      // Force refetch with cache bypass
+      await refetch()
       
       console.log('Data refreshed successfully')
     } catch (error) {
