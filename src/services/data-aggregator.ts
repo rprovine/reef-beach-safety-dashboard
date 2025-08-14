@@ -364,9 +364,6 @@ export class DataAggregatorService {
     try {
       // Return null - satellite data requires real API integration
       return null
-
-      this.setCache(cacheKey, result)
-      return result
     } catch (error) {
       console.error('Satellite data fetch error:', error)
       return null
