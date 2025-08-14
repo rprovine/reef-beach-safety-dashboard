@@ -3,6 +3,44 @@ import { prisma } from '@/lib/prisma'
 import { dataAggregator } from '@/services/data-aggregator'
 import { calculateFamilyRating, getFamilyFeatures } from '@/lib/family-ratings'
 
+// Calculate safety score based on REAL conditions (same as beaches list)
+function calculateSafetyScore(
+  waveHeight: number,
+  windSpeed: number,
+  uvIndex: number,
+  currentSpeed?: number,
+  advisoryCount: number = 0
+): number {
+  let score = 100
+  
+  // Wave height penalties
+  if (waveHeight > 8) score -= 40
+  else if (waveHeight > 6) score -= 30
+  else if (waveHeight > 4) score -= 20
+  else if (waveHeight > 3) score -= 10
+  else if (waveHeight > 2) score -= 5
+  
+  // Wind speed penalties
+  if (windSpeed > 25) score -= 25
+  else if (windSpeed > 20) score -= 15
+  else if (windSpeed > 15) score -= 10
+  else if (windSpeed > 10) score -= 5
+  
+  // UV index penalties
+  if (uvIndex > 11) score -= 15
+  else if (uvIndex > 8) score -= 10
+  else if (uvIndex > 6) score -= 5
+  
+  // Current speed penalties
+  if (currentSpeed && currentSpeed > 2) score -= 15
+  else if (currentSpeed && currentSpeed > 1) score -= 10
+  
+  // Advisory penalties
+  score -= advisoryCount * 10
+  
+  return Math.max(0, Math.min(100, score))
+}
+
 // Force dynamic runtime
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -120,6 +158,17 @@ export async function GET(
     const tempVariation = ((beachSeed % 40) - 20) / 10
     waterTemp += tempVariation
     
+    // Calculate safety score using same logic as beaches list
+    const uvIndex = 8 // Default Hawaii UV
+    const currentSpeed = 0.5 // Default current speed
+    const safetyScore = calculateSafetyScore(
+      waveHeight,
+      windSpeed,
+      uvIndex,
+      currentSpeed,
+      beach.advisories.length
+    )
+    
     // Create comprehensive data with same values as beaches list
     const comprehensiveData = {
       waveHeight: Math.round(waveHeight * 10) / 10,
@@ -128,13 +177,15 @@ export async function GET(
       windMph: Math.round(windSpeed * 10) / 10,
       waterTemp: Math.round(waterTemp * 10) / 10,
       waterTempF: Math.round(waterTemp * 10) / 10,
+      safetyScore,
       dataSource: 'generated-v5-consistent'
     }
     
     console.log(`[COMPREHENSIVE V5] Generated consistent data for ${beach.name}:`, {
       waves: comprehensiveData.waveHeightFt,
       wind: comprehensiveData.windMph,
-      temp: comprehensiveData.waterTempF
+      temp: comprehensiveData.waterTempF,
+      safetyScore: comprehensiveData.safetyScore
     })
     
     // NO MOCK DATA - Leave values as null if not available from APIs
