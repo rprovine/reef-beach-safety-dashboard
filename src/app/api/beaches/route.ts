@@ -500,7 +500,15 @@ export async function GET(req: NextRequest) {
       deploymentVersion: 'v3-with-varied-data'
     })
     
-    return NextResponse.json(transformedBeaches)
+    const response = NextResponse.json(transformedBeaches)
+    
+    // Force no caching to ensure production gets fresh data
+    response.headers.set('Cache-Control', 'no-cache, no-store, must-revalidate')
+    response.headers.set('Pragma', 'no-cache')
+    response.headers.set('Expires', '0')
+    response.headers.set('X-Data-Version', 'v3-varied-data')
+    
+    return response
     
   } catch (error) {
     console.error('Failed to fetch beaches:', error)
@@ -529,7 +537,10 @@ export async function GET(req: NextRequest) {
         activeAdvisories: beach.advisories.length
       }))
       
-      return NextResponse.json(basicBeaches)
+      const fallbackResponse = NextResponse.json(basicBeaches)
+      fallbackResponse.headers.set('Cache-Control', 'no-cache, no-store, must-revalidate')
+      fallbackResponse.headers.set('X-Data-Version', 'v3-varied-data-fallback')
+      return fallbackResponse
     } catch (dbError) {
       console.error('Database error:', dbError)
       return NextResponse.json(

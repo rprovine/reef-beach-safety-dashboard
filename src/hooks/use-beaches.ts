@@ -17,11 +17,12 @@ export function useBeaches(island?: Island, searchQuery?: string) {
         console.log('[useBeaches] Fetching:', url)
         
         // Use fetch with no-cache to ensure fresh data
-        const response = await fetch(url, {
+        const response = await fetch(url + '&_t=' + Date.now(), {
           cache: 'no-store',
           headers: {
-            'Cache-Control': 'no-cache',
-            'Pragma': 'no-cache'
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
           }
         })
         if (!response.ok) {
