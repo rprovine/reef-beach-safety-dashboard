@@ -84,41 +84,31 @@ export async function GET(req: NextRequest) {
         const lat = Number(beach.lat)
         const lng = Number(beach.lng)
         
-        // Fetch REAL weather data directly from OpenWeather API
-        console.log(`[Beaches-Realtime] Calling OpenWeather API for ${beach.name}...`)
+        // Fetch REAL data from APIs - NO MADE UP VALUES
         let realWeatherData = null
+        let realMarineData = null
+        
         try {
+          // Get weather data from OpenWeather
           realWeatherData = await weatherService.getWeatherData(lat, lng)
-          console.log(`[Beaches-Realtime] ${beach.name} REAL WEATHER DATA:`, {
-            temperature: realWeatherData.temperature,
-            windSpeed: realWeatherData.windSpeed,
-            humidity: realWeatherData.humidity,
-            uvIndex: realWeatherData.uvIndex
-          })
+          
+          // Try to get marine data from StormGlass
+          realMarineData = await weatherService.getMarineData(lat, lng)
+          
         } catch (error) {
-          console.error(`[Beaches-Realtime] Weather API failed for ${beach.name}:`, error)
+          console.error(`[Beaches-Realtime] API failed for ${beach.name}:`, error)
         }
         
-        // Use ONLY real data - no defaults
+        // Use ONLY real data from APIs - if not available, use null
         const windSpeed = realWeatherData?.windSpeed || null
-        const windDirection = realWeatherData?.windDirection || null
+        const windDirection = realWeatherData?.windDirection || null  
         const humidity = realWeatherData?.humidity || null
         const temperature = realWeatherData?.temperature || null
         const uvIndex = realWeatherData?.uvIndex || null
         const visibility = realWeatherData?.visibility || null
         
-        // Estimate wave height from wind speed (real calculation)
-        const waveHeight = windSpeed ? Math.max(1, windSpeed * 0.15) : null
-        
-        if (beach.name === 'Ala Moana Beach') {
-          console.log(`[Beaches-Realtime] ${beach.name} DETAILED VALUES:`, {
-            rawWindSpeed: realWeatherData?.windSpeed,
-            calculatedWaveHeight: windSpeed ? Math.max(1, windSpeed * 0.15) : null,
-            finalWaveHeight: waveHeight,
-            finalWindSpeed: windSpeed,
-            finalTemperature: temperature
-          })
-        }
+        // Use REAL wave height from marine API, not calculated
+        const waveHeight = realMarineData?.waveHeight || null
         
         // Calculate safety score from REAL data only
         const safetyScore = (waveHeight && windSpeed && uvIndex) 

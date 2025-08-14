@@ -68,18 +68,19 @@ export async function GET(
     
     console.log('[Comprehensive-Fast] Fetching REAL OpenWeather data...')
     
-    // Fetch REAL weather data directly from OpenWeather API (same as beaches-realtime)
+    // Fetch REAL data from APIs - NO MADE UP VALUES (same as beaches-realtime)
     let realWeatherData = null
+    let realMarineData = null
+    
     try {
+      // Get weather data from OpenWeather
       realWeatherData = await weatherService.getWeatherData(lat, lng)
-      console.log('[Comprehensive-Fast] Got real weather data:', {
-        temperature: realWeatherData.temperature,
-        windSpeed: realWeatherData.windSpeed,
-        humidity: realWeatherData.humidity,
-        uvIndex: realWeatherData.uvIndex
-      })
+      
+      // Try to get marine data from StormGlass
+      realMarineData = await weatherService.getMarineData(lat, lng)
+      
     } catch (error) {
-      console.error('[Comprehensive-Fast] Weather API failed:', error)
+      console.error('[Comprehensive-Fast] API failed:', error)
     }
     
     // Use ONLY real data - same logic as beaches-realtime
@@ -90,18 +91,8 @@ export async function GET(
     const uvIndex = realWeatherData?.uvIndex || null
     const visibility = realWeatherData?.visibility || null
     
-    // Estimate wave height from wind speed (same calculation as beaches-realtime)
-    const waveHeight = windSpeed ? Math.max(1, windSpeed * 0.15) : null
-    
-    if (beach.name === 'Ala Moana Beach') {
-      console.log(`[Comprehensive-Fast] ${beach.name} DETAILED VALUES:`, {
-        rawWindSpeed: realWeatherData?.windSpeed,
-        calculatedWaveHeight: windSpeed ? Math.max(1, windSpeed * 0.15) : null,
-        finalWaveHeight: waveHeight,
-        finalWindSpeed: windSpeed,
-        finalTemperature: waterTemp
-      })
-    }
+    // Use REAL wave height from marine API, not calculated
+    const waveHeight = realMarineData?.waveHeight || null
     
     // Calculate safety score from REAL data only (same as beaches-realtime)
     const safetyScore = (waveHeight && windSpeed && uvIndex) 
