@@ -13,7 +13,7 @@ export function useBeaches(island?: Island, searchQuery?: string) {
         if (island) params.append('island', island)
         if (searchQuery) params.append('search', searchQuery)
         
-        const url = `/api/beaches-static?${params.toString()}`
+        const url = `/api/beaches-realtime?${params.toString()}`
         console.log('[useBeaches] Fetching:', url)
         
         // Simple fetch without aggressive headers
