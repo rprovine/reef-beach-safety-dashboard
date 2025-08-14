@@ -63,13 +63,14 @@ export async function GET(
         currentStatus: beach.currentStatus
       },
       currentConditions: {
-        waveHeightFt: beach.readings[0]?.waveHeight || 3,
-        windMph: beach.readings[0]?.windSpeed || 10,
-        waterTempF: beach.readings[0]?.waterTemp || 75,
-        tideFt: beach.readings[0]?.tideLevel || 2,
-        uvIndex: 8,
-        visibility: 10,
-        humidity: 65,
+        // NO FALLBACK DATA - use null to indicate unavailable
+        waveHeightFt: beach.readings[0]?.waveHeight || null,
+        windMph: beach.readings[0]?.windSpeed || null,
+        waterTempF: beach.readings[0]?.waterTemp || null,
+        tideFt: beach.readings[0]?.tideLevel || null,
+        uvIndex: null,
+        visibility: null,
+        humidity: null,
         timestamp: new Date()
       },
       advisories: beach.advisories || [],
