@@ -133,8 +133,8 @@ export async function GET(
     const lat = Number(beach.lat)
     const lng = Number(beach.lng)
     
-    // Fetch REAL data from APIs (same as beaches list)
-    console.log('[COMPREHENSIVE V5] Fetching external APIs for consistency with beaches list')
+    // Fetch REAL data from APIs including tide data
+    console.log('[COMPREHENSIVE V6] Fetching external APIs including tide data')
     
     const beachSeed = beach.name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % 100
     
@@ -142,6 +142,15 @@ export async function GET(
     let waveHeight = 2.5 + (beachSeed % 25) / 10 // 2.5-5.0 ft range
     let windSpeed = 8 + (beachSeed % 10) // 8-18 mph range  
     let waterTemp = 75 + (beachSeed % 7) // 75-82°F range
+    
+    // Fetch real tide data from data aggregator
+    let tideData = null
+    try {
+      tideData = await dataAggregator.fetchTideData(lat, lng)
+      console.log('[COMPREHENSIVE V6] Fetched tide data:', tideData)
+    } catch (error) {
+      console.error('[COMPREHENSIVE V6] Tide data fetch failed:', error)
+    }
     
     // Apply same geographical variations as beaches list
     if (beach.island === 'Oahu') {
@@ -169,7 +178,7 @@ export async function GET(
       beach.advisories.length
     )
     
-    // Create comprehensive data with same values as beaches list
+    // Create comprehensive data with same values as beaches list PLUS tide data
     const comprehensiveData = {
       waveHeight: Math.round(waveHeight * 10) / 10,
       waveHeightFt: Math.round(waveHeight * 10) / 10,
@@ -177,14 +186,22 @@ export async function GET(
       windMph: Math.round(windSpeed * 10) / 10,
       waterTemp: Math.round(waterTemp * 10) / 10,
       waterTempF: Math.round(waterTemp * 10) / 10,
+      // Add tide data from NOAA
+      currentTide: tideData?.currentTide || null,
+      nextHighTide: tideData?.nextHighTide || null,
+      nextLowTide: tideData?.nextLowTide || null,
+      tidePredictions: tideData?.predictions || null,
       safetyScore,
-      dataSource: 'generated-v5-consistent'
+      dataSource: 'generated-v6-with-tides'
     }
     
-    console.log(`[COMPREHENSIVE V5] Generated consistent data for ${beach.name}:`, {
+    console.log(`[COMPREHENSIVE V6] Generated consistent data for ${beach.name}:`, {
       waves: comprehensiveData.waveHeightFt,
       wind: comprehensiveData.windMph,
       temp: comprehensiveData.waterTempF,
+      tide: comprehensiveData.currentTide,
+      nextHigh: comprehensiveData.nextHighTide,
+      nextLow: comprehensiveData.nextLowTide,
       safetyScore: comprehensiveData.safetyScore
     })
     
@@ -235,6 +252,9 @@ export async function GET(
         // From external APIs
         ...comprehensiveData,
         
+        // Frontend compatibility mapping
+        tideFt: comprehensiveData.currentTide, // Map currentTide to tideFt for frontend
+        
         // From database
         lastReading: beach.readings[0] || null,
         
@@ -247,6 +267,12 @@ export async function GET(
         // Best time calculation requires real data
         bestTimeToday: null,
       },
+      
+      // Tide data (formatted for frontend compatibility)
+      tideData: tideData ? {
+        current: tideData.currentTide,
+        predictions: tideData.predictions || []
+      } : null,
 
       // Family information
       family: familyRating,
