@@ -136,13 +136,23 @@ async function fetchStormGlassData(lat: number, lng: number) {
 
     if (!currentHour) return null
 
+    // Debug water temperature - check if it's reasonable
+    const rawTemp = currentHour.waterTemperature?.noaa || currentHour.waterTemperature?.sg
+    // Ocean water temp should be between 15-30°C (59-86°F) typically
+    const isReasonableTemp = rawTemp && rawTemp >= 15 && rawTemp <= 30
+    
+    if (!isReasonableTemp && rawTemp) {
+      console.warn(`Unrealistic water temp from StormGlass: ${rawTemp}°C (${(rawTemp * 9/5) + 32}°F) - using default`)
+    }
+    
+    // Convert StormGlass values from metric to imperial
     const result = {
-      waveHeight: currentHour.waveHeight?.noaa || currentHour.waveHeight?.sg,
+      waveHeight: (currentHour.waveHeight?.noaa || currentHour.waveHeight?.sg || 0) * 3.28084, // meters to feet
       wavePeriod: currentHour.wavePeriod?.noaa || currentHour.wavePeriod?.sg,
       waveDirection: currentHour.waveDirection?.noaa || currentHour.waveDirection?.sg,
-      waterTemperature: currentHour.waterTemperature?.noaa || currentHour.waterTemperature?.sg,
+      waterTemperature: isReasonableTemp ? (rawTemp * 9/5) + 32 : 78, // Use default if temp is unrealistic
       currentSpeed: currentHour.currentSpeed?.sg,
-      swellHeight: currentHour.swellHeight?.noaa || currentHour.swellHeight?.sg,
+      swellHeight: (currentHour.swellHeight?.noaa || currentHour.swellHeight?.sg || 0) * 3.28084, // meters to feet
       swellPeriod: currentHour.swellPeriod?.noaa || currentHour.swellPeriod?.sg,
       timestamp: Date.now()
     }
@@ -357,15 +367,12 @@ export async function GET(req: NextRequest) {
         fetchNOAATideData(lat, lng)
       ])
       
-      // Use real data or fallback to last reading
-      const waveHeight = marineData?.waveHeight 
-        ? marineData.waveHeight * 3.28084 // Convert meters to feet
-        : beach.readings[0]?.waveHeight || 3
+      // Use real data or fallback to last reading (already in feet from weather service)
+      const waveHeight = marineData?.waveHeight || beach.readings[0]?.waveHeight || 3
       
       const windSpeed = weatherData?.windSpeed || beach.readings[0]?.windSpeed || 10
-      const waterTemp = marineData?.waterTemperature 
-        ? (marineData.waterTemperature * 1.8) + 32 // Convert C to F properly
-        : weatherData?.temperature || 78
+      // Water temperature is already in Fahrenheit from weather service
+      const waterTemp = marineData?.waterTemperature || weatherData?.temperature || 78
       
       const tideLevel = tideData?.tideLevel || beach.readings[0]?.tideLevel || 2.5
       const uvIndex = weatherData?.uvIndex || 8

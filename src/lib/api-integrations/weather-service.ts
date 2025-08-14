@@ -141,12 +141,12 @@ export class WeatherService {
   }
   
   // Get marine data from StormGlass
-  async getMarineData(lat: number, lon: number): Promise<MarineData> {
+  async getMarineData(lat: number, lon: number): Promise<MarineData | null> {
     try {
       const apiKey = config.stormGlassKey
       if (!apiKey) {
-        // Return mock data if no API key
-        return this.getMockMarineData()
+        console.warn('No StormGlass API key - marine data unavailable')
+        return null
       }
       
       const params = [
@@ -182,6 +182,15 @@ export class WeatherService {
       const data = await response.json()
       const current = data.hours[0]
       
+      // Debug StormGlass response
+      if (current.waterTemperature) {
+        console.log('StormGlass raw water temp:', {
+          noaa: current.waterTemperature?.noaa,
+          sg: current.waterTemperature?.sg,
+          meteo: current.waterTemperature?.meteo
+        })
+      }
+      
       return {
         waveHeight: this.metersToFeet(current.waveHeight?.noaa || 0),
         wavePeriod: current.wavePeriod?.noaa || 0,
@@ -195,7 +204,10 @@ export class WeatherService {
         windWaveHeight: this.metersToFeet(current.windWaveHeight?.noaa || 0),
         windWavePeriod: current.windWavePeriod?.noaa || 0,
         windWaveDirection: current.windWaveDirection?.noaa || 0,
-        waterTemperature: this.celsiusToFahrenheit(current.waterTemperature?.noaa || 25),
+        // StormGlass returns water temp in Celsius, convert to Fahrenheit
+        waterTemperature: current.waterTemperature?.noaa 
+          ? this.celsiusToFahrenheit(current.waterTemperature.noaa)
+          : 78, // Default to 78°F if no data
         currentSpeed: current.currentSpeed?.sg || 0,
         currentDirection: current.currentDirection?.sg || 0,
         visibility: current.visibility?.noaa || 10,
@@ -204,7 +216,7 @@ export class WeatherService {
       }
     } catch (error) {
       console.error('Error fetching marine data:', error)
-      return this.getMockMarineData()
+      return null // Return null instead of mock data
     }
   }
   
@@ -273,28 +285,9 @@ export class WeatherService {
     })).slice(0, 5)
   }
   
-  // Get mock marine data when API is unavailable
-  private getMockMarineData(): MarineData {
-    return {
-      waveHeight: 3 + Math.random() * 4,
-      wavePeriod: 8 + Math.random() * 6,
-      waveDirection: Math.random() * 360,
-      swellHeight: 2 + Math.random() * 3,
-      swellPeriod: 10 + Math.random() * 5,
-      swellDirection: Math.random() * 360,
-      secondarySwellHeight: 1 + Math.random() * 2,
-      secondarySwellPeriod: 8 + Math.random() * 4,
-      secondarySwellDirection: Math.random() * 360,
-      windWaveHeight: 1 + Math.random() * 2,
-      windWavePeriod: 4 + Math.random() * 3,
-      windWaveDirection: Math.random() * 360,
-      waterTemperature: 75 + Math.random() * 5,
-      currentSpeed: Math.random() * 2,
-      currentDirection: Math.random() * 360,
-      visibility: 5 + Math.random() * 10,
-      seaLevel: 0,
-      iceCover: 0
-    }
+  // Return null when API is unavailable - NO MOCK DATA
+  private getMockMarineData(): MarineData | null {
+    return null
   }
   
   // Unit conversion helpers
