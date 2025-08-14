@@ -61,8 +61,8 @@ export function useBeachDetail(slug: string) {
       try {
         console.log('[useBeachDetail] Fetching beach:', slug)
         
-        // Try the comprehensive endpoint first using fetch with cache-busting
-        const response = await fetch(`/api/beaches/${slug}/comprehensive?_t=${Date.now()}&_r=${Math.random()}`, {
+        // Use comprehensive-fast endpoint for consistent data with list page
+        const response = await fetch(`/api/beaches/${slug}/comprehensive-fast?_t=${Date.now()}&_r=${Math.random()}`, {
           cache: 'no-store',
           headers: {
             'Cache-Control': 'no-cache, no-store, must-revalidate',
@@ -80,36 +80,35 @@ export function useBeachDetail(slug: string) {
         console.log('[useBeachDetail] API response:', data)
         
         // Transform the data to match BeachDetailResponse interface
+        // comprehensive-fast endpoint returns data in a simpler format
         
-        // Get current conditions from the beach conditions
-        const conditions = data.conditions || {}
-        const tides = conditions.tides || []
-        
-        // Extract ALL conditions from the comprehensive data
-        const forecast = data.forecast || {}
-        const currentConditions = conditions.lastReading || {}
-        
-        // Build complete response - NO FALLBACK DATA (user explicitly requested no mock data)
+        // Build complete response using comprehensive-fast data structure
         const transformedResponse = {
           beach: data.beach,
-          currentConditions: {
-            waveHeightFt: conditions.waveHeight || conditions.waveHeightFt || null,
-            windMph: conditions.windSpeed || conditions.windMph || null,
-            windDirection: conditions.windDirection || null,
-            waterTempF: conditions.waterTemp || conditions.waterTempF || null,
-            tideFt: conditions.currentTide || conditions.tideFt || null,
-            timestamp: conditions.timestamp || new Date()
+          currentConditions: data.currentConditions || {
+            waveHeightFt: null,
+            windMph: null,
+            windDirection: null,
+            waterTempF: null,
+            tideFt: null,
+            timestamp: new Date()
           },
           forecast7Day: [],
           history30Day: [],
           advisories: data.advisories || [],
-          tides: [],
-          safetyScore: conditions.safetyScore,
-          activities: conditions.activities,
-          bacteriaLevel: conditions.bacteriaLevel,
-          warnings: data.warnings,
-          recommendations: data.recommendations,
-          trends: data.trends
+          tides: data.tideData?.predictions || [],
+          safetyScore: data.safetyScore,
+          activities: data.activities,
+          bacteriaLevel: null,
+          warnings: [],
+          recommendations: [],
+          trends: null,
+          status: data.status,
+          currentStatus: data.currentStatus,
+          familyRating: data.familyRating,
+          familyFeatures: data.familyFeatures,
+          forecast: data.forecast,
+          tideData: data.tideData
         }
         
         console.log('[useBeachDetail] Transformed response:', transformedResponse)
