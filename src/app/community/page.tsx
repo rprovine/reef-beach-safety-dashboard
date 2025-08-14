@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/auth-context'
 import { TierFeature } from '@/components/tier-features'
 import { 
@@ -92,6 +92,8 @@ export default function CommunityPage() {
   const { user, isPro } = useAuth()
   const [selectedType, setSelectedType] = useState<'all' | 'conditions' | 'hazard' | 'wildlife' | 'general'>('all')
   const [showReportForm, setShowReportForm] = useState(false)
+  const [beaches, setBeaches] = useState<Array<{id: string, name: string, island: string}>>([])
+  const [loadingBeaches, setLoadingBeaches] = useState(true)
   
   const filteredReports = selectedType === 'all' 
     ? mockReports 
@@ -110,6 +112,33 @@ export default function CommunityPage() {
     wildlife: Fish,
     general: Users
   }
+
+  // Fetch all beaches for report form
+  useEffect(() => {
+    const fetchBeaches = async () => {
+      try {
+        const response = await fetch('/api/beaches')
+        if (response.ok) {
+          const data = await response.json()
+          setBeaches(data)
+        }
+      } catch (error) {
+        console.error('Failed to fetch beaches:', error)
+      } finally {
+        setLoadingBeaches(false)
+      }
+    }
+
+    fetchBeaches()
+  }, [])
+
+  // Group beaches by island for display
+  const beachesByIsland = beaches.reduce((acc, beach) => {
+    const island = beach.island.charAt(0).toUpperCase() + beach.island.slice(1)
+    if (!acc[island]) acc[island] = []
+    acc[island].push(beach)
+    return acc
+  }, {} as Record<string, typeof beaches>)
   
   return (
     <div className="min-h-screen bg-gray-50 pt-20">
@@ -327,8 +356,8 @@ export default function CommunityPage() {
       
       {/* Report Form Modal */}
       {showReportForm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/50 flex items-start justify-center z-50 p-4 overflow-y-auto">
+          <div className="bg-white rounded-xl max-w-2xl w-full my-8 min-h-fit">
             <div className="p-6">
               <h2 className="text-2xl font-bold text-gray-900 mb-6">Submit Beach Report</h2>
               
@@ -339,12 +368,23 @@ export default function CommunityPage() {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Beach Location
                     </label>
-                    <select className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ocean-500 focus:border-ocean-500">
-                      <option>Select a beach...</option>
-                      <option>Waikiki Beach</option>
-                      <option>Pipeline</option>
-                      <option>Hanauma Bay</option>
-                      <option>Lanikai Beach</option>
+                    <select 
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-ocean-500 focus:border-ocean-500"
+                      disabled={loadingBeaches}
+                    >
+                      <option value="">
+                        {loadingBeaches ? 'Loading beaches...' : 'Select a beach...'}
+                      </option>
+                      
+                      {Object.entries(beachesByIsland).map(([island, islandBeaches]) => (
+                        <optgroup key={island} label={island}>
+                          {islandBeaches.map((beach) => (
+                            <option key={beach.id} value={beach.id}>
+                              {beach.name}
+                            </option>
+                          ))}
+                        </optgroup>
+                      ))}
                     </select>
                   </div>
                   
